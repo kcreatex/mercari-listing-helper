@@ -709,7 +709,6 @@ body.analysis-view .dashboard-grid {
   background: #fff8f7;
 }
 
-.cloud-panel.cloud-logged-in .cloud-config-grid,
 .cloud-panel.cloud-logged-in .cloud-login-form {
   display: none;
 }

@@ -2,9 +2,8 @@ const STORAGE_KEY = "mercari-listing-helper-items";
 const SETTINGS_KEY = "mercari-listing-helper-settings";
 const TEMPLATES_KEY = "mercari-listing-helper-templates";
 const SORTING_STORAGE_KEY = "mercari-listing-helper-destination-sorting";
-const SUPABASE_CONFIG_KEY = "mercari-listing-helper-supabase-config";
-const SUPABASE_DEFAULT_URL = "";
-const SUPABASE_DEFAULT_ANON_KEY = "";
+const SUPABASE_URL = "";
+const SUPABASE_PUBLISHABLE_KEY = "";
 
 const form = document.querySelector("#itemForm");
 const formDetails = document.querySelector(".form-details");
@@ -61,9 +60,6 @@ const itemCount = document.querySelector("#itemCount");
 const sideNavLinks = document.querySelectorAll(".side-nav a[data-view]");
 const cloudPanel = document.querySelector(".cloud-panel");
 const cloudStatus = document.querySelector("#cloudStatus");
-const supabaseUrlInput = document.querySelector("#supabaseUrlInput");
-const supabaseAnonKeyInput = document.querySelector("#supabaseAnonKeyInput");
-const saveSupabaseConfigButton = document.querySelector("#saveSupabaseConfigButton");
 const cloudLoginForm = document.querySelector("#cloudLoginForm");
 const cloudEmailInput = document.querySelector("#cloudEmailInput");
 const cloudPasswordInput = document.querySelector("#cloudPasswordInput");
@@ -511,20 +507,10 @@ function saveItems() {
 }
 
 function loadSupabaseConfig() {
-  try {
-    const saved = localStorage.getItem(SUPABASE_CONFIG_KEY);
-    const parsed = saved ? JSON.parse(saved) : {};
-    return {
-      url: String(parsed.url || SUPABASE_DEFAULT_URL || "").trim(),
-      anonKey: String(parsed.anonKey || SUPABASE_DEFAULT_ANON_KEY || "").trim(),
-    };
-  } catch {
-    return { url: "", anonKey: "" };
-  }
-}
-
-function saveSupabaseConfig(config) {
-  localStorage.setItem(SUPABASE_CONFIG_KEY, JSON.stringify(config));
+  return {
+    url: String(SUPABASE_URL || "").trim(),
+    anonKey: String(SUPABASE_PUBLISHABLE_KEY || "").trim(),
+  };
 }
 
 function setCloudStatus(message, type = "") {
@@ -578,11 +564,9 @@ function collapseSortingExtrasOnMobile() {
 
 function initializeSupabaseClient() {
   const config = loadSupabaseConfig();
-  supabaseUrlInput.value = config.url;
-  supabaseAnonKeyInput.value = config.anonKey;
 
   if (!config.url || !config.anonKey) {
-    setCloudStatus("Supabase接続情報を入れるとログインできます。未設定の間はローカル保存です。");
+    setCloudStatus("Supabase接続情報がコード側に未設定です。設定されるまではローカル保存です。", "warning");
     return false;
   }
 
@@ -4475,33 +4459,11 @@ mobileCardList.addEventListener("click", (event) => {
   }
 });
 
-saveSupabaseConfigButton.addEventListener("click", () => {
-  const config = {
-    url: supabaseUrlInput.value.trim(),
-    anonKey: supabaseAnonKeyInput.value.trim(),
-  };
-
-  if (!config.url || !config.anonKey) {
-    alert("Supabase URL と anon public key を入力してください。");
-    return;
-  }
-
-  saveSupabaseConfig(config);
-  supabaseClient = null;
-  supabaseSession = null;
-  cloudUser = null;
-  cloudHouseholdId = "";
-  isCloudReady = false;
-  initializeSupabaseClient();
-  renderCloudAuthState();
-  alert("Supabase接続情報を保存しました。次にログインしてください。");
-});
-
 cloudLoginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   if (!supabaseClient && !initializeSupabaseClient()) {
-    alert("先にSupabase接続情報を保存してください。");
+    alert("Supabase接続情報がコード側に未設定です。app.js の SUPABASE_URL と SUPABASE_PUBLISHABLE_KEY を設定してください。");
     return;
   }
 
