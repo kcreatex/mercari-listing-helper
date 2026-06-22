@@ -540,11 +540,15 @@ function renderCloudAuthState() {
   cloudLoginButton.disabled = false;
   cloudLogoutButton.classList.toggle("hidden", !cloudUser);
   migrateToSupabaseButton.classList.toggle("hidden", !isLoggedIn);
+  cloudPanel.classList.toggle("cloud-logged-in", isLoggedIn);
   cloudEmailInput.disabled = Boolean(cloudUser);
   cloudPasswordInput.disabled = Boolean(cloudUser);
+  if (cloudUser) {
+    cloudPasswordInput.value = "";
+  }
 
   if (isLoggedIn) {
-    setCloudStatus(`ログイン中: ${email} / 商品データはSupabaseとlocalStorageに保存されます`, "connected");
+    setCloudStatus(`ログイン中: ${email} / 次回起動時も自動ログインします`, "connected");
     return;
   }
 
@@ -587,7 +591,13 @@ function initializeSupabaseClient() {
     return false;
   }
 
-  supabaseClient = window.supabase.createClient(config.url, config.anonKey);
+  supabaseClient = window.supabase.createClient(config.url, config.anonKey, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: false,
+    },
+  });
   return true;
 }
 
