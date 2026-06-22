@@ -76,7 +76,7 @@ h3 {
 .summary {
   display: inline-flex;
   align-items: baseline;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: 2px;
   min-width: 0;
   padding: 0;
@@ -101,6 +101,10 @@ h3 {
   color: var(--muted);
   font-size: 12px;
   font-weight: 800;
+}
+
+.list-count {
+  margin-top: 2px;
 }
 
 .dashboard-panel {
@@ -1376,10 +1380,17 @@ input[readonly] {
   justify-content: center;
 }
 
+#itemForm > .profit-preview {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: 100%;
+}
+
 .profit-preview div {
   display: flex;
   min-height: 34px;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   padding: 6px 10px;
   border: 1px solid var(--line);
@@ -3963,6 +3974,27 @@ button:disabled {
   .sold-fields {
     grid-template-columns: 1fr;
     gap: 7px;
+  }
+
+  #itemForm > .profit-preview {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    width: 100%;
+  }
+
+  #itemForm > .profit-preview div {
+    min-height: 32px;
+    padding: 5px 4px;
+    gap: 3px;
+  }
+
+  #itemForm > .profit-preview span {
+    font-size: 10px;
+  }
+
+  #itemForm > .profit-preview strong {
+    font-size: 12px;
   }
 
   .form-details-grid {
