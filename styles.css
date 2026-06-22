@@ -40,19 +40,14 @@ textarea {
   display: flex;
   justify-content: space-between;
   gap: 24px;
-  align-items: flex-end;
+  align-items: center;
   padding: 32px min(5vw, 56px) 20px;
   border-bottom: 1px solid var(--line);
   background: #ffffff;
 }
 
 .eyebrow {
-  margin: 0 0 6px;
-  color: var(--accent);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0;
-  text-transform: uppercase;
+  display: none;
 }
 
 h1,
@@ -79,26 +74,33 @@ h3 {
 }
 
 .summary {
-  min-width: 132px;
-  padding: 14px 18px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--surface);
-  text-align: center;
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 2px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted);
+  text-align: right;
 }
 
 .summary-number {
-  display: block;
-  font-size: 30px;
+  display: inline;
+  color: #34424f;
+  font-size: 13px;
   font-weight: 800;
-  line-height: 1;
+  line-height: 1.2;
 }
 
 .summary-label {
-  display: block;
-  margin-top: 6px;
+  display: inline;
+  margin-top: 0;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .dashboard-panel {
@@ -1371,6 +1373,7 @@ input[readonly] {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  justify-content: center;
 }
 
 .profit-preview div {
@@ -3036,15 +3039,18 @@ button:disabled {
 
 @media (max-width: 900px) {
   .app-header {
-    align-items: stretch;
+    align-items: center;
     flex-direction: column;
+    text-align: center;
   }
 
   .side-nav {
     position: sticky;
     top: 0;
     display: flex;
-    overflow-x: auto;
+    flex-wrap: wrap;
+    justify-content: center;
+    overflow-x: hidden;
     width: auto;
     margin: 0;
     padding: 10px 16px;
@@ -3054,12 +3060,13 @@ button:disabled {
   }
 
   .side-nav a {
-    flex: 0 0 auto;
+    flex: 0 1 auto;
     white-space: nowrap;
   }
 
   .summary {
-    width: 100%;
+    justify-content: center;
+    width: auto;
   }
 
   .dashboard-panel {
@@ -3263,20 +3270,25 @@ button:disabled {
   }
 
   .eyebrow {
-    margin-bottom: 3px;
-    font-size: 10px;
+    display: none;
   }
 
   .summary {
-    padding: 8px 10px;
+    justify-content: center;
+    padding: 0;
   }
 
   .summary-number {
-    font-size: 22px;
+    font-size: 12px;
+  }
+
+  .summary-label {
+    font-size: 11px;
   }
 
   .side-nav {
     gap: 6px;
+    justify-content: center;
     padding: 8px 10px;
     border-bottom: 1px solid var(--line);
   }
