@@ -3949,6 +3949,22 @@ button:disabled {
     gap: 7px;
   }
 
+  .cloud-config-grid,
+  .cloud-login-form {
+    grid-template-columns: 1fr !important;
+    gap: 7px;
+    width: 100%;
+  }
+
+  .cloud-panel label,
+  .cloud-panel input,
+  .cloud-panel button {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
   .cloud-panel input,
   .cloud-panel button {
     width: 100%;
