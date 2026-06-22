@@ -649,7 +649,7 @@ async function loadItemsFromSupabase() {
 
   const { data, error } = await supabaseClient
     .from("items")
-    .select("id,data,updated_at")
+    .select("local_id,title,status,category,storage_location,planned_price,data,updated_at")
     .eq("household_id", cloudHouseholdId)
     .order("updated_at", { ascending: false });
 
@@ -662,11 +662,30 @@ async function loadItemsFromSupabase() {
     return;
   }
 
+  const localItemsById = new Map(loadItems().map((item) => [String(item.id), item]));
   items = data
-    .map((row) => ({ ...(row.data || {}), id: row.data?.id || row.id }))
+    .map((row) => {
+      const itemId = String(row.data?.id || row.local_id || "");
+      const localItem = localItemsById.get(itemId);
+      return {
+        ...(row.data || {}),
+        id: itemId,
+        listingTitle: row.data?.listingTitle || row.title || "",
+        status: row.data?.status || row.status || DEFAULT_STATUS,
+        category: row.data?.category || row.category || "",
+        storageLocation: row.data?.storageLocation || row.storage_location || "",
+        plannedPrice: row.data?.plannedPrice ?? row.planned_price ?? "",
+        imageData: localItem?.imageData || row.data?.imageData || "",
+      };
+    })
     .filter((item) => item.id);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
   hasCloudSaveWarning = false;
+}
+
+function createCloudItemData(item) {
+  const { imageData, ...cloudItem } = item;
+  return cloudItem;
 }
 
 function createSupabaseItemRows(targetItems) {
@@ -674,12 +693,20 @@ function createSupabaseItemRows(targetItems) {
     return [];
   }
 
-  return targetItems.map((item) => ({
-    id: String(item.id || createId()),
-    household_id: cloudHouseholdId,
-    user_id: cloudUser.id,
-    data: item,
-  }));
+  return targetItems
+    .map((item) => {
+      const localId = String(item.id || createId());
+      return {
+        household_id: cloudHouseholdId,
+        local_id: localId,
+        title: getListingTitle(item),
+        status: getItemStatus(item),
+        category: item.category || "",
+        storage_location: item.storageLocation || "",
+        planned_price: parseMoney(item.plannedPrice) === "" ? null : parseMoney(item.plannedPrice),
+        data: createCloudItemData({ ...item, id: localId }),
+      };
+    });
 }
 
 async function syncItemsToSupabase() {
@@ -695,7 +722,7 @@ async function syncItemsToSupabase() {
 
   const { error } = await supabaseClient
     .from("items")
-    .upsert(rows, { onConflict: "id" });
+    .upsert(rows, { onConflict: "household_id,local_id" });
 
   if (error) {
     throw error;
@@ -714,7 +741,7 @@ async function deleteItemFromSupabase(itemId) {
     .from("items")
     .delete()
     .eq("household_id", cloudHouseholdId)
-    .eq("id", itemId);
+    .eq("local_id", itemId);
 
   if (error) {
     throw error;
@@ -756,7 +783,7 @@ async function migrateLocalItemsToSupabase() {
     const rows = createSupabaseItemRows(localItems);
     const { error } = await supabaseClient
       .from("items")
-      .upsert(rows, { onConflict: "id" });
+      .upsert(rows, { onConflict: "household_id,local_id" });
 
     if (error) {
       throw error;

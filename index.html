@@ -812,6 +812,43 @@
           <button class="ghost-button" type="button" id="resetSettingsButton">初期設定に戻す</button>
         </div>
 
+        <details class="cloud-panel" aria-labelledby="cloudTitle">
+          <summary class="cloud-summary">クラウド共有（上級者向け）</summary>
+          <div class="cloud-panel-header">
+            <div>
+              <h2 id="cloudTitle">クラウド共有</h2>
+              <p class="muted" id="cloudStatus">未ログイン: 商品データはこの端末に保存されます</p>
+              <p class="cloud-backup-warning">Supabaseへ移行する前に、PC版の設定ページからJSONバックアップを書き出して保存してください。</p>
+            </div>
+            <button class="ghost-button hidden" type="button" id="cloudLogoutButton">ログアウト</button>
+          </div>
+
+          <div class="cloud-config-grid">
+            <label>
+              Supabase URL
+              <input id="supabaseUrlInput" type="url" placeholder="https://xxxx.supabase.co">
+            </label>
+            <label>
+              anon public key
+              <input id="supabaseAnonKeyInput" type="password" placeholder="Supabaseのanon key">
+            </label>
+            <button class="ghost-button" type="button" id="saveSupabaseConfigButton">接続情報を保存</button>
+          </div>
+
+          <form class="cloud-login-form" id="cloudLoginForm" autocomplete="on">
+            <label>
+              メール
+              <input id="cloudEmailInput" type="email" autocomplete="email" placeholder="mail@example.com">
+            </label>
+            <label>
+              パスワード
+              <input id="cloudPasswordInput" type="password" autocomplete="current-password">
+            </label>
+            <button class="primary-button" type="submit" id="cloudLoginButton">ログイン</button>
+            <button class="ghost-button hidden" type="button" id="migrateToSupabaseButton">Supabaseへ移行</button>
+          </form>
+        </details>
+
         <div class="settings-grid">
           <div class="settings-group">
             <h3>カテゴリ</h3>
@@ -855,43 +892,6 @@
         </div>
 
         <button class="primary-button" type="button" id="saveSettingsButton">設定を保存</button>
-
-        <details class="cloud-panel" aria-labelledby="cloudTitle">
-          <summary class="cloud-summary">クラウド共有（上級者向け）</summary>
-          <div class="cloud-panel-header">
-            <div>
-              <h2 id="cloudTitle">クラウド共有</h2>
-              <p class="muted" id="cloudStatus">未ログイン: 商品データはこの端末に保存されます</p>
-              <p class="cloud-backup-warning">Supabaseへ移行する前に、必ず商品一覧の「バックアップを書き出す」からJSONバックアップを保存してください。</p>
-            </div>
-            <button class="ghost-button hidden" type="button" id="cloudLogoutButton">ログアウト</button>
-          </div>
-
-          <div class="cloud-config-grid">
-            <label>
-              Supabase URL
-              <input id="supabaseUrlInput" type="url" placeholder="https://xxxx.supabase.co">
-            </label>
-            <label>
-              anon public key
-              <input id="supabaseAnonKeyInput" type="password" placeholder="Supabaseのanon key">
-            </label>
-            <button class="ghost-button" type="button" id="saveSupabaseConfigButton">接続情報を保存</button>
-          </div>
-
-          <form class="cloud-login-form" id="cloudLoginForm" autocomplete="on">
-            <label>
-              メール
-              <input id="cloudEmailInput" type="email" autocomplete="email" placeholder="mail@example.com">
-            </label>
-            <label>
-              パスワード
-              <input id="cloudPasswordInput" type="password" autocomplete="current-password">
-            </label>
-            <button class="primary-button" type="submit" id="cloudLoginButton">ログイン</button>
-            <button class="ghost-button hidden" type="button" id="migrateToSupabaseButton">Supabaseへ移行</button>
-          </form>
-        </details>
       </section>
     </main>
 

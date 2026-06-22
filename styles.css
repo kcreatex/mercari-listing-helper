@@ -712,8 +712,7 @@ body.analysis-view .dashboard-grid {
 body:not(.analysis-view) .dashboard-panel,
 body:not(.analysis-view) .sold-panel,
 body:not(.analysis-view) .analysis-accordion,
-body:not(.settings-view) .settings-panel,
-body:not(.settings-view) .cloud-panel {
+body:not(.settings-view) .settings-panel {
   display: none;
 }
 
@@ -4218,8 +4217,8 @@ button:disabled {
     display: none;
   }
 
-  .cloud-panel {
-    display: none !important;
+  body.settings-view .settings-panel .cloud-panel {
+    display: grid !important;
   }
 
   body.work-view.work-tab-list .list-panel {
