@@ -534,7 +534,7 @@ function renderCloudAuthState() {
   }
 
   if (isLoggedIn) {
-    setCloudStatus(`ログイン中: ${email} / 次回起動時も自動ログインします`, "connected");
+    setCloudStatus(email, "connected");
     return;
   }
 

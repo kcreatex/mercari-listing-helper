@@ -3946,6 +3946,34 @@ button:disabled {
     display: none;
   }
 
+  .cloud-panel.cloud-logged-in .cloud-summary {
+    font-size: 0;
+  }
+
+  .cloud-panel.cloud-logged-in .cloud-summary::after {
+    content: "クラウド共有";
+    font-size: 13px;
+  }
+
+  .cloud-panel.cloud-logged-in .cloud-panel-header {
+    display: grid;
+    gap: 6px;
+  }
+
+  .cloud-panel.cloud-logged-in #cloudTitle {
+    display: none;
+  }
+
+  .cloud-panel.cloud-logged-in #cloudStatus {
+    color: #34424f;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .cloud-panel.cloud-logged-in #cloudLogoutButton {
+    width: 100%;
+  }
+
   .cloud-panel[open] .cloud-summary {
     margin-bottom: 6px;
     border-bottom: 1px solid var(--line);
