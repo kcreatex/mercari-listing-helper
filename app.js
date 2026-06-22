@@ -228,6 +228,7 @@ let cloudUser = null;
 let cloudHouseholdId = "";
 let isCloudReady = false;
 let hasCloudSaveWarning = false;
+let isSettingsDirty = false;
 
 function isMobileViewport() {
   return window.matchMedia("(max-width: 700px)").matches;
@@ -3747,6 +3748,9 @@ function renderSettings() {
   descriptionTemplates.forEach((template, index) => {
     templateSettingsList.append(createTemplateSettingsRow(template, index));
   });
+
+  isSettingsDirty = false;
+  updateSettingsSaveButtonVisibility();
 }
 
 function createCategorySettingsRow(category, index) {
@@ -3838,6 +3842,20 @@ function saveSettingsFromForm() {
   alert("設定を保存しました。");
 }
 
+function hasSettingsFormChanges() {
+  return JSON.stringify(collectSettingsFromForm()) !== JSON.stringify(settings)
+    || JSON.stringify(collectTemplatesFromForm()) !== JSON.stringify(descriptionTemplates);
+}
+
+function updateSettingsSaveButtonVisibility() {
+  saveSettingsButton.classList.toggle("hidden", !(isSettingsDirty && hasSettingsFormChanges()));
+}
+
+function markSettingsDirty() {
+  isSettingsDirty = true;
+  updateSettingsSaveButtonVisibility();
+}
+
 function addCategoryFromForm() {
   const name = newCategoryNameInput.value.trim();
 
@@ -3848,6 +3866,7 @@ function addCategoryFromForm() {
 
   categorySettingsList.append(createCategorySettingsRow(name, categorySettingsList.children.length));
   newCategoryNameInput.value = "";
+  markSettingsDirty();
 }
 
 function addShippingMethodFromForm() {
@@ -3862,6 +3881,7 @@ function addShippingMethodFromForm() {
   shippingSettingsList.append(createShippingSettingsRow({ name, cost }, shippingSettingsList.children.length));
   newShippingNameInput.value = "";
   newShippingCostInput.value = "";
+  markSettingsDirty();
 }
 
 function addTemplateFromForm() {
@@ -3886,6 +3906,7 @@ function addTemplateFromForm() {
   }, templateSettingsList.children.length));
   newTemplateNameInput.value = "";
   newTemplateContentInput.value = "";
+  markSettingsDirty();
 }
 
 function resetSettingsToDefault() {
@@ -4862,6 +4883,9 @@ addCategoryButton.addEventListener("click", addCategoryFromForm);
 addShippingMethodButton.addEventListener("click", addShippingMethodFromForm);
 addTemplateButton.addEventListener("click", addTemplateFromForm);
 resetSettingsButton.addEventListener("click", resetSettingsToDefault);
+[categorySettingsList, shippingSettingsList, templateSettingsList].forEach((list) => {
+  list.addEventListener("input", markSettingsDirty);
+});
 categorySettingsList.addEventListener("click", (event) => {
   const button = event.target.closest("button");
   const row = event.target.closest(".category-setting-row");
@@ -4881,6 +4905,8 @@ categorySettingsList.addEventListener("click", (event) => {
   if (button.dataset.action === "move-down") {
     moveSettingsRow(row, "down");
   }
+
+  markSettingsDirty();
 });
 shippingSettingsList.addEventListener("click", (event) => {
   const button = event.target.closest("button");
@@ -4901,6 +4927,8 @@ shippingSettingsList.addEventListener("click", (event) => {
   if (button.dataset.action === "move-down") {
     moveSettingsRow(row, "down");
   }
+
+  markSettingsDirty();
 });
 templateSettingsList.addEventListener("click", (event) => {
   const button = event.target.closest("button");
@@ -4921,6 +4949,8 @@ templateSettingsList.addEventListener("click", (event) => {
   if (button.dataset.action === "move-down") {
     moveSettingsRow(row, "down");
   }
+
+  markSettingsDirty();
 });
 [plannedPriceInput, shippingCostInput, purchaseCostInput].forEach((input) => {
   input.addEventListener("input", updateProfitPreview);

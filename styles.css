@@ -1848,6 +1848,14 @@ input[readonly] {
   content: "▼";
 }
 
+.cloud-panel.settings-accordion > .cloud-summary::before {
+  content: "▶";
+}
+
+.cloud-panel.settings-accordion[open] > .cloud-summary::before {
+  content: "▼";
+}
+
 .shipping-settings-list {
   display: grid;
   gap: 4px;
@@ -1927,6 +1935,10 @@ input[readonly] {
   min-width: 120px;
   min-height: 28px;
   margin-left: auto;
+}
+
+#saveSettingsButton.hidden {
+  display: none;
 }
 
 body.analysis-view .sold-panel {
@@ -3991,12 +4003,11 @@ button:disabled {
   }
 
   .cloud-panel.cloud-logged-in .cloud-summary {
-    font-size: 0;
+    font-size: 13px;
   }
 
   .cloud-panel.cloud-logged-in .cloud-summary::after {
-    content: "クラウド共有";
-    font-size: 13px;
+    content: "";
   }
 
   .cloud-panel.cloud-logged-in .cloud-panel-header {
