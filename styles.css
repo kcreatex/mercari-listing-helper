@@ -3013,6 +3013,43 @@ tbody tr:last-child td {
   gap: 14px;
 }
 
+.detail-hero {
+  display: grid;
+  gap: 7px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.detail-hero h3 {
+  margin: 0;
+  color: #1f2933;
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1.25;
+  word-break: break-word;
+}
+
+.detail-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.detail-tag-list span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 3px 7px;
+  border: 1px solid #d7eadf;
+  border-radius: 999px;
+  background: #f2faf6;
+  color: #0f766e;
+  font-size: 12px;
+  font-weight: 900;
+}
+
 .detail-image-wrap {
   display: grid;
   place-items: center;
@@ -3050,6 +3087,29 @@ tbody tr:last-child td {
   font-size: 15px;
 }
 
+.detail-section-collapsible summary {
+  color: #34424f;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 900;
+  list-style: none;
+}
+
+.detail-section-collapsible summary::-webkit-details-marker {
+  display: none;
+}
+
+.detail-section-collapsible summary::before {
+  content: "▶";
+  margin-right: 6px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.detail-section-collapsible[open] summary::before {
+  content: "▼";
+}
+
 .detail-section dl {
   display: grid;
   gap: 8px;
@@ -3073,6 +3133,33 @@ tbody tr:last-child td {
   color: #2f343a;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.detail-profit-highlight {
+  padding: 5px 7px;
+  border: 1px solid #b9d8d3;
+  border-radius: 6px;
+  background: #f2faf6;
+}
+
+.detail-profit-highlight dt,
+.detail-profit-highlight dd {
+  color: #0f766e;
+  font-weight: 900;
+}
+
+.detail-empty-text {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+#prepareRelistButton {
+  border-color: #0f766e;
+  background: #0f766e;
+  color: #fff;
+  font-weight: 900;
 }
 
 .description-modal-content {
@@ -4649,6 +4736,26 @@ button:disabled {
     gap: 7px;
   }
 
+  .detail-hero {
+    gap: 5px;
+    padding: 7px;
+    border-radius: 6px;
+  }
+
+  .detail-hero h3 {
+    font-size: 20px;
+  }
+
+  .detail-tag-list {
+    gap: 4px;
+  }
+
+  .detail-tag-list span {
+    min-height: 20px;
+    padding: 2px 6px;
+    font-size: 10px;
+  }
+
   .detail-image-wrap {
     min-height: 92px;
     border-radius: 6px;
@@ -4670,6 +4777,10 @@ button:disabled {
   }
 
   .detail-section h3 {
+    font-size: 13px;
+  }
+
+  .detail-section-collapsible summary {
     font-size: 13px;
   }
 
@@ -4703,6 +4814,14 @@ button:disabled {
   .detail-section dd {
     min-width: 0;
     font-size: 12px;
+  }
+
+  .detail-profit-highlight {
+    padding: 3px 5px;
+  }
+
+  .detail-profit-highlight dd {
+    font-size: 13px;
   }
 
   .detail-modal-panel .modal-actions {

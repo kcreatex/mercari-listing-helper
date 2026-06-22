@@ -2141,6 +2141,9 @@ function createDetailSection(title, rows) {
     if (["商品タイトル", "購入時期", "商品実寸", "商品説明文", "メモ", "売却メモ"].includes(label)) {
       row.classList.add("detail-row-wide");
     }
+    if (label === "見込み利益") {
+      row.classList.add("detail-profit-highlight");
+    }
     const term = document.createElement("dt");
     const description = document.createElement("dd");
     term.textContent = label;
@@ -2152,9 +2155,63 @@ function createDetailSection(title, rows) {
   return section;
 }
 
+function createDetailCollapsibleSection(title, rows, emptyText) {
+  const section = document.createElement("details");
+  section.className = "detail-section detail-section-collapsible detail-section-product";
+
+  const summary = document.createElement("summary");
+  summary.textContent = title;
+  section.append(summary);
+
+  const hasContent = rows.some(([, value]) => String(value || "").trim());
+  if (!hasContent) {
+    const empty = document.createElement("p");
+    empty.className = "detail-empty-text";
+    empty.textContent = emptyText;
+    section.append(empty);
+    return section;
+  }
+
+  const list = document.createElement("dl");
+  rows.forEach(([label, value]) => {
+    const row = document.createElement("div");
+    row.classList.add("detail-row-wide");
+    const term = document.createElement("dt");
+    const description = document.createElement("dd");
+    term.textContent = label;
+    description.textContent = value || "-";
+    row.append(term, description);
+    list.append(row);
+  });
+  section.append(list);
+  return section;
+}
+
+function createDetailHero(item) {
+  const hero = document.createElement("section");
+  hero.className = "detail-hero";
+
+  const title = document.createElement("h3");
+  title.textContent = getListingTitle(item) || "商品タイトル未入力";
+  hero.append(title);
+
+  const tagList = document.createElement("div");
+  tagList.className = "detail-tag-list";
+  [item.category, item.condition, getItemStatus(item)].forEach((value) => {
+    const tag = document.createElement("span");
+    tag.textContent = value || "-";
+    tagList.append(tag);
+  });
+  hero.append(tagList);
+
+  return hero;
+}
+
 function openDetailModal(item) {
   currentDetailItem = item;
   detailModalContent.innerHTML = "";
+
+  detailModalContent.append(createDetailHero(item));
 
   const imageWrap = document.createElement("div");
   imageWrap.className = "detail-image-wrap";
@@ -2172,11 +2229,10 @@ function openDetailModal(item) {
   detailModalContent.append(imageWrap);
 
   detailModalContent.append(createDetailSection("基本情報", [
-    ["商品タイトル", getListingTitle(item)],
+    ["保管場所", item.storageLocation],
     ["状態", item.condition],
     ["出品ステータス", getItemStatus(item)],
     ["カテゴリ", item.category],
-    ["保管場所", item.storageLocation],
     ["購入時期", item.purchaseDate],
   ]));
 
@@ -2190,11 +2246,11 @@ function openDetailModal(item) {
     ["原価", formatMoney(parseMoney(item.purchaseCost))],
   ]));
 
-  detailModalContent.append(createDetailSection("商品情報", [
+  detailModalContent.append(createDetailCollapsibleSection("商品情報", [
     ["商品実寸", item.measurements],
     ["商品説明文", item.description],
     ["メモ", item.memo],
-  ]));
+  ], "商品情報未登録"));
 
   if (getItemStatus(item) === "売却済み") {
     detailModalContent.append(createDetailSection("売却情報", [
