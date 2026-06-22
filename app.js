@@ -2,8 +2,8 @@ const STORAGE_KEY = "mercari-listing-helper-items";
 const SETTINGS_KEY = "mercari-listing-helper-settings";
 const TEMPLATES_KEY = "mercari-listing-helper-templates";
 const SORTING_STORAGE_KEY = "mercari-listing-helper-destination-sorting";
-const SUPABASE_URL = "";
-const SUPABASE_PUBLISHABLE_KEY = "";
+const SUPABASE_URL = "https://pkbgvfurouxmghujlscs.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_pJVEFb8bDDTrdOaCYU3BRQ_jUnbesuv";
 
 const form = document.querySelector("#itemForm");
 const formDetails = document.querySelector(".form-details");
