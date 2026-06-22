@@ -809,12 +809,14 @@
             <h2 id="settingsTitle">設定</h2>
             <p class="muted">カテゴリ、配送方法、送料を管理します</p>
           </div>
-          <button class="ghost-button" type="button" id="resetSettingsButton">初期設定に戻す</button>
         </div>
 
         <div class="settings-grid">
           <details class="settings-group settings-accordion">
-            <summary>カテゴリ</summary>
+            <summary>
+              <span class="settings-summary-label">カテゴリ</span>
+              <button class="ghost-button settings-reset-button" type="button" id="resetCategoriesButton">初期化</button>
+            </summary>
             <div class="category-settings-list" id="categorySettingsList"></div>
             <div class="category-add-row">
               <input id="newCategoryName" type="text" placeholder="カテゴリ名">
@@ -823,7 +825,10 @@
           </details>
 
           <details class="settings-group settings-accordion">
-            <summary>配送方法と送料</summary>
+            <summary>
+              <span class="settings-summary-label">配送方法と送料</span>
+              <button class="ghost-button settings-reset-button" type="button" id="resetShippingButton">初期化</button>
+            </summary>
             <div class="shipping-settings-list" id="shippingSettingsList"></div>
             <div class="shipping-add-row">
               <input id="newShippingName" type="text" placeholder="配送方法名">
@@ -833,7 +838,10 @@
           </details>
 
           <details class="settings-group settings-accordion template-settings-group">
-            <summary>商品説明テンプレート</summary>
+            <summary>
+              <span class="settings-summary-label">商品説明テンプレート</span>
+              <button class="ghost-button settings-reset-button" type="button" id="resetTemplatesButton">初期化</button>
+            </summary>
             <div class="template-settings-list" id="templateSettingsList"></div>
             <div class="template-add-row">
               <input id="newTemplateName" type="text" placeholder="テンプレート名">

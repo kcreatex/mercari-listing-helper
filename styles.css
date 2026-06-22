@@ -1830,6 +1830,7 @@ input[readonly] {
 
 .settings-accordion > summary::before {
   content: "▶";
+  flex: 0 0 auto;
   color: var(--muted);
   font-size: 11px;
 }
@@ -1854,6 +1855,24 @@ input[readonly] {
 
 .cloud-panel.settings-accordion[open] > .cloud-summary::before {
   content: "▼";
+}
+
+.settings-summary-label {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.settings-reset-button {
+  flex: 0 0 auto;
+  min-height: 24px;
+  padding: 2px 7px;
+  font-size: 11px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.settings-accordion:not([open]) .settings-reset-button {
+  display: none;
 }
 
 .shipping-settings-list {
@@ -4549,10 +4568,10 @@ button:disabled {
     min-width: 0;
   }
 
-  #resetSettingsButton {
+  .settings-reset-button {
     width: auto;
-    min-height: 26px;
-    padding: 3px 6px;
+    min-height: 24px;
+    padding: 2px 6px;
     font-size: 10px;
     white-space: nowrap;
   }

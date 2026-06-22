@@ -195,7 +195,9 @@ const newTemplateNameInput = document.querySelector("#newTemplateName");
 const newTemplateContentInput = document.querySelector("#newTemplateContent");
 const addTemplateButton = document.querySelector("#addTemplateButton");
 const saveSettingsButton = document.querySelector("#saveSettingsButton");
-const resetSettingsButton = document.querySelector("#resetSettingsButton");
+const resetCategoriesButton = document.querySelector("#resetCategoriesButton");
+const resetShippingButton = document.querySelector("#resetShippingButton");
+const resetTemplatesButton = document.querySelector("#resetTemplatesButton");
 const descriptionModal = document.querySelector("#descriptionModal");
 const descriptionModalItemTitle = document.querySelector("#descriptionModalItemTitle");
 const descriptionModalContent = document.querySelector("#descriptionModalContent");
@@ -3909,21 +3911,58 @@ function addTemplateFromForm() {
   markSettingsDirty();
 }
 
-function resetSettingsToDefault() {
-  const shouldReset = confirm("カテゴリ、配送方法、商品説明テンプレートを初期設定に戻しますか？\nクラウド共有設定とログイン情報は変更しません。");
+function resetCategoriesToDefault(event) {
+  event?.preventDefault();
+  event?.stopPropagation();
+  const shouldReset = confirm("カテゴリを初期設定に戻しますか？");
 
   if (!shouldReset) {
     return;
   }
 
-  settings = normalizeSettings(DEFAULT_SETTINGS);
-  descriptionTemplates = normalizeTemplates(DEFAULT_TEMPLATES, []);
+  settings = normalizeSettings({
+    ...settings,
+    categories: DEFAULT_SETTINGS.categories,
+  });
   saveSettings();
-  saveTemplates();
   refreshCategoryOptions(categoryInput.value);
+  renderSettings();
+  alert("カテゴリを初期設定に戻しました。");
+}
+
+function resetShippingToDefault(event) {
+  event?.preventDefault();
+  event?.stopPropagation();
+  const shouldReset = confirm("配送方法と送料を初期設定に戻しますか？");
+
+  if (!shouldReset) {
+    return;
+  }
+
+  settings = normalizeSettings({
+    ...settings,
+    shippingMethods: DEFAULT_SETTINGS.shippingMethods,
+  });
+  saveSettings();
   refreshShippingMethodOptions(shippingMethodInput.value);
+  renderSettings();
+  alert("配送方法と送料を初期設定に戻しました。");
+}
+
+function resetTemplatesToDefault(event) {
+  event?.preventDefault();
+  event?.stopPropagation();
+  const shouldReset = confirm("商品説明テンプレートを初期設定に戻しますか？");
+
+  if (!shouldReset) {
+    return;
+  }
+
+  descriptionTemplates = normalizeTemplates(DEFAULT_TEMPLATES, []);
+  saveTemplates();
   refreshTemplateOptions();
   renderSettings();
+  alert("商品説明テンプレートを初期設定に戻しました。");
 }
 
 function moveSettingsRow(row, direction) {
@@ -4882,7 +4921,9 @@ saveSettingsButton.addEventListener("click", saveSettingsFromForm);
 addCategoryButton.addEventListener("click", addCategoryFromForm);
 addShippingMethodButton.addEventListener("click", addShippingMethodFromForm);
 addTemplateButton.addEventListener("click", addTemplateFromForm);
-resetSettingsButton.addEventListener("click", resetSettingsToDefault);
+resetCategoriesButton.addEventListener("click", resetCategoriesToDefault);
+resetShippingButton.addEventListener("click", resetShippingToDefault);
+resetTemplatesButton.addEventListener("click", resetTemplatesToDefault);
 [categorySettingsList, shippingSettingsList, templateSettingsList].forEach((list) => {
   list.addEventListener("input", markSettingsDirty);
 });
