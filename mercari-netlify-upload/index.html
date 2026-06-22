@@ -1,0 +1,933 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>メルカリ出品補助室</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  </head>
+  <body class="work-view work-tab-form">
+    <header class="app-header">
+      <div>
+        <p class="eyebrow">Local Listing Manager</p>
+        <h1>メルカリ出品補助室</h1>
+      </div>
+      <div class="summary" aria-live="polite">
+        <span class="summary-number" id="itemCount">0</span>
+        <span class="summary-label">件の商品</span>
+      </div>
+    </header>
+
+    <nav class="side-nav" aria-label="画面メニュー">
+      <a href="#formTitle" data-view="form">商品登録</a>
+      <a href="#listTitle" data-view="list">商品一覧</a>
+      <a href="#sortingTitle" data-view="sorting">売却先仕分け</a>
+      <a href="#analysisTitle" data-view="analysis">分析</a>
+      <a href="#settingsTitle" data-view="settings">設定</a>
+    </nav>
+
+    <section class="dashboard-panel" aria-labelledby="analysisTitle">
+      <div class="panel-heading">
+        <div>
+          <h2 id="analysisTitle">分析</h2>
+          <p class="muted">今やるべき作業を一瞬で判断するための業務ダッシュボードです</p>
+        </div>
+      </div>
+
+      <div class="dashboard-hero-grid" aria-live="polite">
+        <div class="dashboard-card dashboard-card-large dashboard-card-profit">
+          <span>累計利益</span>
+          <strong id="dashboardHeroTotalProfit">0円</strong>
+        </div>
+        <div class="dashboard-card dashboard-card-large dashboard-card-unlisted">
+          <span>未出品件数</span>
+          <strong id="dashboardHeroUnlistedCount">0件</strong>
+        </div>
+        <div class="dashboard-card dashboard-card-large dashboard-card-shipping">
+          <span>発送待ち件数</span>
+          <strong id="dashboardHeroShippingWaitCount">0件</strong>
+        </div>
+        <div class="dashboard-card dashboard-card-large dashboard-card-unlisted">
+          <span>埋蔵金額</span>
+          <strong id="dashboardHeroBuriedValue">0円</strong>
+        </div>
+      </div>
+
+      <div class="dashboard-grid" aria-live="polite">
+        <div class="dashboard-card dashboard-card-profit">
+          <span>今月利益</span>
+          <strong id="dashboardMonthlyProfit">0円</strong>
+        </div>
+        <div class="dashboard-card dashboard-card-profit">
+          <span>累計利益</span>
+          <strong id="dashboardTotalProfit">0円</strong>
+        </div>
+        <div class="dashboard-card dashboard-card-profit">
+          <span>今月販売件数</span>
+          <strong id="dashboardMonthlySoldCount">0件</strong>
+        </div>
+        <div class="dashboard-card dashboard-card-profit">
+          <span>累計売却件数</span>
+          <strong id="dashboardTotalSoldCount">0件</strong>
+        </div>
+        <div class="dashboard-card dashboard-card-profit">
+          <span>利益額1位の商品</span>
+          <strong id="dashboardTopProfitAmount">-</strong>
+        </div>
+        <div class="dashboard-card dashboard-card-profit">
+          <span>利益率1位の商品</span>
+          <strong id="dashboardTopProfitRate">-</strong>
+        </div>
+        <div class="dashboard-card dashboard-card-profit">
+          <span>カテゴリー別利益1位</span>
+          <strong id="dashboardTopCategory">-</strong>
+        </div>
+        <div class="dashboard-card dashboard-card-profit">
+          <span>保管場所別利益1位</span>
+          <strong id="dashboardTopStorage">-</strong>
+        </div>
+        <div class="dashboard-card dashboard-card-warning">
+          <span>長期在庫件数</span>
+          <strong id="dashboardLongInventoryCount">0件</strong>
+        </div>
+        <div class="dashboard-card dashboard-card-warning">
+          <span>要捜索件数</span>
+          <strong id="dashboardSearchCount">0件</strong>
+        </div>
+        <div class="dashboard-card dashboard-card-unlisted">
+          <span>埋蔵金ランキング1位</span>
+          <strong id="dashboardBuriedTreasureTop">-</strong>
+        </div>
+        <div class="dashboard-card dashboard-card-unlisted">
+          <span>在庫価値ランキング1位</span>
+          <strong id="dashboardInventoryValueTop">-</strong>
+        </div>
+        <div class="dashboard-card dashboard-card-unlisted">
+          <span>未出品埋蔵金1位</span>
+          <strong id="dashboardUnlistedTreasureTop">-</strong>
+        </div>
+      </div>
+
+      <div class="excavation-panel">
+        <h3>発掘優先ランキングTOP5</h3>
+        <p class="ranking-note">保管場所ごとの期待値ランキング / 対象：売却件数3件以上</p>
+        <div class="excavation-ranking-list" id="excavationExpectedRankingList"></div>
+      </div>
+
+      <div class="input-issue-panel" aria-labelledby="inputIssueTitle">
+        <h3 id="inputIssueTitle">入力不足ダッシュボード</h3>
+        <p class="ranking-note">対象：未出品・出品中・要捜索</p>
+        <div class="input-issue-grid" aria-live="polite">
+          <div>
+            <span>保管場所未設定</span>
+            <strong id="missingStorageCount">0件</strong>
+          </div>
+          <div>
+            <span>販売価格未設定</span>
+            <strong id="missingPriceCount">0件</strong>
+          </div>
+          <div>
+            <span>最低出品価格未設定</span>
+            <strong id="missingMinimumPriceCount">0件</strong>
+          </div>
+          <div>
+            <span>カテゴリ未設定</span>
+            <strong id="missingCategoryCount">0件</strong>
+          </div>
+          <div>
+            <span>状態未設定</span>
+            <strong id="missingConditionCount">0件</strong>
+          </div>
+          <div>
+            <span>写真未登録</span>
+            <strong id="missingImageCount">0件</strong>
+          </div>
+          <div>
+            <span>説明文未登録</span>
+            <strong id="missingDescriptionCount">0件</strong>
+          </div>
+        </div>
+
+        <details class="analysis-accordion">
+          <summary>入力不足商品を開く</summary>
+          <div class="input-issue-list" id="inputIssueList"></div>
+        </details>
+      </div>
+
+      <details class="analysis-accordion">
+        <summary>保管場所カルテを開く</summary>
+        <div class="analysis-panel" id="analysisPanel">
+          <div class="storage-report-panel" aria-labelledby="storageReportTitle">
+          <div class="storage-report-heading">
+            <div>
+              <h3 id="storageReportTitle">保管場所カルテ</h3>
+              <p class="ranking-note">利益を生みやすい保管場所を発見するための分析</p>
+            </div>
+            <select id="storageReportSort" aria-label="保管場所カルテの並び替え">
+              <option value="averageProfit">平均利益順</option>
+              <option value="totalProfit">累計利益順</option>
+              <option value="soldRate">売却率順</option>
+              <option value="unlistedCount">未出品件数順</option>
+              <option value="projectedProfit">見込み利益順</option>
+            </select>
+          </div>
+          <div class="storage-report-list" id="storageReportList"></div>
+        </div>
+        </div>
+      </details>
+
+      <details class="analysis-accordion">
+        <summary>その他分析を開く</summary>
+        <div class="analysis-panel">
+        <div class="excavation-panel">
+          <h3>発掘優先ランキング</h3>
+          <p class="ranking-note">利益総額が高い場所</p>
+          <div class="excavation-ranking-list" id="excavationRankingList"></div>
+        </div>
+
+        <div class="buried-treasure-panel" id="unlistedTreasurePanel">
+          <section>
+            <h3>未出品埋蔵金ランキング</h3>
+            <div class="buried-ranking-list" id="unlistedTreasureRankingList"></div>
+          </section>
+        </div>
+
+        <div class="buried-treasure-panel" id="buriedTreasurePanel">
+          <section>
+            <h3>埋蔵金ランキング</h3>
+            <div class="buried-ranking-list" id="buriedTreasureRankingList"></div>
+          </section>
+
+          <section>
+            <h3>在庫価値ランキング</h3>
+            <div class="buried-ranking-list" id="inventoryValueRankingList"></div>
+          </section>
+        </div>
+      </div>
+      </details>
+
+      <details class="analysis-accordion">
+        <summary>発送履歴・売却済み分析</summary>
+        <div class="analysis-shipping-panel" aria-labelledby="analysisShippingCompletedTitle">
+          <h3>発送優先ランキング</h3>
+          <p class="ranking-note">対象：仕分け済・箱詰め済</p>
+          <div class="shipping-priority-list" id="analysisShippingPriorityList"></div>
+
+          <h3 id="analysisShippingCompletedTitle">発送済み商品一覧</h3>
+          <p class="ranking-note">対象：発送済・査定待ち・入金済</p>
+          <div class="shipping-completed-list" id="analysisShippingCompletedList"></div>
+        </div>
+
+        <section class="sold-panel" aria-labelledby="soldTitle">
+          <div class="panel-heading">
+            <div>
+              <h2 id="soldTitle">売却済み商品</h2>
+              <p class="muted">売却済み商品の実利益と月間利益を確認できます</p>
+            </div>
+            <div class="filter-controls">
+              <select class="status-filter" id="soldSort" aria-label="売却済み商品の並び替え">
+                <option value="soldDateDesc">売却日が新しい順</option>
+                <option value="profitDesc">利益が高い順</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="sold-summary" aria-live="polite">
+            <div>
+              <span>累計利益</span>
+              <strong id="totalProfit">0円</strong>
+            </div>
+            <div>
+              <span>累計売却件数</span>
+              <strong id="totalSoldCount">0件</strong>
+            </div>
+            <div>
+              <span>今月利益</span>
+              <strong id="monthlyProfit">0円</strong>
+            </div>
+            <div>
+              <span>今月売却</span>
+              <strong id="monthlySoldCount">0件</strong>
+            </div>
+          </div>
+
+          <details class="analysis-accordion">
+            <summary>月別利益推移・カテゴリ分析を開く</summary>
+            <div class="monthly-profit-panel" id="monthlyProfitPanel">
+              <h3>月別利益</h3>
+              <div class="monthly-profit-list" id="monthlyProfitList"></div>
+              <h3>利益ランキング</h3>
+              <div class="profit-ranking-list" id="profitRankingList"></div>
+              <h3>利益額ランキング</h3>
+              <div class="profit-amount-ranking-list" id="profitAmountRankingList"></div>
+              <h3>利益率ランキング</h3>
+              <p class="ranking-note">対象：利益額500円以上</p>
+              <div class="profit-rate-ranking-list" id="profitRateRankingList"></div>
+              <h3>カテゴリー別利益ランキング</h3>
+              <div class="category-profit-ranking-list" id="categoryProfitRankingList"></div>
+              <h3>保管場所別利益ランキング</h3>
+              <div class="storage-profit-ranking-list" id="storageProfitRankingList"></div>
+            </div>
+          </details>
+
+          <div class="empty-state hidden" id="soldEmptyState">
+            <h3>売却済みの商品はまだありません</h3>
+            <p>ステータスを売却済みにすると、ここに表示されます。</p>
+          </div>
+
+          <div class="table-wrap hidden" id="soldTableWrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>商品タイトル</th>
+                  <th>カテゴリ</th>
+                  <th>保管場所</th>
+                  <th>売却日</th>
+                  <th>実売価格</th>
+                  <th>原価</th>
+                  <th>実送料</th>
+                  <th>実手数料</th>
+                  <th>実利益</th>
+                  <th>メモ</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="soldTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </details>
+    </section>
+
+    <main class="app-shell">
+      <section class="form-panel" aria-labelledby="formTitle">
+        <div class="panel-heading">
+          <h2 id="formTitle">商品登録</h2>
+          <button class="ghost-button hidden" type="button" id="cancelEditButton">編集をやめる</button>
+        </div>
+
+        <div class="form-main-column">
+        <div class="form-assist-grid">
+          <div class="compact-helper">
+            <span>最近登録した商品</span>
+            <div class="quick-chip-list" id="recentItemsList" aria-live="polite"></div>
+          </div>
+          <div class="compact-helper">
+            <span>最近使った保管場所</span>
+            <div class="quick-chip-list" id="recentStorageList" aria-live="polite"></div>
+          </div>
+        </div>
+
+        <div class="completion-panel hidden" id="completionPanel" aria-live="polite">
+          <strong>登録完了</strong>
+          <div>
+            <button class="ghost-button" type="button" id="continueSameCategoryButton">同カテゴリで続ける</button>
+            <button class="ghost-button" type="button" id="continueSameStorageButton">同じ保管場所で続ける</button>
+            <button class="ghost-button" type="button" id="goToListAfterSaveButton">商品一覧へ</button>
+          </div>
+        </div>
+
+        <form id="itemForm" autocomplete="off">
+          <input type="hidden" id="itemId">
+          <input type="hidden" id="name" name="name">
+
+          <label>
+            商品タイトル
+            <input id="listingTitle" name="listingTitle" type="text" maxlength="80" required placeholder="例：春夏 ワンピース Mサイズ">
+          </label>
+
+          <label>
+            カテゴリ
+            <select id="category" name="category" required>
+              <option value="">選択してください</option>
+            </select>
+          </label>
+
+          <label>
+            状態
+            <select id="condition" name="condition" required>
+              <option value="">選択してください</option>
+              <option>新品、未使用</option>
+              <option>未使用に近い</option>
+              <option>目立った傷や汚れなし</option>
+              <option>やや傷や汚れあり</option>
+              <option>傷や汚れあり</option>
+              <option>全体的に状態が悪い</option>
+            </select>
+          </label>
+
+          <label>
+            保管場所
+            <input id="storageLocation" name="storageLocation" type="text" maxlength="80" placeholder="例：押し入れ右上 / 黒い箱A">
+          </label>
+
+          <label>
+            配送方法
+            <select id="shippingMethod" name="shippingMethod">
+              <option value="">選択してください</option>
+            </select>
+          </label>
+
+          <label class="hidden" id="shippingSizeField">
+            サイズ
+            <select id="shippingSize" name="shippingSize">
+              <option value="">選択してください</option>
+            </select>
+          </label>
+
+          <div class="price-fields" aria-label="利益計算">
+            <label>
+              販売価格
+              <input id="plannedPrice" name="plannedPrice" type="number" min="0" step="1" inputmode="numeric" placeholder="例：3000">
+            </label>
+
+            <label id="shippingCostField">
+              送料
+              <input id="shippingCost" name="shippingCost" type="number" min="0" step="1" inputmode="numeric" placeholder="例：210">
+            </label>
+          </div>
+
+          <details class="form-details">
+            <summary>詳細設定</summary>
+            <div class="form-details-grid">
+              <label>
+                出品ステータス
+                <select id="status" name="status" required>
+                  <option>未出品</option>
+                  <option>出品中</option>
+                  <option>売却済み</option>
+                  <option>保留</option>
+                  <option>要捜索</option>
+                </select>
+              </label>
+
+              <label>
+                出品日
+                <input id="listingDate" name="listingDate" type="date">
+              </label>
+
+              <label>
+                出品URL
+                <input id="listingUrl" name="listingUrl" type="url" maxlength="500" placeholder="例：https://jp.mercari.com/item/...">
+              </label>
+
+              <label>
+                購入時期
+                <input id="purchaseDate" name="purchaseDate" type="text" maxlength="40" placeholder="例：2024年春 / 2年前">
+              </label>
+
+              <label>
+                商品実寸
+                <textarea id="measurements" name="measurements" rows="4" maxlength="500" placeholder="例：高さ 約20cm / 縦10cm × 横8cm / 未計測"></textarea>
+              </label>
+
+              <label>
+                原価
+                <input id="purchaseCost" name="purchaseCost" type="number" min="0" step="1" inputmode="numeric" placeholder="例：1000">
+              </label>
+
+              <div class="sold-fields hidden" id="soldFields" aria-labelledby="soldFieldsTitle">
+                <h3 id="soldFieldsTitle">売却情報</h3>
+
+                <label>
+                  実売価格
+                  <input id="actualSalePrice" name="actualSalePrice" type="number" min="0" step="1" inputmode="numeric" placeholder="例：2800">
+                </label>
+
+                <label>
+                  送料
+                  <input id="actualShippingCost" name="actualShippingCost" type="number" min="0" step="1" inputmode="numeric" placeholder="例：210">
+                </label>
+
+                <label>
+                  手数料
+                  <input id="actualFee" name="actualFee" type="number" min="0" step="1" inputmode="numeric" placeholder="自動計算" readonly>
+                </label>
+
+                <label>
+                  売却日
+                  <input id="soldDate" name="soldDate" type="date">
+                </label>
+
+                <div class="profit-preview">
+                  <div>
+                    <span>実利益</span>
+                    <strong id="actualProfitPreview">-</strong>
+                  </div>
+                </div>
+
+                <label>
+                  売却メモ
+                  <textarea id="soldMemo" name="soldMemo" rows="4" maxlength="500" placeholder="実際の取引メモ、値下げ理由、購入者対応など"></textarea>
+                </label>
+              </div>
+
+              <label>
+                商品説明テンプレート
+                <select id="descriptionTemplate" name="descriptionTemplate">
+                  <option value="">テンプレート選択</option>
+                </select>
+              </label>
+
+              <label>
+                商品説明文
+                <textarea id="description" name="description" rows="7" maxlength="2000" placeholder="メルカリに貼り付ける説明文"></textarea>
+              </label>
+
+              <label>
+                メモ
+                <textarea id="memo" name="memo" rows="5" maxlength="500" placeholder="採寸、付属品、気になる点など"></textarea>
+              </label>
+
+              <div class="image-field">
+                <label for="imageInput">商品画像</label>
+                <input id="imageInput" name="imageInput" type="file" accept="image/*">
+                <div class="image-preview" id="imagePreview" aria-live="polite">
+                  <span>画像未選択</span>
+                </div>
+                <button class="ghost-button hidden" type="button" id="removeImageButton">画像を削除</button>
+              </div>
+            </div>
+          </details>
+
+          <div class="profit-preview" aria-live="polite">
+            <div>
+              <span>手数料</span>
+              <strong id="feePreview">-</strong>
+            </div>
+            <div>
+              <span>最低価格</span>
+              <strong id="minimumPricePreview">-</strong>
+            </div>
+            <div>
+              <span>利益</span>
+              <strong id="profitPreview">-</strong>
+            </div>
+          </div>
+
+          <button class="primary-button" type="submit" id="submitButton">登録する</button>
+        </form>
+        </div>
+
+        <aside class="registration-dock" aria-labelledby="registrationDockTitle">
+          <section class="quick-search-panel" aria-labelledby="quickSearchTitle">
+            <div>
+              <h2 id="quickSearchTitle">クイック検索</h2>
+              <p class="muted">商品名、メモ、保管場所、箱番号</p>
+            </div>
+            <input id="quickSearchInput" type="search" placeholder="例：押し入れ右 / 黒い箱A" aria-label="クイック検索">
+            <div class="quick-search-results" id="quickSearchResults" aria-live="polite"></div>
+          </section>
+
+          <div class="dock-heading">
+            <div>
+              <h3 id="registrationDockTitle">最近登録した商品</h3>
+              <p class="muted">直近10件だけ表示します</p>
+            </div>
+            <div class="dock-shortcuts">
+              <button class="ghost-button" type="button" id="openFullListButton">全商品を見る</button>
+              <button class="ghost-button" type="button" id="openBoxSearchButton">箱検索</button>
+              <button class="ghost-button" type="button" id="openShippingManagementButton">発送管理</button>
+            </div>
+          </div>
+
+          <div class="dock-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>商品名</th>
+                  <th>ステータス</th>
+                  <th>保管場所</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="recentDockTableBody"></tbody>
+            </table>
+          </div>
+          <div class="recent-dock-mobile-list" id="recentDockMobileList" aria-label="スマホ用最近登録した商品一覧"></div>
+          <p class="empty-mini hidden" id="recentDockEmpty">まだ商品がありません</p>
+        </aside>
+      </section>
+
+      <section class="list-panel" aria-labelledby="listTitle">
+        <div class="panel-heading list-heading">
+          <div>
+            <h2 id="listTitle">商品一覧</h2>
+            <p class="muted">このブラウザに保存されます</p>
+          </div>
+        </div>
+        <div class="inventory-toolbar" aria-label="商品一覧の操作">
+          <input class="search-input" id="searchInput" type="search" placeholder="商品名・メモ・保管場所で検索">
+          <div class="inventory-filter-row" aria-label="並び順とステータス">
+            <select class="status-filter" id="sortOrder" aria-label="並び順">
+              <option value="newest">登録順（新しい順）</option>
+              <option value="oldest">登録順（古い順）</option>
+              <option value="title">商品名</option>
+              <option value="storageLocation">保管場所</option>
+              <option value="condition">状態</option>
+              <option value="status">ステータス</option>
+              <option value="plannedPrice">販売価格</option>
+              <option value="profit">利益</option>
+            </select>
+            <select class="status-filter" id="statusFilter" aria-label="ステータスで絞り込み">
+              <option value="">すべてのステータス</option>
+              <option>未出品</option>
+              <option>出品中</option>
+              <option>売却済み</option>
+              <option>保留</option>
+              <option>要捜索</option>
+            </select>
+          </div>
+          <div class="quick-actions" aria-label="商品一覧ショートカット">
+            <button class="ghost-button" type="button" id="listShowAllButton">全商品を見る</button>
+            <button class="ghost-button" type="button" id="listBoxSearchButton">箱検索</button>
+            <button class="ghost-button" type="button" id="listShippingManagementButton">発送管理</button>
+          </div>
+          <div class="view-toggle" aria-label="商品一覧の表示切替">
+            <button class="ghost-button active" type="button" id="listViewButton">在庫一覧</button>
+            <button class="ghost-button" type="button" id="cardViewButton">カード表示</button>
+          </div>
+        </div>
+
+        <div class="empty-state" id="emptyState">
+          <h3>まだ商品がありません</h3>
+          <p>左のフォームから、出品準備中の商品を登録できます。</p>
+        </div>
+
+        <div class="compact-table-grid hidden" id="compactTableGrid" aria-label="高密度リスト表示の商品一覧"></div>
+        <div class="inventory-shelf-list hidden" id="inventoryShelfList" aria-label="在庫棚表示の商品一覧"></div>
+        <div class="mobile-card-list hidden" id="mobileCardList" aria-label="スマホ用商品一覧"></div>
+
+        <div class="table-wrap hidden" id="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th>商品名</th>
+                <th>ステータス</th>
+                <th>保管場所</th>
+                <th>状態</th>
+                <th>価格</th>
+                <th>利益</th>
+                <th>…</th>
+              </tr>
+            </thead>
+            <tbody id="itemTableBody"></tbody>
+          </table>
+        </div>
+
+      </section>
+
+      <section class="sorting-panel" aria-labelledby="sortingTitle">
+        <div class="panel-heading list-heading">
+          <div>
+            <h2 id="sortingTitle">売却先仕分け</h2>
+            <p class="muted">引越し前の大量グッズを、どこへ回すか独立管理します</p>
+          </div>
+          <button class="ghost-button" type="button" id="sortingCsvButton">CSV出力</button>
+        </div>
+
+        <form class="sorting-form" id="sortingForm" autocomplete="off">
+          <input type="hidden" id="sortingId">
+
+          <div class="sorting-form-card">
+            <h3>商品情報</h3>
+            <div class="sorting-card-grid">
+              <label class="wide-field">
+                商品名
+                <input id="sortingName" type="text" maxlength="120" required placeholder="例：アニメグッズまとめ">
+              </label>
+
+              <label>
+                ジャンル
+                <select id="sortingGenre">
+                  <option value="">選択してください</option>
+                </select>
+              </label>
+
+              <label>
+                数量
+                <input id="sortingQuantity" type="number" min="1" step="1" inputmode="numeric" placeholder="例：3">
+              </label>
+
+              <label class="wide-field">
+                保管場所
+                <input id="sortingStorageLocation" type="text" maxlength="80" placeholder="例：押し入れ / かごA">
+              </label>
+            </div>
+          </div>
+
+          <div class="sorting-form-card">
+            <h3>売却情報</h3>
+            <div class="sorting-card-grid">
+              <label>
+                最終売却先
+                <select id="sortingDestination">
+                  <option>未定</option>
+                  <option>メルカリ</option>
+                  <option>ヤフオク</option>
+                  <option>駿河屋</option>
+                  <option>良盤ディスク</option>
+                  <option>エコリング</option>
+                  <option>服買取</option>
+                  <option>まんだらけ</option>
+                  <option>処分</option>
+                  <option>その他</option>
+                </select>
+              </label>
+
+              <label>
+                ステータス
+                <select id="sortingStatus">
+                  <option>未確認</option>
+                  <option>査定中</option>
+                  <option>出品予定</option>
+                  <option>送付待ち</option>
+                  <option>発送済み</option>
+                  <option>完了</option>
+                  <option>保留</option>
+                </select>
+              </label>
+
+              <label>
+                発送ステータス
+                <select id="sortingShippingStatus">
+                  <option>未仕分け</option>
+                  <option>仕分け済</option>
+                  <option>箱詰め済</option>
+                  <option>発送済</option>
+                  <option>査定待ち</option>
+                  <option>入金済</option>
+                  <option>完了</option>
+                </select>
+              </label>
+
+              <label>
+                箱番号
+                <input id="sortingBoxNumber" type="text" maxlength="80" placeholder="例：駿河屋-1 / 良盤-1">
+              </label>
+            </div>
+          </div>
+
+          <details class="sorting-form-card sorting-extra-card sorting-assessment-card" open>
+            <summary>査定情報</summary>
+            <div class="sorting-price-grid" aria-label="売却先別の想定価格と査定額">
+              <label>メルカリ<input id="sortingMercariPrice" type="number" min="0" step="1" inputmode="numeric"></label>
+              <label>ヤフオク<input id="sortingYahooPrice" type="number" min="0" step="1" inputmode="numeric"></label>
+              <label>駿河屋<input id="sortingSurugayaPrice" type="number" min="0" step="1" inputmode="numeric"></label>
+              <label>良盤<input id="sortingRyobanPrice" type="number" min="0" step="1" inputmode="numeric"></label>
+              <label>エコリング<input id="sortingEcoRingPrice" type="number" min="0" step="1" inputmode="numeric"></label>
+              <label>服買取<input id="sortingClothesPrice" type="number" min="0" step="1" inputmode="numeric"></label>
+              <label>その他<input id="sortingOtherPrice" type="number" min="0" step="1" inputmode="numeric"></label>
+            </div>
+          </details>
+
+          <details class="sorting-form-card sorting-extra-card" open>
+            <summary>メモ</summary>
+            <label>
+              メモ
+              <textarea id="sortingMemo" rows="3" maxlength="600" placeholder="状態、箱数、査定メモなど"></textarea>
+            </label>
+          </details>
+
+          <div class="sorting-actions">
+            <button class="primary-button" type="submit" id="sortingSubmitButton">仕分け登録</button>
+            <button class="ghost-button hidden" type="button" id="sortingCancelButton">編集をやめる</button>
+          </div>
+        </form>
+
+        <div class="sorting-controls">
+          <select id="sortingDestinationFilter" aria-label="最終売却先で絞り込み">
+            <option value="">すべての売却先</option>
+          </select>
+          <select id="sortingStatusFilter" aria-label="ステータスで絞り込み">
+            <option value="">すべてのステータス</option>
+          </select>
+          <select id="sortingGenreFilter" aria-label="ジャンルで絞り込み">
+            <option value="">すべてのジャンル</option>
+          </select>
+          <input id="sortingBoxSearch" type="search" placeholder="箱番号検索 例：駿河屋-1" aria-label="箱番号で検索">
+        </div>
+
+        <div class="sorting-summary-grid" id="sortingSummaryGrid" aria-live="polite"></div>
+
+        <div class="shipping-management-panel" aria-labelledby="shippingManagementTitle">
+          <h3 id="shippingManagementTitle">発送管理</h3>
+          <p class="ranking-note">どの箱に何を入れて、どこへ送ったかを確認します</p>
+
+          <h4>発送管理ダッシュボード</h4>
+          <div class="shipping-dashboard-grid" id="shippingDashboardGrid"></div>
+
+          <h4 id="shippingPriorityTitle">発送優先ランキング</h4>
+          <div class="shipping-priority-list" id="shippingPriorityList"></div>
+
+          <h4>発送済一覧</h4>
+          <p class="ranking-note">対象：発送済・査定待ち・入金済</p>
+          <div class="shipping-completed-list" id="shippingCompletedList"></div>
+
+          <h4 id="boxSearchTitle">箱番号検索結果</h4>
+          <div class="box-search-list" id="boxSearchList"></div>
+
+          <div class="packing-list-controls">
+            <button class="ghost-button" type="button" id="togglePackingListButton">箱詰めリストを見る</button>
+            <button class="ghost-button" type="button" id="packingListCsvButton">箱詰めリストCSV出力</button>
+          </div>
+
+          <div class="packing-list-panel hidden" id="packingListPanel">
+            <h4>売却先別箱詰めリスト</h4>
+            <p class="ranking-note">対象：仕分け済・箱詰め済・発送済</p>
+            <div class="packing-list" id="packingList"></div>
+          </div>
+        </div>
+
+        <div class="empty-state hidden" id="sortingEmptyState">
+          <h3>仕分け商品はまだありません</h3>
+          <p>上のフォームから、売却先を決めたい商品を登録できます。</p>
+        </div>
+
+        <div class="table-wrap hidden" id="sortingTableWrap">
+          <table class="sorting-table">
+            <thead>
+              <tr>
+                <th>商品名</th>
+                <th>数量</th>
+                <th>保管場所</th>
+                <th>最終売却先</th>
+                <th>ステータス</th>
+                <th>発送</th>
+                <th>箱番号</th>
+                <th>最高額</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="sortingTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="settings-panel" aria-labelledby="settingsTitle">
+        <div class="panel-heading">
+          <div>
+            <h2 id="settingsTitle">設定</h2>
+            <p class="muted">カテゴリ、配送方法、送料を管理します</p>
+          </div>
+          <button class="ghost-button" type="button" id="resetSettingsButton">初期設定に戻す</button>
+        </div>
+
+        <div class="settings-grid">
+          <div class="settings-group">
+            <h3>カテゴリ</h3>
+            <div class="category-settings-list" id="categorySettingsList"></div>
+            <div class="category-add-row">
+              <input id="newCategoryName" type="text" placeholder="カテゴリ名">
+              <button class="ghost-button" type="button" id="addCategoryButton">追加</button>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <h3>配送方法と送料</h3>
+            <div class="shipping-settings-list" id="shippingSettingsList"></div>
+            <div class="shipping-add-row">
+              <input id="newShippingName" type="text" placeholder="配送方法名">
+              <input id="newShippingCost" type="number" min="0" step="1" inputmode="numeric" placeholder="送料">
+              <button class="ghost-button" type="button" id="addShippingMethodButton">追加</button>
+            </div>
+          </div>
+
+          <div class="settings-group template-settings-group">
+            <h3>商品説明テンプレート</h3>
+            <div class="template-settings-list" id="templateSettingsList"></div>
+            <div class="template-add-row">
+              <input id="newTemplateName" type="text" placeholder="テンプレート名">
+              <textarea id="newTemplateContent" rows="5" placeholder="テンプレート内容"></textarea>
+              <button class="ghost-button" type="button" id="addTemplateButton">追加</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-backup-group">
+          <h3>バックアップ</h3>
+          <p class="muted">Supabase化や端末変更の前に、JSONを書き出して保存してください。</p>
+          <div class="backup-controls backup-controls-top" aria-label="バックアップ操作">
+            <strong>localStorageバックアップ</strong>
+            <button class="ghost-button" type="button" id="exportButtonTop">バックアップを書き出す</button>
+            <button class="ghost-button" type="button" id="importButtonTop">バックアップを読み込む</button>
+          </div>
+          <input class="hidden" id="importFileInput" type="file" accept="application/json,.json">
+        </div>
+
+        <button class="primary-button" type="button" id="saveSettingsButton">設定を保存</button>
+
+        <details class="cloud-panel" aria-labelledby="cloudTitle">
+          <summary class="cloud-summary">クラウド共有（上級者向け）</summary>
+          <div class="cloud-panel-header">
+            <div>
+              <h2 id="cloudTitle">クラウド共有</h2>
+              <p class="muted" id="cloudStatus">未ログイン: 商品データはこの端末に保存されます</p>
+              <p class="cloud-backup-warning">Supabaseへ移行する前に、必ず商品一覧の「バックアップを書き出す」からJSONバックアップを保存してください。</p>
+            </div>
+            <button class="ghost-button hidden" type="button" id="cloudLogoutButton">ログアウト</button>
+          </div>
+
+          <div class="cloud-config-grid">
+            <label>
+              Supabase URL
+              <input id="supabaseUrlInput" type="url" placeholder="https://xxxx.supabase.co">
+            </label>
+            <label>
+              anon public key
+              <input id="supabaseAnonKeyInput" type="password" placeholder="Supabaseのanon key">
+            </label>
+            <button class="ghost-button" type="button" id="saveSupabaseConfigButton">接続情報を保存</button>
+          </div>
+
+          <form class="cloud-login-form" id="cloudLoginForm" autocomplete="on">
+            <label>
+              メール
+              <input id="cloudEmailInput" type="email" autocomplete="email" placeholder="mail@example.com">
+            </label>
+            <label>
+              パスワード
+              <input id="cloudPasswordInput" type="password" autocomplete="current-password">
+            </label>
+            <button class="primary-button" type="submit" id="cloudLoginButton">ログイン</button>
+            <button class="ghost-button hidden" type="button" id="migrateToSupabaseButton">Supabaseへ移行</button>
+          </form>
+        </details>
+      </section>
+    </main>
+
+    <div class="modal-backdrop hidden" id="descriptionModal" role="dialog" aria-modal="true" aria-labelledby="descriptionModalTitle">
+      <div class="modal-panel">
+        <div class="modal-heading">
+          <h2 id="descriptionModalTitle">商品説明文</h2>
+          <button class="ghost-button" type="button" id="closeDescriptionModalButton">閉じる</button>
+        </div>
+        <p class="modal-item-title" id="descriptionModalItemTitle"></p>
+        <div class="description-modal-content" id="descriptionModalContent"></div>
+        <div class="modal-actions">
+          <button class="text-button" type="button" id="copyDescriptionModalButton">説明をコピー</button>
+          <button class="ghost-button" type="button" id="closeDescriptionModalFooterButton">閉じる</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-backdrop hidden" id="detailModal" role="dialog" aria-modal="true" aria-labelledby="detailModalTitle">
+      <div class="modal-panel detail-modal-panel">
+        <div class="modal-heading">
+          <h2 id="detailModalTitle">商品詳細</h2>
+          <button class="ghost-button" type="button" id="closeDetailModalButton">閉じる</button>
+        </div>
+        <div class="detail-modal-content" id="detailModalContent"></div>
+        <div class="modal-actions">
+          <button class="text-button" type="button" id="copyDetailTitleButton">タイトルコピー</button>
+          <button class="text-button" type="button" id="copyDetailDescriptionButton">説明文コピー</button>
+          <button class="text-button" type="button" id="prepareRelistButton">再出品</button>
+          <button class="ghost-button" type="button" id="closeDetailModalFooterButton">閉じる</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
