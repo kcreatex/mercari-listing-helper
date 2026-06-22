@@ -813,34 +813,34 @@
         </div>
 
         <div class="settings-grid">
-          <div class="settings-group">
-            <h3>カテゴリ</h3>
+          <details class="settings-group settings-accordion">
+            <summary>カテゴリ</summary>
             <div class="category-settings-list" id="categorySettingsList"></div>
             <div class="category-add-row">
               <input id="newCategoryName" type="text" placeholder="カテゴリ名">
               <button class="ghost-button" type="button" id="addCategoryButton">追加</button>
             </div>
-          </div>
+          </details>
 
-          <div class="settings-group">
-            <h3>配送方法と送料</h3>
+          <details class="settings-group settings-accordion">
+            <summary>配送方法と送料</summary>
             <div class="shipping-settings-list" id="shippingSettingsList"></div>
             <div class="shipping-add-row">
               <input id="newShippingName" type="text" placeholder="配送方法名">
               <input id="newShippingCost" type="number" min="0" step="1" inputmode="numeric" placeholder="送料">
               <button class="ghost-button" type="button" id="addShippingMethodButton">追加</button>
             </div>
-          </div>
+          </details>
 
-          <div class="settings-group template-settings-group">
-            <h3>商品説明テンプレート</h3>
+          <details class="settings-group settings-accordion template-settings-group">
+            <summary>商品説明テンプレート</summary>
             <div class="template-settings-list" id="templateSettingsList"></div>
             <div class="template-add-row">
               <input id="newTemplateName" type="text" placeholder="テンプレート名">
               <textarea id="newTemplateContent" rows="5" placeholder="テンプレート内容"></textarea>
               <button class="ghost-button" type="button" id="addTemplateButton">追加</button>
             </div>
-          </div>
+          </details>
         </div>
 
         <div class="settings-backup-group">
@@ -856,7 +856,7 @@
 
         <button class="primary-button" type="button" id="saveSettingsButton">設定を保存</button>
 
-        <details class="cloud-panel" aria-labelledby="cloudTitle" open>
+        <details class="cloud-panel settings-accordion" aria-labelledby="cloudTitle">
           <summary class="cloud-summary">クラウド共有設定（上級者向け）</summary>
           <div class="cloud-panel-header">
             <div>

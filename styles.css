@@ -635,13 +635,11 @@ body.analysis-view .dashboard-grid {
 }
 
 .cloud-summary::before {
-  content: "▼ ";
-  color: var(--muted);
-  font-size: 12px;
+  content: "";
 }
 
 .cloud-panel[open] .cloud-summary::before {
-  content: "▲ ";
+  content: "";
 }
 
 .cloud-panel:not([open]) > :not(summary) {
@@ -1802,6 +1800,43 @@ input[readonly] {
 .settings-group h3 {
   margin-bottom: 0;
   font-size: 12px;
+}
+
+.settings-accordion {
+  display: block;
+}
+
+.settings-accordion > summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 30px;
+  margin-bottom: 0;
+  color: #34424f;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 900;
+  list-style: none;
+}
+
+.settings-accordion > summary::-webkit-details-marker {
+  display: none;
+}
+
+.settings-accordion > summary::after {
+  content: "▶";
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.settings-accordion[open] > summary {
+  padding-bottom: 5px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+}
+
+.settings-accordion[open] > summary::after {
+  content: "▼";
 }
 
 .shipping-settings-list {

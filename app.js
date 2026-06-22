@@ -527,9 +527,6 @@ function renderCloudAuthState() {
   cloudLogoutButton.classList.toggle("hidden", !cloudUser);
   migrateToSupabaseButton.classList.toggle("hidden", !isLoggedIn);
   cloudPanel.classList.toggle("cloud-logged-in", isLoggedIn);
-  if (isLoggedIn && window.matchMedia("(max-width: 700px)").matches) {
-    cloudPanel.setAttribute("open", "");
-  }
   cloudEmailInput.disabled = Boolean(cloudUser);
   cloudPasswordInput.disabled = Boolean(cloudUser);
   if (cloudUser) {
