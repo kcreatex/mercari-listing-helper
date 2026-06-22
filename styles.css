@@ -3032,6 +3032,10 @@ tbody tr:last-child td {
   object-fit: contain;
 }
 
+.detail-image-empty {
+  min-height: 58px;
+}
+
 .detail-section {
   display: grid;
   gap: 8px;
@@ -4619,5 +4623,99 @@ button:disabled {
   #saveSettingsButton {
     width: 100%;
     margin-top: 4px;
+  }
+
+  .modal-backdrop {
+    padding: 10px;
+    place-items: start center;
+  }
+
+  .detail-modal-panel {
+    box-sizing: border-box;
+    width: 100%;
+    max-height: calc(100vh - 28px - env(safe-area-inset-bottom));
+    padding: 10px;
+  }
+
+  .detail-modal-panel .modal-heading {
+    margin-bottom: 7px;
+  }
+
+  .detail-modal-panel .modal-heading h2 {
+    font-size: 16px;
+  }
+
+  .detail-modal-content {
+    gap: 7px;
+  }
+
+  .detail-image-wrap {
+    min-height: 92px;
+    border-radius: 6px;
+    font-size: 12px;
+  }
+
+  .detail-image-empty {
+    min-height: 34px;
+  }
+
+  .detail-image-wrap img {
+    max-height: 170px;
+  }
+
+  .detail-section {
+    gap: 5px;
+    padding: 7px;
+    border-radius: 6px;
+  }
+
+  .detail-section h3 {
+    font-size: 13px;
+  }
+
+  .detail-section dl {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px 8px;
+  }
+
+  .detail-section dl div {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 3px;
+    align-items: baseline;
+    min-width: 0;
+  }
+
+  .detail-section .detail-row-wide {
+    grid-column: 1 / -1;
+  }
+
+  .detail-section dt {
+    font-size: 10px;
+    white-space: nowrap;
+  }
+
+  .detail-section dt::after {
+    content: "：";
+  }
+
+  .detail-section dd {
+    min-width: 0;
+    font-size: 12px;
+  }
+
+  .detail-modal-panel .modal-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .detail-modal-panel .modal-actions button {
+    width: 100%;
+    min-height: 34px;
+    padding: 5px 6px;
+    font-size: 12px;
   }
 }

@@ -2123,7 +2123,13 @@ function closeDescriptionModal() {
 
 function createDetailSection(title, rows) {
   const section = document.createElement("section");
-  section.className = "detail-section";
+  const sectionClassMap = {
+    "基本情報": "detail-section-basic",
+    "金額情報": "detail-section-price",
+    "商品情報": "detail-section-product",
+    "売却情報": "detail-section-sold",
+  };
+  section.className = `detail-section ${sectionClassMap[title] || ""}`.trim();
 
   const heading = document.createElement("h3");
   heading.textContent = title;
@@ -2132,6 +2138,9 @@ function createDetailSection(title, rows) {
   const list = document.createElement("dl");
   rows.forEach(([label, value]) => {
     const row = document.createElement("div");
+    if (["商品タイトル", "購入時期", "商品実寸", "商品説明文", "メモ", "売却メモ"].includes(label)) {
+      row.classList.add("detail-row-wide");
+    }
     const term = document.createElement("dt");
     const description = document.createElement("dd");
     term.textContent = label;
@@ -2155,29 +2164,30 @@ function openDetailModal(item) {
     image.alt = `${getListingTitle(item)}の画像`;
     imageWrap.append(image);
   } else {
+    imageWrap.classList.add("detail-image-empty");
     const placeholder = document.createElement("span");
-    placeholder.textContent = "画像なし";
+    placeholder.textContent = "画像未登録";
     imageWrap.append(placeholder);
   }
   detailModalContent.append(imageWrap);
 
   detailModalContent.append(createDetailSection("基本情報", [
     ["商品タイトル", getListingTitle(item)],
-    ["カテゴリ", item.category],
     ["状態", item.condition],
     ["出品ステータス", getItemStatus(item)],
-    ["購入時期", item.purchaseDate],
+    ["カテゴリ", item.category],
     ["保管場所", item.storageLocation],
+    ["購入時期", item.purchaseDate],
   ]));
 
   const projectedProfit = calculateProfit(item);
   detailModalContent.append(createDetailSection("金額情報", [
-    ["原価", formatMoney(parseMoney(item.purchaseCost))],
     ["販売価格", formatMoney(parseMoney(item.plannedPrice))],
+    ["見込み利益", formatMoney(projectedProfit)],
     ["送料", formatMoney(parseMoney(item.shippingCost))],
     ["メルカリ手数料", formatMoney(calculateFee(parseMoney(item.plannedPrice)))],
-    ["見込み利益", formatMoney(projectedProfit)],
     ["最低出品価格", formatMoney(calculateMinimumPrice(item))],
+    ["原価", formatMoney(parseMoney(item.purchaseCost))],
   ]));
 
   detailModalContent.append(createDetailSection("商品情報", [
