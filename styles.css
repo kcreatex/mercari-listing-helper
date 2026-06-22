@@ -3947,12 +3947,7 @@ button:disabled {
   }
 
   .cloud-panel.cloud-logged-in .cloud-summary {
-    font-size: 0;
-  }
-
-  .cloud-panel.cloud-logged-in .cloud-summary::after {
-    content: "クラウド共有";
-    font-size: 13px;
+    display: none;
   }
 
   .cloud-panel.cloud-logged-in .cloud-panel-header {
