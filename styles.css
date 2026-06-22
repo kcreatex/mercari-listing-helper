@@ -1808,8 +1808,9 @@ input[readonly] {
 
 .settings-accordion > summary {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
+  gap: 6px;
   min-height: 30px;
   margin-bottom: 0;
   color: #34424f;
@@ -1824,6 +1825,10 @@ input[readonly] {
 }
 
 .settings-accordion > summary::after {
+  content: "";
+}
+
+.settings-accordion > summary::before {
   content: "▶";
   color: var(--muted);
   font-size: 11px;
@@ -1836,6 +1841,10 @@ input[readonly] {
 }
 
 .settings-accordion[open] > summary::after {
+  content: "";
+}
+
+.settings-accordion[open] > summary::before {
   content: "▼";
 }
 
@@ -4516,6 +4525,25 @@ button:disabled {
 
   .settings-group {
     gap: 6px;
+  }
+
+  .settings-panel > .panel-heading {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .settings-panel > .panel-heading > div {
+    min-width: 0;
+  }
+
+  #resetSettingsButton {
+    width: auto;
+    min-height: 26px;
+    padding: 3px 6px;
+    font-size: 10px;
+    white-space: nowrap;
   }
 
   .category-setting-row {

@@ -3889,7 +3889,7 @@ function addTemplateFromForm() {
 }
 
 function resetSettingsToDefault() {
-  const shouldReset = confirm("カテゴリ、配送方法、商品説明テンプレートを初期設定に戻しますか？");
+  const shouldReset = confirm("カテゴリ、配送方法、商品説明テンプレートを初期設定に戻しますか？\nクラウド共有設定とログイン情報は変更しません。");
 
   if (!shouldReset) {
     return;
