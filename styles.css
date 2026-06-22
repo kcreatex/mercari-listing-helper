@@ -3957,7 +3957,9 @@ button:disabled {
 
   .cloud-panel.cloud-logged-in .cloud-panel-header {
     display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     gap: 6px;
+    align-items: center;
   }
 
   .cloud-panel.cloud-logged-in #cloudTitle {
@@ -3968,10 +3970,17 @@ button:disabled {
     color: #34424f;
     font-size: 13px;
     font-weight: 800;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .cloud-panel.cloud-logged-in #cloudLogoutButton {
-    width: 100%;
+    width: auto !important;
+    max-width: none !important;
+    min-height: 28px;
+    padding: 4px 8px;
+    white-space: nowrap;
   }
 
   .cloud-panel[open] .cloud-summary {
