@@ -4305,6 +4305,14 @@ button:disabled {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 
+  body.work-view.work-tab-list .list-panel .inventory-filter-row #sortOrder,
+  body.work-view.work-tab-list .list-panel .inventory-filter-row #statusFilter {
+    grid-column: auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
   .list-panel .view-toggle .ghost-button {
     width: 100% !important;
     max-width: none !important;
