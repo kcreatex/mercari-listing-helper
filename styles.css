@@ -3942,6 +3942,10 @@ button:disabled {
     display: none;
   }
 
+  .cloud-panel .cloud-backup-warning {
+    display: none;
+  }
+
   .cloud-panel[open] .cloud-summary {
     margin-bottom: 6px;
     border-bottom: 1px solid var(--line);
