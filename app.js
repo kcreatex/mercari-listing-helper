@@ -70,6 +70,7 @@ const searchInput = document.querySelector("#searchInput");
 const quickSearchInput = document.querySelector("#quickSearchInput");
 const quickSearchResults = document.querySelector("#quickSearchResults");
 const listShowAllButton = document.querySelector("#listShowAllButton");
+const listInventoryOnlyButton = document.querySelector("#listInventoryOnlyButton");
 const listBoxSearchButton = document.querySelector("#listBoxSearchButton");
 const listShippingManagementButton = document.querySelector("#listShippingManagementButton");
 const statusFilter = document.querySelector("#statusFilter");
@@ -224,6 +225,7 @@ let isImageProcessing = false;
 let lastSavedShortcut = null;
 let isFormDirty = false;
 let itemListViewMode = "list";
+let itemListTargetMode = "inventory";
 let supabaseClient = null;
 let supabaseSession = null;
 let cloudUser = null;
@@ -837,13 +839,37 @@ function getListingTitle(item) {
   return item.listingTitle || item.name || "";
 }
 
+function getSelectPlaceholder(select) {
+  if (select === categoryInput || select === sortingGenreInput) {
+    return "カテゴリを選択";
+  }
+
+  if (select === conditionInput) {
+    return "状態を選択";
+  }
+
+  if (select === shippingMethodInput) {
+    return "配送方法を選択";
+  }
+
+  return "未選択";
+}
+
+function updateSelectPlaceholderState(select) {
+  select.classList.toggle("placeholder-select", !select.value);
+}
+
+function updateFormSelectPlaceholderStates() {
+  [categoryInput, conditionInput, shippingMethodInput, shippingSizeInput].forEach(updateSelectPlaceholderState);
+}
+
 function setSelectOptions(select, values, selectedValue = "") {
   const currentValue = selectedValue || select.value;
   select.innerHTML = "";
 
   const placeholder = document.createElement("option");
   placeholder.value = "";
-  placeholder.textContent = "選択してください";
+  placeholder.textContent = getSelectPlaceholder(select);
   select.append(placeholder);
 
   values.forEach((value) => {
@@ -864,6 +890,7 @@ function setSelectOptions(select, values, selectedValue = "") {
   }
 
   select.value = currentValue;
+  updateSelectPlaceholderState(select);
 }
 
 function refreshCategoryOptions(selectedValue = "") {
@@ -894,7 +921,7 @@ function refreshShippingSizeOptions(selectedValue = "") {
 
   const placeholder = document.createElement("option");
   placeholder.value = "";
-  placeholder.textContent = "選択してください";
+  placeholder.textContent = "サイズを選択";
   shippingSizeInput.append(placeholder);
 
   sizes.forEach((size) => {
@@ -905,6 +932,7 @@ function refreshShippingSizeOptions(selectedValue = "") {
   });
 
   shippingSizeInput.value = currentValue;
+  updateSelectPlaceholderState(shippingSizeInput);
 }
 
 function refreshTemplateOptions(selectedValue = "") {
@@ -3416,8 +3444,8 @@ function showCompletionPanel(item) {
 
 function render() {
   const filteredItems = getFilteredItems();
-  const activeItems = statusFilter.value === "売却済み"
-    ? filteredItems.filter((item) => getItemStatus(item) === "売却済み")
+  const activeItems = itemListTargetMode === "all"
+    ? filteredItems
     : filteredItems.filter((item) => ["未出品", "出品中", "保留", "要捜索"].includes(getItemStatus(item)));
   const sortedActiveItems = sortActiveItems(activeItems);
   const soldItems = sortSoldItems(filteredItems.filter((item) => getItemStatus(item) === "売却済み"));
@@ -3446,6 +3474,8 @@ function render() {
   const shouldShowCardList = shouldRenderFullItemList && itemListViewMode === "card";
   listViewButton.classList.toggle("active", itemListViewMode === "list");
   cardViewButton.classList.toggle("active", itemListViewMode === "card");
+  listShowAllButton.classList.toggle("active", itemListTargetMode === "all");
+  listInventoryOnlyButton.classList.toggle("active", itemListTargetMode === "inventory");
   viewToggle.classList.toggle("hidden", shouldRenderFullItemList && items.length === 0);
   inventoryShelfList.classList.toggle("card-grid", itemListViewMode === "card");
 
@@ -4103,6 +4133,7 @@ function resetForm() {
   shippingCostInput.readOnly = true;
   updateProfitPreview();
   updateSoldFieldsVisibility();
+  updateFormSelectPlaceholderStates();
   formDetails.open = false;
   formTitle.textContent = "商品登録";
   submitButton.textContent = "登録する";
@@ -4145,6 +4176,7 @@ function startEdit(item) {
   updateImagePreview(currentImageData);
   updateProfitPreview();
   updateSoldFieldsVisibility();
+  updateFormSelectPlaceholderStates();
   formDetails.open = getItemStatus(item) === "売却済み";
   formTitle.textContent = "商品編集";
   submitButton.textContent = "更新する";
@@ -4462,10 +4494,17 @@ openShippingManagementButton.addEventListener("click", () => {
 });
 
 listShowAllButton.addEventListener("click", () => {
-  searchInput.value = "";
   statusFilter.value = "";
-  sortOrderInput.value = "newest";
+  itemListTargetMode = "all";
   itemListViewMode = "list";
+  setActiveNavigation("list");
+  render();
+  document.querySelector("#listTitle")?.scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
+listInventoryOnlyButton.addEventListener("click", () => {
+  statusFilter.value = "";
+  itemListTargetMode = "inventory";
   setActiveNavigation("list");
   render();
   document.querySelector("#listTitle")?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -4683,7 +4722,12 @@ removeImageButton.addEventListener("click", () => {
 
 cancelEditButton.addEventListener("click", resetForm);
 searchInput.addEventListener("input", render);
-statusFilter.addEventListener("change", render);
+statusFilter.addEventListener("change", () => {
+  if (statusFilter.value === "売却済み") {
+    itemListTargetMode = "all";
+  }
+  render();
+});
 sortOrderInput.addEventListener("change", render);
 soldSortInput.addEventListener("change", render);
 storageReportSortInput.addEventListener("change", render);
@@ -4987,6 +5031,9 @@ shippingMethodInput.addEventListener("change", () => {
   applyShippingMethodCost();
 });
 shippingSizeInput.addEventListener("change", applyShippingSizeCost);
+[categoryInput, conditionInput, shippingMethodInput, shippingSizeInput].forEach((select) => {
+  select.addEventListener("change", () => updateSelectPlaceholderState(select));
+});
 statusInput.addEventListener("change", updateSoldFieldsVisibility);
 descriptionTemplateInput.addEventListener("change", applyDescriptionTemplate);
 saveSettingsButton.addEventListener("click", saveSettingsFromForm);
@@ -5081,6 +5128,7 @@ saveTemplates();
 renderSettings();
 updateProfitPreview();
 updateSoldFieldsVisibility();
+updateFormSelectPlaceholderStates();
 collapseCloudPanelOnMobile();
 collapseSortingExtrasOnMobile();
 setActiveNavigation("form");

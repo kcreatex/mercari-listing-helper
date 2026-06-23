@@ -335,14 +335,14 @@
           <label>
             カテゴリ
             <select id="category" name="category" required>
-              <option value="">選択してください</option>
+              <option value="">カテゴリを選択</option>
             </select>
           </label>
 
           <label>
             状態
             <select id="condition" name="condition" required>
-              <option value="">選択してください</option>
+              <option value="">状態を選択</option>
               <option>新品、未使用</option>
               <option>未使用に近い</option>
               <option>目立った傷や汚れなし</option>
@@ -360,14 +360,14 @@
           <label>
             配送方法
             <select id="shippingMethod" name="shippingMethod">
-              <option value="">選択してください</option>
+              <option value="">配送方法を選択</option>
             </select>
           </label>
 
           <label class="hidden" id="shippingSizeField">
             サイズ
             <select id="shippingSize" name="shippingSize">
-              <option value="">選択してください</option>
+              <option value="">サイズを選択</option>
             </select>
           </label>
 
@@ -548,15 +548,17 @@
       <section class="list-panel" aria-labelledby="listTitle">
         <div class="panel-heading list-heading">
           <div>
-            <h2 id="listTitle">商品一覧</h2>
+            <h2 id="listTitle">商品一覧 <span class="list-title-count">（<span id="itemCount">0</span>件）</span></h2>
             <p class="muted">このブラウザに保存されます</p>
-            <p class="list-count summary" aria-live="polite">
-              <span class="summary-label">登録商品数：</span><span class="summary-number" id="itemCount">0</span><span class="summary-label">件</span>
-            </p>
           </div>
         </div>
         <div class="inventory-toolbar" aria-label="商品一覧の操作">
           <input class="search-input" id="searchInput" type="search" placeholder="商品名・メモ・保管場所で検索">
+          <div class="inventory-control-group inventory-target-toggle" aria-label="表示対象">
+            <span class="inventory-control-label">表示対象</span>
+            <button class="ghost-button active" type="button" id="listShowAllButton">すべて</button>
+            <button class="ghost-button" type="button" id="listInventoryOnlyButton">在庫のみ</button>
+          </div>
           <div class="inventory-filter-row" aria-label="並び順とステータス">
             <select class="status-filter" id="sortOrder" aria-label="並び順">
               <option value="newest">登録順（新しい順）</option>
@@ -577,14 +579,15 @@
               <option>要捜索</option>
             </select>
           </div>
-          <div class="quick-actions" aria-label="商品一覧ショートカット">
-            <button class="ghost-button" type="button" id="listShowAllButton">すべての商品</button>
+          <div class="inventory-control-group quick-actions" aria-label="検索管理">
+            <span class="inventory-control-label">検索管理</span>
             <button class="ghost-button" type="button" id="listBoxSearchButton">箱検索</button>
             <button class="ghost-button" type="button" id="listShippingManagementButton">発送管理</button>
           </div>
-          <div class="view-toggle" aria-label="商品一覧の表示切替">
-            <button class="ghost-button active" type="button" id="listViewButton">在庫のみ</button>
-            <button class="ghost-button" type="button" id="cardViewButton">カード表示</button>
+          <div class="inventory-control-group view-toggle" aria-label="表示形式">
+            <span class="inventory-control-label">表示形式</span>
+            <button class="ghost-button active" type="button" id="listViewButton">一覧</button>
+            <button class="ghost-button" type="button" id="cardViewButton">カード</button>
           </div>
         </div>
 
@@ -622,7 +625,7 @@
             <h2 id="sortingTitle">売却先仕分け</h2>
             <p class="muted">引越し前の大量グッズを、どこへ回すか独立管理します</p>
           </div>
-          <button class="ghost-button" type="button" id="sortingCsvButton">CSV出力</button>
+          <button class="ghost-button compact-export-button" type="button" id="sortingCsvButton">CSV</button>
         </div>
 
         <form class="sorting-form" id="sortingForm" autocomplete="off">

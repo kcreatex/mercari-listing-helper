@@ -107,6 +107,12 @@ h3 {
   margin-top: 2px;
 }
 
+.list-title-count {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .dashboard-panel {
   margin: 14px min(3vw, 28px) 0 196px;
   padding: 10px;
@@ -1003,9 +1009,27 @@ body.shipping-view #shippingPriorityList {
   box-sizing: border-box;
 }
 
-.inventory-toolbar .quick-actions {
+.inventory-control-group {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+}
+
+.inventory-control-label {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.inventory-toolbar .inventory-target-toggle,
+.inventory-toolbar .quick-actions,
+.inventory-toolbar .view-toggle {
+  display: grid;
+  grid-template-columns: auto repeat(2, minmax(0, 1fr));
   gap: 6px;
   width: 100%;
   max-width: none;
@@ -1013,11 +1037,9 @@ body.shipping-view #shippingPriorityList {
 }
 
 .inventory-toolbar .view-toggle {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  width: 100%;
-  max-width: none;
-  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
 }
 
 .sold-panel,
@@ -1244,6 +1266,19 @@ textarea {
   outline: none;
 }
 
+select.placeholder-select {
+  color: #8b97a3;
+  font-weight: 400;
+}
+
+select.placeholder-select option {
+  color: var(--text);
+}
+
+select.placeholder-select option[value=""] {
+  color: #8b97a3;
+}
+
 input.no-spinner,
 .shipping-setting-row input[type="number"],
 #newShippingCost,
@@ -1282,6 +1317,10 @@ input,
 select {
   min-height: 34px;
   padding: 6px 9px;
+}
+
+select {
+  font-weight: 600;
 }
 
 textarea {
@@ -2230,6 +2269,14 @@ body.work-view.work-tab-sorting .sorting-price-grid {
   padding: 3px 6px;
   color: var(--muted);
   font-size: 10px;
+}
+
+#sortingCsvButton.compact-export-button {
+  width: auto;
+  min-width: 42px;
+  min-height: 22px;
+  padding: 2px 6px;
+  justify-self: end;
 }
 
 #sortingTableWrap th,
@@ -3918,29 +3965,56 @@ button:disabled {
     margin-bottom: 3px;
   }
 
+  .mobile-card-main > div {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: start;
+    width: 100%;
+    min-width: 0;
+  }
+
   .mobile-card-name {
     margin-bottom: 3px;
     font-size: 13px;
     line-height: 1.35;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobile-card-status {
+    justify-self: end;
+    white-space: nowrap;
   }
 
   .mobile-card-details {
     display: grid;
-    gap: 2px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 3px 10px;
     margin: 0;
   }
 
   .mobile-card-details div {
     display: grid;
-    grid-template-columns: 58px minmax(0, 1fr);
-    gap: 5px;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 3px;
     align-items: baseline;
+    min-width: 0;
+  }
+
+  .mobile-card-details div:nth-child(3),
+  .mobile-card-details div:nth-child(4) {
+    justify-self: end;
+    width: 100%;
   }
 
   .mobile-card-details dt {
     color: var(--muted);
     font-size: 10px;
     font-weight: 800;
+    white-space: nowrap;
   }
 
   .mobile-card-details dd {
@@ -3948,7 +4022,16 @@ button:disabled {
     color: var(--text);
     font-size: 12px;
     font-weight: 800;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     word-break: break-word;
+  }
+
+  .mobile-card-details div:nth-child(3) dd,
+  .mobile-card-details div:nth-child(4) dd {
+    text-align: right;
   }
 
   .mobile-card-actions {
@@ -4332,23 +4415,27 @@ button:disabled {
   }
 
   .sorting-controls {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px;
+    padding: 4px;
   }
 
   .sorting-summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 3px;
   }
 
   .sorting-summary-grid div {
     height: auto;
-    min-height: 26px;
-    padding: 4px 5px;
+    min-height: 20px;
+    padding: 2px 4px;
+    border-radius: 999px;
   }
 
   .sorting-summary-grid span,
   .sorting-summary-grid strong,
   .sorting-summary-grid small {
-    font-size: 10px;
+    font-size: 9px;
   }
 
   .sorting-panel input,
@@ -4844,5 +4931,118 @@ button:disabled {
     min-height: 34px;
     padding: 5px 6px;
     font-size: 12px;
+  }
+
+  .list-title-count {
+    font-size: 11px;
+  }
+
+  body.work-view.work-tab-list .inventory-toolbar {
+    gap: 5px !important;
+  }
+
+  body.work-view.work-tab-list .inventory-toolbar .inventory-target-toggle,
+  body.work-view.work-tab-list .inventory-toolbar .quick-actions,
+  body.work-view.work-tab-list .inventory-toolbar .view-toggle {
+    display: grid !important;
+    grid-template-columns: auto repeat(2, minmax(0, 1fr)) !important;
+    gap: 5px !important;
+    align-items: center !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+  }
+
+  body.work-view.work-tab-list .inventory-toolbar .inventory-control-label {
+    min-width: 42px;
+    font-size: 9px;
+  }
+
+  body.work-view.work-tab-list .inventory-toolbar .inventory-control-group button {
+    grid-column: auto !important;
+    min-height: 28px !important;
+    padding: 3px 4px !important;
+    font-size: 11px !important;
+  }
+
+  body.work-view.work-tab-sorting .sorting-panel .panel-heading {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px;
+    align-items: center;
+    margin-bottom: 5px;
+  }
+
+  body.work-view.work-tab-sorting #sortingCsvButton {
+    width: auto !important;
+    min-width: 38px !important;
+    min-height: 24px !important;
+    padding: 2px 6px !important;
+    font-size: 10px !important;
+  }
+
+  body.work-view.work-tab-sorting .sorting-controls {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 4px !important;
+    padding: 4px !important;
+  }
+
+  body.work-view.work-tab-sorting .sorting-controls select,
+  body.work-view.work-tab-sorting .sorting-controls input {
+    min-height: 30px !important;
+    padding: 4px 5px !important;
+    font-size: 11px !important;
+  }
+
+  body.work-view.work-tab-sorting .sorting-summary-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 3px !important;
+  }
+
+  body.work-view.work-tab-sorting .sorting-summary-grid div {
+    display: flex;
+    align-items: center;
+    min-height: 20px !important;
+    height: 20px !important;
+    padding: 2px 5px !important;
+    border-radius: 999px !important;
+  }
+
+  body.work-view.work-tab-sorting .sorting-summary-grid span,
+  body.work-view.work-tab-sorting .sorting-summary-grid strong,
+  body.work-view.work-tab-sorting .sorting-summary-grid small {
+    font-size: 9px !important;
+    line-height: 1 !important;
+  }
+
+  body.work-view.work-tab-sorting #sortingTableWrap td:nth-child(2),
+  body.work-view.work-tab-sorting #sortingTableWrap td:nth-child(5),
+  body.work-view.work-tab-sorting #sortingTableWrap td:nth-child(6),
+  body.work-view.work-tab-sorting #sortingTableWrap td:nth-child(7),
+  body.work-view.work-tab-sorting #sortingTableWrap th:nth-child(2),
+  body.work-view.work-tab-sorting #sortingTableWrap th:nth-child(5),
+  body.work-view.work-tab-sorting #sortingTableWrap th:nth-child(6),
+  body.work-view.work-tab-sorting #sortingTableWrap th:nth-child(7) {
+    display: none !important;
+  }
+
+  body.work-view.work-tab-sorting #sortingTableWrap td:nth-child(1)::before { content: "商品名"; }
+  body.work-view.work-tab-sorting #sortingTableWrap td:nth-child(3)::before { content: "保管場所"; }
+  body.work-view.work-tab-sorting #sortingTableWrap td:nth-child(4)::before { content: "売却先"; }
+  body.work-view.work-tab-sorting #sortingTableWrap td:nth-child(8)::before { content: "最高額"; }
+  body.work-view.work-tab-sorting #sortingTableWrap td:nth-child(9)::before { content: "操作"; }
+
+  body.work-view.work-tab-sorting #sortingTableWrap .sorting-action-panel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    min-width: 132px;
+  }
+
+  body.work-view.work-tab-sorting #sortingTableWrap .sorting-action-panel .danger-button {
+    grid-column: 1 / -1;
   }
 }
