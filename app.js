@@ -106,6 +106,7 @@ const storageLocationView = document.querySelector("#storageLocationView");
 const inventoryShelfList = document.querySelector("#inventoryShelfList");
 const mobileCardList = document.querySelector("#mobileCardList");
 const emptyState = document.querySelector("#emptyState");
+const emptyRegisterButton = document.querySelector("#emptyRegisterButton");
 const itemTableBody = document.querySelector("#itemTableBody");
 const dashboardMonthlyProfit = document.querySelector("#dashboardMonthlyProfit");
 const dashboardTotalProfit = document.querySelector("#dashboardTotalProfit");
@@ -284,7 +285,7 @@ let currentImageData = "";
 let isImageProcessing = false;
 let lastSavedShortcut = null;
 let isFormDirty = false;
-let itemListViewMode = "list";
+let itemListViewMode = window.matchMedia?.("(max-width: 700px)").matches ? "card" : "list";
 let itemListTargetMode = "inventory";
 let itemListGroupMode = "normal";
 let selectedStorageGroup = "";
@@ -4130,11 +4131,13 @@ function createRecentDockMobileCard(item) {
         <dd data-field="plannedPrice"></dd>
       </div>
     </dl>
+    <div class="mobile-card-primary-actions">
+      <button class="text-button" type="button" data-action="view-detail">詳細</button>
+      <button class="text-button" type="button" data-action="edit">編集</button>
+    </div>
     <details class="mobile-more-actions">
       <summary aria-label="その他の操作">…</summary>
       <div class="mobile-more-actions-panel">
-        <button class="text-button" type="button" data-action="view-detail">詳細</button>
-        <button class="text-button" type="button" data-action="edit">編集</button>
         <button class="text-button" type="button" data-action="copy-title">タイトルコピー</button>
         <button class="text-button" type="button" data-action="copy-description">説明コピー</button>
         <button class="text-button" type="button" data-action="relist">再出品</button>
@@ -4196,7 +4199,10 @@ function showCompletionPanel(item) {
 
 function render() {
   const filteredItems = getFilteredItems();
-  const activeItems = filteredItems;
+  const shouldIgnoreInventoryFilter = statusFilter.value === "売却済み";
+  const activeItems = itemListTargetMode === "inventory" && !shouldIgnoreInventoryFilter
+    ? filteredItems.filter((item) => getItemStatus(item) !== "売却済み")
+    : filteredItems;
   const sortedActiveItems = sortActiveItems(activeItems);
   const soldItems = sortSoldItems(filteredItems.filter((item) => getItemStatus(item) === "売却済み"));
   const allSoldItems = items.filter((item) => getItemStatus(item) === "売却済み");
@@ -4689,13 +4695,18 @@ function createMobileCard(item) {
   const card = document.createElement("article");
   card.className = "mobile-item-card";
   card.dataset.id = item.id;
+  const profit = calculateProfit(item);
+  const storageText = item.storageLocation || "未設定";
+  const conditionText = item.condition || "未設定";
+  const statusText = getItemStatus(item) || "未設定";
 
   card.innerHTML = `
-    <div class="mobile-card-main">
-      <div>
+    <div class="mobile-card-head">
+      <div class="mobile-card-title-wrap">
         <h3 class="mobile-card-name"></h3>
-        <span class="status-badge mobile-card-status"></span>
+        <span class="mobile-card-code"></span>
       </div>
+      <span class="status-badge mobile-card-status"></span>
     </div>
     <dl class="mobile-card-details">
       <div class="mobile-priority-storage">
@@ -4707,23 +4718,25 @@ function createMobileCard(item) {
         <dd data-field="profit"></dd>
       </div>
       <div class="mobile-priority-small">
-        <dt>出品状態</dt>
-        <dd data-field="status"></dd>
+        <dt>状態</dt>
+        <dd data-field="condition"></dd>
       </div>
       <div class="mobile-priority-small">
-        <dt>売却先</dt>
-        <dd data-field="destination"></dd>
+        <dt>出品ステータス</dt>
+        <dd data-field="status"></dd>
       </div>
       <div class="mobile-priority-small">
         <dt>価格</dt>
         <dd data-field="plannedPrice"></dd>
       </div>
     </dl>
+    <div class="mobile-card-primary-actions">
+      <button class="text-button" type="button" data-action="view-detail">詳細</button>
+      <button class="text-button" type="button" data-action="edit">編集</button>
+    </div>
     <details class="mobile-more-actions">
       <summary aria-label="その他の操作">…</summary>
       <div class="mobile-more-actions-panel">
-        <button class="text-button" type="button" data-action="view-detail">詳細</button>
-        <button class="text-button" type="button" data-action="edit">編集</button>
         <button class="text-button" type="button" data-action="copy-title">タイトルコピー</button>
         <button class="text-button" type="button" data-action="copy-description">説明コピー</button>
         <button class="text-button" type="button" data-action="relist">再出品</button>
@@ -4733,19 +4746,24 @@ function createMobileCard(item) {
     </details>
   `;
 
-  card.querySelector(".mobile-card-name").textContent = getListingTitle(item);
+  card.querySelector(".mobile-card-name").textContent = getListingTitle(item) || "商品名未設定";
+  card.querySelector(".mobile-card-code").textContent = item.itemCode || "ID未設定";
   const statusBadge = card.querySelector(".mobile-card-status");
-  statusBadge.textContent = getItemStatus(item);
+  statusBadge.textContent = statusText;
   statusBadge.classList.add(STATUS_CLASS_NAMES[getItemStatus(item)] || "status-unlisted");
-  card.querySelector('[data-field="storageLocation"]').textContent = item.storageLocation || "-";
-  const mobileProfit = calculateProfit(item);
+  const storageField = card.querySelector('[data-field="storageLocation"]');
+  storageField.textContent = storageText;
+  storageField.classList.toggle("muted-empty", !item.storageLocation);
+  const mobileProfit = profit;
   const mobileProfitField = card.querySelector('[data-field="profit"]');
   mobileProfitField.textContent = formatMoney(mobileProfit);
   applyProfitLevel(mobileProfitField, mobileProfit);
+  const conditionField = card.querySelector('[data-field="condition"]');
+  conditionField.textContent = conditionText;
+  conditionField.classList.toggle("muted-empty", !item.condition);
+  card.querySelector('[data-field="status"]').textContent = statusText;
   const mobileStatusField = card.querySelector('[data-field="status"]');
-  mobileStatusField.textContent = getSearchNeededLabel(item) === "要捜索" ? "要捜索" : getItemStatus(item);
   mobileStatusField.classList.toggle("search-needed-cell", getItemStatus(item) === "要捜索");
-  card.querySelector('[data-field="destination"]').textContent = getSortingDestinationForItem(item);
   card.querySelector('[data-field="plannedPrice"]').textContent = formatMoney(parseMoney(item.plannedPrice));
 
   return card;
@@ -5781,7 +5799,6 @@ openShippingManagementButton.addEventListener("click", () => {
 listShowAllButton?.addEventListener("click", () => {
   statusFilter.value = "";
   itemListTargetMode = "all";
-  itemListViewMode = "list";
   setActiveNavigation("list");
   render();
   document.querySelector("#listTitle")?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -5805,6 +5822,11 @@ listShippingManagementButton.addEventListener("click", () => {
   setActiveNavigation("shipping");
   render();
   document.querySelector("#shippingManagementTitle")?.scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
+emptyRegisterButton?.addEventListener("click", () => {
+  setActiveNavigation("register");
+  document.querySelector("#formTitle")?.scrollIntoView({ behavior: "smooth", block: "start" });
 });
 
 soldTableBody.addEventListener("click", (event) => {
@@ -6018,7 +6040,12 @@ formCopyItemCodeButton.addEventListener("click", () => {
 
 cancelEditButton?.addEventListener("click", resetForm);
 searchInput.addEventListener("input", render);
-statusFilter.addEventListener("change", render);
+statusFilter.addEventListener("change", () => {
+  if (statusFilter.value === "売却済み") {
+    itemListTargetMode = "all";
+  }
+  render();
+});
 sortOrderInput.addEventListener("change", render);
 soldSortInput.addEventListener("change", render);
 storageReportSortInput.addEventListener("change", render);
