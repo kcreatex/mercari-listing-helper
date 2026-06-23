@@ -27,10 +27,26 @@
     <section class="dashboard-panel" aria-labelledby="analysisTitle">
       <div class="panel-heading">
         <div>
-          <h2 id="analysisTitle">分析</h2>
-          <p class="muted">今やるべき作業を一瞬で判断するための業務ダッシュボードです</p>
+          <h2 id="analysisTitle">宝探し司令室</h2>
+          <p class="muted">次に何をやれば利益になるかを判断するための作業ダッシュボードです</p>
         </div>
       </div>
+
+      <section class="today-command-panel" aria-labelledby="todayCommandTitle">
+        <div class="today-command-heading">
+          <h3 id="todayCommandTitle">🔥 今日やること</h3>
+          <span>優先順：未仕分け → 発送待ち → 査定待ち → 入力不足</span>
+        </div>
+        <div class="today-command-list" id="todayCommandList" aria-live="polite"></div>
+      </section>
+
+      <section class="today-buried-panel" aria-labelledby="todayBuriedTitle">
+        <div>
+          <h3 id="todayBuriedTitle">💰 今日の埋蔵金</h3>
+          <p id="todayBuriedSummary">未出品の利益候補を確認します</p>
+        </div>
+        <button class="ghost-button" type="button" id="todayBuriedButton">確認する</button>
+      </section>
 
       <div class="today-work-heading">
         <h3>本日の作業</h3>
@@ -38,18 +54,22 @@
 
       <div class="dashboard-hero-grid today-work-grid" aria-live="polite">
         <div class="dashboard-card dashboard-card-large dashboard-card-warning">
+          <em class="work-state-label">🔴 要対応</em>
           <span>入力不足</span>
           <strong id="dashboardHeroTotalProfit">0件</strong>
         </div>
         <div class="dashboard-card dashboard-card-large dashboard-card-unlisted">
+          <em class="work-state-label">🟠 作業中</em>
           <span>未仕分け</span>
           <strong id="dashboardHeroUnlistedCount">0件</strong>
         </div>
         <div class="dashboard-card dashboard-card-large dashboard-card-shipping">
+          <em class="work-state-label">🟢 完了</em>
           <span>発送待ち</span>
           <strong id="dashboardHeroShippingWaitCount">0件</strong>
         </div>
         <div class="dashboard-card dashboard-card-large dashboard-card-shipping">
+          <em class="work-state-label">🟢 完了</em>
           <span>査定待ち</span>
           <strong id="dashboardHeroBuriedValue">0件</strong>
         </div>
@@ -153,10 +173,6 @@
           <div>
             <span>状態未設定</span>
             <strong id="missingConditionCount">0件</strong>
-          </div>
-          <div class="optional-image-metric">
-            <span>写真</span>
-            <strong id="missingImageCount">任意</strong>
           </div>
           <div>
             <span>説明文未登録</span>
@@ -319,7 +335,6 @@
       <section class="form-panel" aria-labelledby="formTitle">
         <div class="panel-heading">
           <h2 id="formTitle">商品登録</h2>
-          <button class="ghost-button hidden" type="button" id="cancelEditButton">編集終了</button>
         </div>
 
         <div class="form-main-column">
@@ -354,15 +369,6 @@
               商品タイトル
               <input id="listingTitle" name="listingTitle" type="text" maxlength="80" required placeholder="例：春夏 ワンピース Mサイズ">
             </label>
-
-            <div class="image-field compact-image-field">
-              <label for="imageInput">商品画像</label>
-              <input id="imageInput" name="imageInput" type="file" accept="image/*">
-              <div class="image-preview" id="imagePreview" aria-live="polite">
-                <span>＋画像追加</span>
-              </div>
-              <button class="ghost-button hidden" type="button" id="removeImageButton">画像を削除</button>
-            </div>
 
             <div class="quick-basic-grid">
               <label>
@@ -399,6 +405,23 @@
               </label>
             </div>
           </section>
+
+          <details class="form-details form-details-photo">
+            <summary><span class="section-icon">写</span>画像管理</summary>
+            <div class="photo-management-note">
+              <strong>Googleフォト推奨</strong>
+              <p>画像本体はGoogleフォトで管理します。商品詳細から商品IDや検索用タグをコピーできます。</p>
+              <button class="ghost-button" type="button" id="formCopyItemCodeButton">商品IDコピー</button>
+            </div>
+            <div class="image-field compact-image-field">
+              <label for="imageInput">任意画像メモ</label>
+              <input id="imageInput" name="imageInput" type="file" accept="image/*">
+              <div class="image-preview" id="imagePreview" aria-live="polite">
+                <span>＋任意で画像追加</span>
+              </div>
+              <button class="ghost-button hidden" type="button" id="removeImageButton">画像を削除</button>
+            </div>
+          </details>
 
           <details class="form-details form-details-listing">
             <summary><span class="section-icon">出</span>出品情報</summary>
@@ -621,6 +644,11 @@
             <button class="ghost-button active" type="button" id="listShowAllButton">すべて</button>
             <button class="ghost-button" type="button" id="listInventoryOnlyButton">在庫のみ</button>
           </div>
+          <div class="inventory-control-group storage-view-toggle" aria-label="一覧種別">
+            <span class="inventory-control-label">一覧種別</span>
+            <button class="ghost-button active" type="button" id="normalListModeButton">通常一覧</button>
+            <button class="ghost-button" type="button" id="storageListModeButton">保管場所別</button>
+          </div>
           <div class="inventory-filter-row" aria-label="並び順とステータス">
             <select class="status-filter" id="sortOrder" aria-label="並び順">
               <option value="newest">登録順（新しい順）</option>
@@ -661,6 +689,7 @@
         </div>
 
         <div class="compact-table-grid hidden" id="compactTableGrid" aria-label="高密度リスト表示の商品一覧"></div>
+        <div class="storage-location-view hidden" id="storageLocationView" aria-label="保管場所別の商品一覧"></div>
         <div class="inventory-shelf-list hidden" id="inventoryShelfList" aria-label="在庫棚表示の商品一覧"></div>
         <div class="mobile-card-list hidden" id="mobileCardList" aria-label="スマホ用商品一覧"></div>
 
@@ -690,7 +719,7 @@
             <h2 id="sortingTitle">売却先仕分け</h2>
             <p class="muted">引越し前の大量グッズを、どこへ回すか独立管理します</p>
           </div>
-          <button class="ghost-button compact-export-button" type="button" id="sortingCsvButton">CSV</button>
+          <button class="ghost-button compact-export-button" type="button" id="sortingCsvButton">CSV出力</button>
         </div>
 
         <form class="sorting-form" id="sortingForm" autocomplete="off">
@@ -804,6 +833,14 @@
           </div>
         </form>
 
+        <section class="sorting-list-section" aria-labelledby="sortingListTitle">
+          <div class="sorting-list-heading">
+            <div>
+              <h3 id="sortingListTitle">登録済み仕分け</h3>
+              <p class="muted">検索・絞り込みは下の仕分け一覧にだけ反映されます</p>
+            </div>
+          </div>
+
         <div class="sorting-controls">
           <select id="sortingDestinationFilter" aria-label="最終売却先で絞り込み">
             <option value="">すべての売却先</option>
@@ -814,10 +851,32 @@
           <select id="sortingGenreFilter" aria-label="ジャンルで絞り込み">
             <option value="">すべてのジャンル</option>
           </select>
-          <input id="sortingBoxSearch" type="search" placeholder="箱番号検索 例：駿河屋-1" aria-label="箱番号で検索">
+          <input id="sortingBoxSearch" type="search" placeholder="箱番号で検索" aria-label="箱番号で検索">
         </div>
 
         <div class="sorting-summary-grid" id="sortingSummaryGrid" aria-live="polite"></div>
+
+        <div class="empty-state hidden" id="sortingEmptyState">
+          <h3>仕分け商品はまだありません</h3>
+          <p>上のフォームから、売却先を決めたい商品を登録できます。</p>
+        </div>
+
+        <div class="table-wrap hidden" id="sortingTableWrap">
+          <table class="sorting-table">
+            <thead>
+              <tr>
+                <th>商品名</th>
+                <th>保管場所</th>
+                <th>売却先</th>
+                <th>発送状態</th>
+                <th>最高額</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="sortingTableBody"></tbody>
+          </table>
+        </div>
+        </section>
 
         <div class="shipping-management-panel" aria-labelledby="shippingManagementTitle">
           <h3 id="shippingManagementTitle">発送管理</h3>
@@ -847,28 +906,6 @@
             <div class="packing-list" id="packingList"></div>
           </div>
         </div>
-
-        <div class="empty-state hidden" id="sortingEmptyState">
-          <h3>仕分け商品はまだありません</h3>
-          <p>上のフォームから、売却先を決めたい商品を登録できます。</p>
-        </div>
-
-        <div class="table-wrap hidden" id="sortingTableWrap">
-          <table class="sorting-table">
-            <thead>
-              <tr>
-                <th>商品名</th>
-                <th>保管場所</th>
-                <th>売却先</th>
-                <th>発送状態</th>
-                <th>最高額</th>
-                <th>推奨</th>
-                <th>操作</th>
-              </tr>
-            </thead>
-            <tbody id="sortingTableBody"></tbody>
-          </table>
-        </div>
       </section>
 
       <section class="settings-panel" aria-labelledby="settingsTitle">
@@ -879,12 +916,29 @@
           </div>
         </div>
 
+        <section class="settings-operations-summary" aria-labelledby="settingsSummaryTitle">
+          <h3 id="settingsSummaryTitle">運用サマリー</h3>
+          <div class="settings-summary-grid">
+            <div><span>登録商品</span><strong id="settingsSummaryItems">0件</strong></div>
+            <div><span>カテゴリ</span><strong id="settingsSummaryCategories">0件</strong></div>
+            <div><span>保管場所</span><strong id="settingsSummaryStorage">0件</strong></div>
+            <div><span>テンプレート</span><strong id="settingsSummaryTemplates">0件</strong></div>
+            <div><span>最終同期</span><strong id="settingsSummarySync">-</strong></div>
+            <div><span>保存容量</span><strong id="settingsSummaryStorageSize">-</strong></div>
+          </div>
+        </section>
+
         <div class="settings-grid">
           <details class="settings-group settings-accordion">
             <summary>
-              <span class="settings-summary-label">カテゴリ</span>
+              <span class="settings-summary-label">
+                カテゴリ
+                <small>商品登録時のジャンル分類を管理</small>
+              </span>
               <span class="settings-summary-count" id="categorySettingsCount">0件</span>
+              <span class="settings-summary-count" id="categorySettingsUsageCount">使用中 0件</span>
             </summary>
+            <div class="settings-insight-box" id="categoryUnusedInsight"></div>
             <div class="category-settings-list" id="categorySettingsList"></div>
             <p class="settings-future-note">将来候補：ドラッグ並び替え</p>
             <button class="ghost-button settings-add-toggle" type="button" id="toggleCategoryAddButton">カテゴリを追加</button>
@@ -892,16 +946,18 @@
               <input id="newCategoryName" type="text" placeholder="カテゴリ名">
               <button class="ghost-button" type="button" id="addCategoryButton">追加</button>
             </div>
-            <div class="settings-danger-footer">
-              <button class="danger-button settings-reset-button" type="button" id="resetCategoriesButton">カテゴリを初期化</button>
-            </div>
           </details>
 
           <details class="settings-group settings-accordion">
             <summary>
-              <span class="settings-summary-label">保管場所</span>
+              <span class="settings-summary-label">
+                保管場所
+                <small>商品の収納場所を管理</small>
+              </span>
               <span class="settings-summary-count" id="storageSettingsCount">0件</span>
+              <span class="settings-summary-count" id="storageSettingsUsageCount">使用中 0件</span>
             </summary>
+            <div class="settings-insight-box" id="storageProfitInsight"></div>
             <div class="storage-settings-list" id="storageSettingsList"></div>
             <p class="settings-future-note">商品登録画面の保管場所プルダウンに反映されます</p>
             <button class="ghost-button settings-add-toggle" type="button" id="toggleStorageAddButton">保管場所を追加</button>
@@ -909,16 +965,18 @@
               <input id="newStorageName" type="text" placeholder="保管場所名">
               <button class="ghost-button" type="button" id="addStorageButton">追加</button>
             </div>
-            <div class="settings-danger-footer">
-              <button class="danger-button settings-reset-button" type="button" id="resetStorageButton">保管場所を初期化</button>
-            </div>
           </details>
 
           <details class="settings-group settings-accordion">
             <summary>
-              <span class="settings-summary-label">配送方法と送料</span>
+              <span class="settings-summary-label">
+                配送方法と送料
+                <small>送料計算で使用する配送設定</small>
+              </span>
               <span class="settings-summary-count" id="shippingSettingsCount">0件</span>
+              <span class="settings-summary-count" id="shippingSettingsUsageCount">利用 0回</span>
             </summary>
+            <div class="settings-insight-box" id="shippingUsageInsight"></div>
             <div class="shipping-settings-list" id="shippingSettingsList"></div>
             <p class="settings-future-note">将来候補：配送グループ編集・ドラッグ並び替え</p>
             <button class="ghost-button settings-add-toggle" type="button" id="toggleShippingAddButton">配送方法を追加</button>
@@ -927,15 +985,16 @@
               <input id="newShippingCost" type="number" min="0" step="1" inputmode="numeric" placeholder="送料">
               <button class="ghost-button" type="button" id="addShippingMethodButton">追加</button>
             </div>
-            <div class="settings-danger-footer">
-              <button class="danger-button settings-reset-button" type="button" id="resetShippingButton">配送方法を初期化</button>
-            </div>
           </details>
 
           <details class="settings-group settings-accordion template-settings-group">
             <summary>
-              <span class="settings-summary-label">商品説明テンプレート</span>
+              <span class="settings-summary-label">
+                商品説明テンプレート
+                <small>説明文テンプレートを管理</small>
+              </span>
               <span class="settings-summary-count" id="templateSettingsCount">0件</span>
+              <span class="settings-summary-count" id="templateSettingsUsageCount">利用 0回</span>
             </summary>
             <div class="template-settings-list" id="templateSettingsList"></div>
             <p class="settings-future-note">将来候補：商品登録画面でテンプレート適用ボタンを追加</p>
@@ -944,9 +1003,6 @@
               <input id="newTemplateName" type="text" placeholder="テンプレート名">
               <textarea id="newTemplateContent" rows="5" placeholder="テンプレート内容"></textarea>
               <button class="ghost-button" type="button" id="addTemplateButton">追加</button>
-            </div>
-            <div class="settings-danger-footer">
-              <button class="danger-button settings-reset-button" type="button" id="resetTemplatesButton">テンプレートを初期化</button>
             </div>
           </details>
         </div>
@@ -965,7 +1021,12 @@
         <button class="primary-button hidden" type="button" id="saveSettingsButton">設定を保存</button>
 
         <details class="cloud-panel settings-accordion" aria-labelledby="cloudTitle">
-          <summary class="cloud-summary">クラウド共有</summary>
+          <summary class="cloud-summary">
+            <span class="settings-summary-label">
+              クラウド共有
+              <small>バックアップ・同期設定</small>
+            </span>
+          </summary>
           <div class="cloud-panel-header">
             <div>
               <h2 id="cloudTitle">クラウド共有</h2>
@@ -989,6 +1050,21 @@
             <button class="primary-button" type="submit" id="cloudLoginButton">ログイン</button>
             <button class="ghost-button hidden" type="button" id="migrateToSupabaseButton">Supabaseへ移行</button>
           </form>
+        </details>
+
+        <details class="settings-maintenance settings-accordion">
+          <summary>
+            <span class="settings-summary-label">
+              ⚠ メンテナンス
+              <small>初期化など危険操作をまとめています</small>
+            </span>
+          </summary>
+          <div class="settings-maintenance-actions">
+            <button class="danger-button settings-reset-button" type="button" id="resetCategoriesButton">カテゴリを初期化</button>
+            <button class="danger-button settings-reset-button" type="button" id="resetStorageButton">保管場所を初期化</button>
+            <button class="danger-button settings-reset-button" type="button" id="resetShippingButton">配送方法を初期化</button>
+            <button class="danger-button settings-reset-button" type="button" id="resetTemplatesButton">テンプレートを初期化</button>
+          </div>
         </details>
       </section>
     </main>
@@ -1017,6 +1093,8 @@
         <div class="detail-modal-content" id="detailModalContent"></div>
         <div class="modal-actions">
           <button class="primary-button" type="button" id="editDetailItemButton">編集</button>
+          <button class="text-button detail-secondary-action" type="button" id="copyDetailItemIdButton">商品IDコピー</button>
+          <button class="text-button detail-secondary-action" type="button" id="copyGooglePhotoTagButton">Googleフォト用タグコピー</button>
           <button class="text-button" type="button" id="prepareRelistButton">再出品</button>
           <button class="text-button detail-secondary-action" type="button" id="copyDetailTitleButton">タイトルコピー</button>
           <button class="text-button detail-secondary-action" type="button" id="copyDetailDescriptionButton">説明文コピー</button>
