@@ -521,7 +521,7 @@
               <p class="muted">直近10件だけ表示します</p>
             </div>
             <div class="dock-shortcuts">
-              <button class="ghost-button" type="button" id="openFullListButton">全商品を見る</button>
+              <button class="ghost-button" type="button" id="openFullListButton">すべての商品</button>
               <button class="ghost-button" type="button" id="openBoxSearchButton">箱検索</button>
               <button class="ghost-button" type="button" id="openShippingManagementButton">発送管理</button>
             </div>
@@ -578,12 +578,12 @@
             </select>
           </div>
           <div class="quick-actions" aria-label="商品一覧ショートカット">
-            <button class="ghost-button" type="button" id="listShowAllButton">全商品を見る</button>
+            <button class="ghost-button" type="button" id="listShowAllButton">すべての商品</button>
             <button class="ghost-button" type="button" id="listBoxSearchButton">箱検索</button>
             <button class="ghost-button" type="button" id="listShippingManagementButton">発送管理</button>
           </div>
           <div class="view-toggle" aria-label="商品一覧の表示切替">
-            <button class="ghost-button active" type="button" id="listViewButton">在庫一覧</button>
+            <button class="ghost-button active" type="button" id="listViewButton">在庫のみ</button>
             <button class="ghost-button" type="button" id="cardViewButton">カード表示</button>
           </div>
         </div>
@@ -910,6 +910,7 @@
         <div class="modal-panel detail-modal-panel">
           <div class="modal-heading">
             <h2 id="detailModalTitle">商品詳細</h2>
+            <button class="ghost-button" type="button" id="closeDetailModalButton">閉じる</button>
           </div>
         <div class="detail-modal-content" id="detailModalContent"></div>
         <div class="modal-actions">
@@ -917,7 +918,6 @@
           <button class="text-button" type="button" id="copyDetailDescriptionButton">説明文コピー</button>
           <button class="text-button" type="button" id="prepareRelistButton">再出品</button>
           <button class="text-button" type="button" id="editDetailItemButton">編集</button>
-          <button class="ghost-button" type="button" id="closeDetailModalFooterButton">閉じる</button>
         </div>
       </div>
     </div>

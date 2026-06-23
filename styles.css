@@ -3010,10 +3010,13 @@ tbody tr:last-child td {
 
 .detail-modal-content {
   display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
+  align-items: stretch;
 }
 
 .detail-hero {
+  grid-column: 1 / -1;
   display: grid;
   gap: 7px;
   padding: 10px 12px;
@@ -3051,6 +3054,7 @@ tbody tr:last-child td {
 }
 
 .detail-image-wrap {
+  grid-column: 1 / -1;
   display: grid;
   place-items: center;
   min-height: 180px;
@@ -3076,10 +3080,16 @@ tbody tr:last-child td {
 .detail-section {
   display: grid;
   gap: 8px;
+  align-content: start;
   padding: 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #fff;
+}
+
+.detail-section-product,
+.detail-section-sold {
+  grid-column: 1 / -1;
 }
 
 .detail-section h3 {
@@ -4781,6 +4791,11 @@ button:disabled {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 4px 8px;
+  }
+
+  .detail-section-basic dl,
+  .detail-section-price dl {
+    grid-template-columns: 1fr;
   }
 
   .detail-section dl div {
