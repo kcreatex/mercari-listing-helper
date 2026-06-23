@@ -30,22 +30,26 @@
         </div>
       </div>
 
-      <div class="dashboard-hero-grid" aria-live="polite">
-        <div class="dashboard-card dashboard-card-large dashboard-card-profit">
-          <span>累計利益</span>
-          <strong id="dashboardHeroTotalProfit">0円</strong>
+      <div class="today-work-heading">
+        <h3>本日の作業</h3>
+      </div>
+
+      <div class="dashboard-hero-grid today-work-grid" aria-live="polite">
+        <div class="dashboard-card dashboard-card-large dashboard-card-warning">
+          <span>入力不足</span>
+          <strong id="dashboardHeroTotalProfit">0件</strong>
         </div>
         <div class="dashboard-card dashboard-card-large dashboard-card-unlisted">
-          <span>未出品件数</span>
+          <span>未仕分け</span>
           <strong id="dashboardHeroUnlistedCount">0件</strong>
         </div>
         <div class="dashboard-card dashboard-card-large dashboard-card-shipping">
-          <span>発送待ち件数</span>
+          <span>発送待ち</span>
           <strong id="dashboardHeroShippingWaitCount">0件</strong>
         </div>
-        <div class="dashboard-card dashboard-card-large dashboard-card-unlisted">
-          <span>埋蔵金額</span>
-          <strong id="dashboardHeroBuriedValue">0円</strong>
+        <div class="dashboard-card dashboard-card-large dashboard-card-shipping">
+          <span>査定待ち</span>
+          <strong id="dashboardHeroBuriedValue">0件</strong>
         </div>
       </div>
 
@@ -108,6 +112,20 @@
         <h3>発掘優先ランキングTOP5</h3>
         <p class="ranking-note">保管場所ごとの期待値ランキング / 対象：売却件数3件以上</p>
         <div class="excavation-ranking-list" id="excavationExpectedRankingList"></div>
+      </div>
+
+      <div class="today-priority-grid">
+        <section class="today-priority-panel" aria-labelledby="sortingPriorityTitle">
+          <h3 id="sortingPriorityTitle">仕分け優先</h3>
+          <p class="ranking-note">未仕分けの商品を推定価値順で表示</p>
+          <div class="today-priority-list" id="sortingPriorityList"></div>
+        </section>
+
+        <section class="today-priority-panel" aria-labelledby="shippingProfitPriorityTitle">
+          <h3 id="shippingProfitPriorityTitle">発送優先</h3>
+          <p class="ranking-note">発送待ち商品を利益順で表示</p>
+          <div class="today-priority-list" id="shippingProfitPriorityList"></div>
+        </section>
       </div>
 
       <div class="input-issue-panel" aria-labelledby="inputIssueTitle">
@@ -327,76 +345,63 @@
           <input type="hidden" id="itemId">
           <input type="hidden" id="name" name="name">
 
-          <label>
-            商品タイトル
-            <input id="listingTitle" name="listingTitle" type="text" maxlength="80" required placeholder="例：春夏 ワンピース Mサイズ">
-          </label>
+          <section class="quick-form-section quick-form-basic" aria-labelledby="quickBasicTitle">
+            <h3 id="quickBasicTitle"><span class="section-icon">品</span>基本情報</h3>
 
-          <div class="image-field compact-image-field">
-            <label for="imageInput">商品画像</label>
-            <input id="imageInput" name="imageInput" type="file" accept="image/*">
-            <div class="image-preview" id="imagePreview" aria-live="polite">
-              <span>＋画像追加</span>
+            <label class="quick-title-field">
+              商品タイトル
+              <input id="listingTitle" name="listingTitle" type="text" maxlength="80" required placeholder="例：春夏 ワンピース Mサイズ">
+            </label>
+
+            <div class="image-field compact-image-field">
+              <label for="imageInput">商品画像</label>
+              <input id="imageInput" name="imageInput" type="file" accept="image/*">
+              <div class="image-preview" id="imagePreview" aria-live="polite">
+                <span>＋画像追加</span>
+              </div>
+              <button class="ghost-button hidden" type="button" id="removeImageButton">画像を削除</button>
             </div>
-            <button class="ghost-button hidden" type="button" id="removeImageButton">画像を削除</button>
-          </div>
 
-          <label>
-            カテゴリ
-            <select id="category" name="category" required>
-              <option value="">カテゴリを選択</option>
-            </select>
-          </label>
+            <div class="quick-basic-grid">
+              <label>
+                カテゴリ
+                <select id="category" name="category" required>
+                  <option value="">カテゴリを選択</option>
+                </select>
+              </label>
 
-          <label>
-            状態
-            <select id="condition" name="condition" required>
-              <option value="">状態を選択</option>
-              <option>新品、未使用</option>
-              <option>未使用に近い</option>
-              <option>目立った傷や汚れなし</option>
-              <option>やや傷や汚れあり</option>
-              <option>傷や汚れあり</option>
-              <option>全体的に状態が悪い</option>
-            </select>
-          </label>
+              <div class="quick-condition-field">
+                <span class="quick-field-label">状態</span>
+                <select class="condition-hidden-select" id="condition" name="condition" required aria-label="状態">
+                  <option value="">状態を選択</option>
+                  <option>新品、未使用</option>
+                  <option>未使用に近い</option>
+                  <option>目立った傷や汚れなし</option>
+                  <option>やや傷や汚れあり</option>
+                  <option>傷や汚れあり</option>
+                  <option>全体的に状態が悪い</option>
+                </select>
+                <div class="condition-button-group" role="group" aria-label="状態を選択">
+                  <button type="button" data-condition-value="新品、未使用">新品</button>
+                  <button type="button" data-condition-value="未使用に近い">美品</button>
+                  <button type="button" data-condition-value="目立った傷や汚れなし">普通</button>
+                  <button type="button" data-condition-value="やや傷や汚れあり">難あり</button>
+                </div>
+              </div>
 
-          <label>
-            保管場所
-            <input id="storageLocation" name="storageLocation" type="text" maxlength="80" placeholder="例：押し入れ右上 / 黒い箱A">
-          </label>
+              <label class="quick-storage-field">
+                保管場所
+                <select id="storageLocation" name="storageLocation">
+                  <option value="">保管場所を選択</option>
+                </select>
+              </label>
+            </div>
+          </section>
 
-          <label>
-            配送方法
-            <select id="shippingMethod" name="shippingMethod">
-              <option value="">配送方法を選択</option>
-            </select>
-          </label>
-
-          <label class="hidden" id="shippingSizeField">
-            サイズ
-            <select id="shippingSize" name="shippingSize">
-              <option value="">サイズを選択</option>
-            </select>
-          </label>
-
-          <div class="price-fields" aria-label="利益計算">
-            <label>
-              販売価格
-              <input id="plannedPrice" name="plannedPrice" type="number" min="0" step="1" inputmode="numeric" placeholder="例：3000">
-            </label>
-
-            <label id="shippingCostField">
-              送料
-              <input id="shippingCost" name="shippingCost" type="number" min="0" step="1" inputmode="numeric" placeholder="例：210">
-            </label>
-          </div>
-
-          <details class="form-details">
-            <summary>詳細設定</summary>
+          <details class="form-details form-details-listing">
+            <summary><span class="section-icon">出</span>出品情報</summary>
             <div class="form-details-grid">
               <section class="form-detail-group">
-                <h3>出品情報</h3>
                 <div class="form-detail-group-grid">
                   <label>
                     出品ステータス
@@ -432,9 +437,13 @@
                   </label>
                 </div>
               </section>
+            </div>
+          </details>
 
+          <details class="form-details form-details-admin">
+            <summary><span class="section-icon">管</span>管理情報</summary>
+            <div class="form-details-grid">
               <section class="form-detail-group">
-                <h3>管理情報</h3>
                 <div class="form-detail-group-grid">
                   <label>
                     購入時期
@@ -455,6 +464,56 @@
                     メモ
                     <textarea id="memo" name="memo" rows="5" maxlength="500" placeholder="採寸、付属品、気になる点など"></textarea>
                   </label>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <details class="form-details form-details-mercari">
+            <summary><span class="section-icon">¥</span>メルカリ管理</summary>
+            <div class="form-details-grid">
+              <section class="form-detail-group">
+                <div class="form-detail-group-grid">
+                  <label>
+                    配送方法
+                    <select id="shippingMethod" name="shippingMethod">
+                      <option value="">配送方法を選択</option>
+                    </select>
+                  </label>
+
+                  <label class="hidden" id="shippingSizeField">
+                    サイズ
+                    <select id="shippingSize" name="shippingSize">
+                      <option value="">サイズを選択</option>
+                    </select>
+                  </label>
+
+                  <div class="price-fields" aria-label="利益計算">
+                    <label>
+                      販売価格
+                      <input id="plannedPrice" name="plannedPrice" type="number" min="0" step="1" inputmode="numeric" placeholder="例：3000">
+                    </label>
+
+                    <label id="shippingCostField">
+                      送料
+                      <input id="shippingCost" name="shippingCost" type="number" min="0" step="1" inputmode="numeric" placeholder="例：210">
+                    </label>
+                  </div>
+
+                  <div class="profit-preview inline-profit-preview" aria-live="polite">
+                    <div>
+                      <span>利益</span>
+                      <strong data-profit-preview-clone>-</strong>
+                    </div>
+                    <div>
+                      <span>最低価格</span>
+                      <strong data-minimum-price-preview-clone>-</strong>
+                    </div>
+                    <div>
+                      <span>手数料</span>
+                      <strong data-fee-preview-clone>-</strong>
+                    </div>
+                  </div>
                 </div>
               </section>
 
@@ -496,7 +555,7 @@
             </div>
           </details>
 
-          <div class="profit-preview" aria-live="polite">
+          <div class="profit-preview submit-profit-preview" aria-live="polite">
             <div>
               <span>利益</span>
               <strong id="profitPreview">-</strong>
@@ -563,7 +622,12 @@
           </div>
         </div>
         <div class="inventory-toolbar" aria-label="商品一覧の操作">
-          <input class="search-input" id="searchInput" type="search" placeholder="商品名・メモ・保管場所で検索">
+          <input class="search-input" id="searchInput" type="search" placeholder="商品を検索">
+          <div class="inventory-action-summary" aria-label="次にやることの目安">
+            <div><span>未出品</span><strong id="listUnlistedCount">0件</strong></div>
+            <div><span>要捜索</span><strong id="listSearchNeededCount">0件</strong></div>
+            <div><span>高利益候補</span><strong id="listHighProfitCount">0件</strong></div>
+          </div>
           <div class="inventory-control-group inventory-target-toggle" aria-label="表示対象">
             <span class="inventory-control-label">表示対象</span>
             <button class="ghost-button active" type="button" id="listShowAllButton">すべて</button>
@@ -572,13 +636,15 @@
           <div class="inventory-filter-row" aria-label="並び順とステータス">
             <select class="status-filter" id="sortOrder" aria-label="並び順">
               <option value="newest">登録順（新しい順）</option>
-              <option value="oldest">登録順（古い順）</option>
-              <option value="title">商品名</option>
               <option value="storageLocation">保管場所</option>
-              <option value="condition">状態</option>
-              <option value="status">ステータス</option>
-              <option value="plannedPrice">販売価格</option>
               <option value="profit">利益</option>
+              <optgroup label="詳細ソート">
+                <option value="oldest">登録順（古い順）</option>
+                <option value="title">商品名</option>
+                <option value="condition">状態</option>
+                <option value="status">ステータス</option>
+                <option value="plannedPrice">販売価格</option>
+              </optgroup>
             </select>
             <select class="status-filter" id="statusFilter" aria-label="ステータスで絞り込み">
               <option value="">すべてのステータス</option>
@@ -615,11 +681,12 @@
             <thead>
               <tr>
                 <th>商品名</th>
-                <th>ステータス</th>
                 <th>保管場所</th>
-                <th>状態</th>
-                <th>価格</th>
                 <th>利益</th>
+                <th>出品状態</th>
+                <th>要捜索</th>
+                <th>売却先</th>
+                <th>価格</th>
                 <th>…</th>
               </tr>
             </thead>
@@ -643,34 +710,27 @@
 
           <div class="sorting-form-card">
             <h3>商品情報</h3>
-            <div class="sorting-card-grid">
+            <div class="sorting-card-grid sorting-primary-product-grid">
               <label class="wide-field">
                 商品名
                 <input id="sortingName" type="text" maxlength="120" required placeholder="例：アニメグッズまとめ">
-              </label>
-
-              <label>
-                ジャンル
-                <select id="sortingGenre">
-                  <option value="">選択してください</option>
-                </select>
-              </label>
-
-              <label>
-                数量
-                <input id="sortingQuantity" type="number" min="1" step="1" inputmode="numeric" placeholder="例：3">
               </label>
 
               <label class="wide-field">
                 保管場所
                 <input id="sortingStorageLocation" type="text" maxlength="80" placeholder="例：押し入れ / かごA">
               </label>
+
+              <label class="wide-field">
+                メモ
+                <textarea id="sortingMemo" rows="2" maxlength="600" placeholder="状態、箱数、査定メモなど"></textarea>
+              </label>
             </div>
           </div>
 
           <div class="sorting-form-card">
             <h3>売却情報</h3>
-            <div class="sorting-card-grid">
+            <div class="sorting-card-grid sorting-primary-sales-grid">
               <label>
                 最終売却先
                 <select id="sortingDestination">
@@ -712,13 +772,30 @@
                   <option>完了</option>
                 </select>
               </label>
+            </div>
+          </div>
+
+          <details class="sorting-form-card sorting-extra-card">
+            <summary>商品詳細</summary>
+            <div class="sorting-card-grid">
+              <label>
+                ジャンル
+                <select id="sortingGenre">
+                  <option value="">選択してください</option>
+                </select>
+              </label>
 
               <label>
+                数量
+                <input id="sortingQuantity" type="number" min="1" step="1" inputmode="numeric" placeholder="例：3">
+              </label>
+
+              <label class="wide-field">
                 箱番号
                 <input id="sortingBoxNumber" type="text" maxlength="80" placeholder="例：駿河屋-1 / 良盤-1">
               </label>
             </div>
-          </div>
+          </details>
 
           <details class="sorting-form-card sorting-extra-card sorting-assessment-card">
             <summary>査定情報</summary>
@@ -731,14 +808,6 @@
               <label>服買取<input id="sortingClothesPrice" type="number" min="0" step="1" inputmode="numeric"></label>
               <label>その他<input id="sortingOtherPrice" type="number" min="0" step="1" inputmode="numeric"></label>
             </div>
-          </details>
-
-          <details class="sorting-form-card sorting-extra-card">
-            <summary>メモ</summary>
-            <label>
-              メモ
-              <textarea id="sortingMemo" rows="3" maxlength="600" placeholder="状態、箱数、査定メモなど"></textarea>
-            </label>
           </details>
 
           <div class="sorting-actions">
@@ -801,13 +870,11 @@
             <thead>
               <tr>
                 <th>商品名</th>
-                <th>数量</th>
                 <th>保管場所</th>
-                <th>最終売却先</th>
-                <th>ステータス</th>
-                <th>発送</th>
-                <th>箱番号</th>
+                <th>売却先</th>
+                <th>発送状態</th>
                 <th>最高額</th>
+                <th>推奨</th>
                 <th>操作</th>
               </tr>
             </thead>
@@ -820,7 +887,7 @@
         <div class="panel-heading">
           <div>
             <h2 id="settingsTitle">設定</h2>
-            <p class="muted">カテゴリ、配送方法、送料を管理します</p>
+          <p class="muted">カテゴリ、配送、テンプレート、バックアップを運用管理します</p>
           </div>
         </div>
 
@@ -828,38 +895,53 @@
           <details class="settings-group settings-accordion">
             <summary>
               <span class="settings-summary-label">カテゴリ</span>
-              <button class="ghost-button settings-reset-button" type="button" id="resetCategoriesButton">初期化</button>
+              <span class="settings-summary-count" id="categorySettingsCount">0件</span>
             </summary>
             <div class="category-settings-list" id="categorySettingsList"></div>
-            <div class="category-add-row">
+            <p class="settings-future-note">将来候補：ドラッグ並び替え</p>
+            <button class="ghost-button settings-add-toggle" type="button" id="toggleCategoryAddButton">カテゴリを追加</button>
+            <div class="category-add-row hidden" id="categoryAddRow">
               <input id="newCategoryName" type="text" placeholder="カテゴリ名">
               <button class="ghost-button" type="button" id="addCategoryButton">追加</button>
+            </div>
+            <div class="settings-danger-footer">
+              <button class="danger-button settings-reset-button" type="button" id="resetCategoriesButton">カテゴリを初期化</button>
             </div>
           </details>
 
           <details class="settings-group settings-accordion">
             <summary>
               <span class="settings-summary-label">配送方法と送料</span>
-              <button class="ghost-button settings-reset-button" type="button" id="resetShippingButton">初期化</button>
+              <span class="settings-summary-count" id="shippingSettingsCount">0件</span>
             </summary>
             <div class="shipping-settings-list" id="shippingSettingsList"></div>
-            <div class="shipping-add-row">
+            <p class="settings-future-note">将来候補：配送グループ編集・ドラッグ並び替え</p>
+            <button class="ghost-button settings-add-toggle" type="button" id="toggleShippingAddButton">配送方法を追加</button>
+            <div class="shipping-add-row hidden" id="shippingAddRow">
               <input id="newShippingName" type="text" placeholder="配送方法名">
               <input id="newShippingCost" type="number" min="0" step="1" inputmode="numeric" placeholder="送料">
               <button class="ghost-button" type="button" id="addShippingMethodButton">追加</button>
+            </div>
+            <div class="settings-danger-footer">
+              <button class="danger-button settings-reset-button" type="button" id="resetShippingButton">配送方法を初期化</button>
             </div>
           </details>
 
           <details class="settings-group settings-accordion template-settings-group">
             <summary>
               <span class="settings-summary-label">商品説明テンプレート</span>
-              <button class="ghost-button settings-reset-button" type="button" id="resetTemplatesButton">初期化</button>
+              <span class="settings-summary-count" id="templateSettingsCount">0件</span>
             </summary>
             <div class="template-settings-list" id="templateSettingsList"></div>
-            <div class="template-add-row">
+            <p class="settings-future-note">将来候補：商品登録画面でテンプレート適用ボタンを追加</p>
+            <button class="ghost-button settings-add-toggle" type="button" id="toggleTemplateAddButton">テンプレートを追加</button>
+            <div class="template-add-row hidden" id="templateAddRow">
               <input id="newTemplateName" type="text" placeholder="テンプレート名">
               <textarea id="newTemplateContent" rows="5" placeholder="テンプレート内容"></textarea>
               <button class="ghost-button" type="button" id="addTemplateButton">追加</button>
+            </div>
+            <div class="settings-danger-footer">
+              <button class="danger-button settings-reset-button" type="button" id="resetTemplatesButton">テンプレートを初期化</button>
             </div>
           </details>
         </div>
@@ -869,8 +951,8 @@
           <p class="muted">Supabase化や端末変更の前に、JSONを書き出して保存してください。</p>
           <div class="backup-controls backup-controls-top" aria-label="バックアップ操作">
             <strong>localStorageバックアップ</strong>
-            <button class="ghost-button" type="button" id="exportButtonTop">バックアップを書き出す</button>
-            <button class="ghost-button" type="button" id="importButtonTop">バックアップを読み込む</button>
+            <button class="ghost-button" type="button" id="exportButtonTop">JSONエクスポート</button>
+            <button class="ghost-button" type="button" id="importButtonTop">JSONインポート</button>
           </div>
           <input class="hidden" id="importFileInput" type="file" accept="application/json,.json">
         </div>
@@ -883,6 +965,8 @@
             <div>
               <h2 id="cloudTitle">クラウド共有</h2>
               <p class="muted" id="cloudStatus">未ログイン: 商品データはこの端末に保存されます</p>
+              <p class="cloud-sync-state" id="cloudSyncState">同期状態 ローカル保存</p>
+              <p class="cloud-sync-time" id="cloudLastSync">最終同期 -</p>
               <p class="cloud-backup-warning">Supabaseへ移行する前に、PC版の設定ページからJSONバックアップを書き出して保存してください。</p>
             </div>
             <button class="ghost-button hidden" type="button" id="cloudLogoutButton">ログアウト</button>
@@ -927,10 +1011,24 @@
           </div>
         <div class="detail-modal-content" id="detailModalContent"></div>
         <div class="modal-actions">
-          <button class="text-button" type="button" id="copyDetailTitleButton">タイトルコピー</button>
-          <button class="text-button" type="button" id="copyDetailDescriptionButton">説明文コピー</button>
+          <button class="primary-button" type="button" id="editDetailItemButton">編集</button>
           <button class="text-button" type="button" id="prepareRelistButton">再出品</button>
-          <button class="text-button" type="button" id="editDetailItemButton">編集</button>
+          <button class="text-button detail-secondary-action" type="button" id="copyDetailTitleButton">タイトルコピー</button>
+          <button class="text-button detail-secondary-action" type="button" id="copyDetailDescriptionButton">説明文コピー</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-backdrop hidden" id="sortingDetailModal" role="dialog" aria-modal="true" aria-labelledby="sortingDetailModalTitle">
+      <div class="modal-panel sorting-detail-modal-panel">
+        <div class="modal-heading">
+          <h2 id="sortingDetailModalTitle">出荷判断</h2>
+          <button class="ghost-button" type="button" id="closeSortingDetailModalButton">閉じる</button>
+        </div>
+        <div class="sorting-detail-content" id="sortingDetailContent"></div>
+        <div class="modal-actions sorting-detail-actions">
+          <button class="primary-button" type="button" id="editSortingDetailButton">編集</button>
+          <button class="danger-button" type="button" id="deleteSortingDetailButton">削除</button>
         </div>
       </div>
     </div>
