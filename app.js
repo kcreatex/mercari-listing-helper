@@ -262,6 +262,7 @@ const copyDetailTitleButton = document.querySelector("#copyDetailTitleButton");
 const copyDetailDescriptionButton = document.querySelector("#copyDetailDescriptionButton");
 const copyDetailItemIdButton = document.querySelector("#copyDetailItemIdButton");
 const copyGooglePhotoTagButton = document.querySelector("#copyGooglePhotoTagButton");
+const copyMercariUrlButton = document.querySelector("#copyMercariUrlButton");
 const prepareRelistButton = document.querySelector("#prepareRelistButton");
 const editDetailItemButton = document.querySelector("#editDetailItemButton");
 const closeDetailModalButton = document.querySelector("#closeDetailModalButton");
@@ -1029,10 +1030,10 @@ function getListingTitle(item) {
 function createGooglePhotoTagText(item) {
   return [
     getItemCode(item),
-    `商品名：${getListingTitle(item) || "-"}`,
-    `カテゴリ：${item.category || "-"}`,
-    `状態：${item.condition || "-"}`,
-    `保管場所：${item.storageLocation || "-"}`,
+    getListingTitle(item) || "-",
+    item.category || "-",
+    item.storageLocation || "-",
+    item.condition || "-",
   ].join("\n");
 }
 
@@ -2480,11 +2481,11 @@ async function copyText(text, successMessage) {
       copyTextWithTextarea(value);
     }
 
-    alert(successMessage);
+    showToast(successMessage || "コピーしました", "success");
   } catch {
     try {
       copyTextWithTextarea(value);
-      alert(successMessage);
+      showToast(successMessage || "コピーしました", "success");
     } catch {
       alert("コピーできませんでした。ブラウザの設定を確認してください。");
     }
@@ -2707,6 +2708,22 @@ function createDetailCollapsibleSection(title, rows, emptyText) {
   return section;
 }
 
+function createDetailFutureSection() {
+  const section = document.createElement("details");
+  const summary = document.createElement("summary");
+  const list = document.createElement("ul");
+
+  section.className = "detail-section detail-section-collapsible detail-section-future";
+  summary.textContent = "将来機能";
+  ["Googleフォト検索", "発送番号管理", "画像管理拡張"].forEach((text) => {
+    const item = document.createElement("li");
+    item.textContent = text;
+    list.append(item);
+  });
+  section.append(summary, list);
+  return section;
+}
+
 function createDetailHero(item) {
   const hero = document.createElement("section");
   hero.className = "detail-hero";
@@ -2818,6 +2835,9 @@ function openDetailModal(item) {
       ["売却メモ", item.soldMemo],
     ]));
   }
+
+  detailModalContent.append(createDetailFutureSection());
+  copyMercariUrlButton.disabled = !String(item.listingUrl || "").trim();
 
   detailModal.classList.remove("hidden");
   closeDetailModalButton.focus();
@@ -6348,6 +6368,9 @@ copyDetailItemIdButton.addEventListener("click", () => {
 });
 copyGooglePhotoTagButton.addEventListener("click", () => {
   copyText(currentDetailItem ? createGooglePhotoTagText(currentDetailItem) : "", "Googleフォト用タグをコピーしました。");
+});
+copyMercariUrlButton.addEventListener("click", () => {
+  copyText(currentDetailItem?.listingUrl || "", "メルカリURLをコピーしました。");
 });
 prepareRelistButton.addEventListener("click", () => {
   if (currentDetailItem) {

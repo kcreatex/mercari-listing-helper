@@ -633,54 +633,71 @@
           </div>
         </div>
         <div class="inventory-toolbar" aria-label="商品一覧の操作">
-          <input class="search-input" id="searchInput" type="search" placeholder="商品を検索">
-          <div class="inventory-action-summary" aria-label="次にやることの目安">
-            <div><span>未出品</span><strong id="listUnlistedCount">0件</strong></div>
-            <div><span>要捜索</span><strong id="listSearchNeededCount">0件</strong></div>
-            <div><span>高利益候補</span><strong id="listHighProfitCount">0件</strong></div>
-          </div>
-          <div class="inventory-control-group inventory-target-toggle" aria-label="表示対象">
-            <span class="inventory-control-label">表示対象</span>
-            <button class="ghost-button active" type="button" id="listShowAllButton">すべて</button>
-            <button class="ghost-button" type="button" id="listInventoryOnlyButton">在庫のみ</button>
-          </div>
-          <div class="inventory-control-group storage-view-toggle" aria-label="一覧種別">
-            <span class="inventory-control-label">一覧種別</span>
-            <button class="ghost-button active" type="button" id="normalListModeButton">通常一覧</button>
-            <button class="ghost-button" type="button" id="storageListModeButton">保管場所別</button>
-          </div>
-          <div class="inventory-filter-row" aria-label="並び順とステータス">
-            <select class="status-filter" id="sortOrder" aria-label="並び順">
-              <option value="newest">登録順（新しい順）</option>
-              <option value="storageLocation">保管場所</option>
-              <option value="profit">利益</option>
-              <optgroup label="詳細ソート">
-                <option value="oldest">登録順（古い順）</option>
-                <option value="title">商品名</option>
-                <option value="condition">状態</option>
-                <option value="status">ステータス</option>
-                <option value="plannedPrice">販売価格</option>
-              </optgroup>
-            </select>
-            <select class="status-filter" id="statusFilter" aria-label="ステータスで絞り込み">
-              <option value="">すべてのステータス</option>
-              <option>未出品</option>
-              <option>出品中</option>
-              <option>売却済み</option>
-              <option>保留</option>
-              <option>要捜索</option>
-            </select>
-          </div>
-          <div class="inventory-control-group quick-actions" aria-label="検索管理">
-            <span class="inventory-control-label">検索管理</span>
-            <button class="ghost-button" type="button" id="listBoxSearchButton">箱検索</button>
-            <button class="ghost-button" type="button" id="listShippingManagementButton">発送管理</button>
-          </div>
-          <div class="inventory-control-group view-toggle" aria-label="表示形式">
-            <span class="inventory-control-label">表示形式</span>
-            <button class="ghost-button active" type="button" id="listViewButton">一覧</button>
-            <button class="ghost-button" type="button" id="cardViewButton">カード</button>
-          </div>
+          <details class="inventory-toolbar-section" open>
+            <summary><span class="section-icon">状</span>状況</summary>
+            <div class="inventory-action-summary" aria-label="次にやることの目安">
+              <div><span>未出品</span><strong id="listUnlistedCount">0件</strong></div>
+              <div><span>要捜索</span><strong id="listSearchNeededCount">0件</strong></div>
+              <div><span>高利益候補</span><strong id="listHighProfitCount">0件</strong></div>
+            </div>
+          </details>
+
+          <details class="inventory-toolbar-section" open>
+            <summary><span class="section-icon">探</span>検索・絞り込み</summary>
+            <div class="inventory-section-body">
+              <input class="search-input" id="searchInput" type="search" placeholder="商品を検索">
+              <div class="inventory-filter-row inventory-search-filter-row" aria-label="ステータスと表示対象">
+                <select class="status-filter" id="statusFilter" aria-label="ステータスで絞り込み">
+                  <option value="">すべてのステータス</option>
+                  <option>未出品</option>
+                  <option>出品中</option>
+                  <option>売却済み</option>
+                  <option>保留</option>
+                  <option>要捜索</option>
+                </select>
+                <div class="inventory-control-group inventory-target-toggle" aria-label="表示対象">
+                  <button class="ghost-button active" type="button" id="listShowAllButton">すべて</button>
+                  <button class="ghost-button" type="button" id="listInventoryOnlyButton">在庫のみ</button>
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <details class="inventory-toolbar-section" open>
+            <summary><span class="section-icon">表</span>表示設定</summary>
+            <div class="inventory-section-body">
+              <div class="inventory-control-group storage-view-toggle" aria-label="一覧種別">
+                <button class="ghost-button active" type="button" id="normalListModeButton">通常一覧</button>
+                <button class="ghost-button" type="button" id="storageListModeButton">保管場所別</button>
+              </div>
+              <div class="inventory-filter-row" aria-label="並び順と表示形式">
+                <select class="status-filter" id="sortOrder" aria-label="並び順">
+                  <option value="newest">登録順（新しい順）</option>
+                  <option value="storageLocation">保管場所</option>
+                  <option value="profit">利益</option>
+                  <optgroup label="詳細ソート">
+                    <option value="oldest">登録順（古い順）</option>
+                    <option value="title">商品名</option>
+                    <option value="condition">状態</option>
+                    <option value="status">ステータス</option>
+                    <option value="plannedPrice">販売価格</option>
+                  </optgroup>
+                </select>
+                <div class="inventory-control-group view-toggle" aria-label="表示形式">
+                  <button class="ghost-button active" type="button" id="listViewButton">一覧</button>
+                  <button class="ghost-button" type="button" id="cardViewButton">カード</button>
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <details class="inventory-toolbar-section inventory-work-section">
+            <summary><span class="section-icon">作</span>作業</summary>
+            <div class="inventory-control-group quick-actions" aria-label="検索管理">
+              <button class="ghost-button" type="button" id="listBoxSearchButton">箱検索</button>
+              <button class="ghost-button" type="button" id="listShippingManagementButton">発送管理</button>
+            </div>
+          </details>
         </div>
 
         <div class="empty-state" id="emptyState">
@@ -1096,6 +1113,7 @@
           <button class="text-button detail-secondary-action" type="button" id="copyDetailItemIdButton">商品IDコピー</button>
           <button class="text-button detail-secondary-action" type="button" id="copyGooglePhotoTagButton">Googleフォト用タグコピー</button>
           <button class="text-button" type="button" id="prepareRelistButton">再出品</button>
+          <button class="text-button detail-secondary-action" type="button" id="copyMercariUrlButton">メルカリURLコピー</button>
           <button class="text-button detail-secondary-action" type="button" id="copyDetailTitleButton">タイトルコピー</button>
           <button class="text-button detail-secondary-action" type="button" id="copyDetailDescriptionButton">説明文コピー</button>
         </div>

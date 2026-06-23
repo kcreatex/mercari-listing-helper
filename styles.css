@@ -9489,6 +9489,31 @@ body.analysis-view .sold-summary div {
   letter-spacing: 0;
 }
 
+.detail-section-future ul {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0 0 0 18px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.detail-modal-panel .modal-actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+.detail-modal-panel .modal-actions button {
+  min-height: 44px !important;
+}
+
+@media (max-width: 700px) {
+  .detail-modal-panel .modal-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+}
+
 .form-detail-group-grid textarea {
   min-height: 72px !important;
 }
@@ -10386,5 +10411,135 @@ body.work-tab-list .compact-table-wrap td:nth-child(4) {
 
   body.work-tab-list .mobile-compact-profit {
     text-align: right !important;
+  }
+}
+
+/* 商品一覧: 役割別アコーディオン整理 */
+.inventory-toolbar {
+  display: grid !important;
+  gap: 10px !important;
+  width: 100% !important;
+  max-width: none !important;
+}
+
+.inventory-toolbar-section {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--ui-card-radius, 12px);
+  background: #fff;
+}
+
+.inventory-toolbar-section > summary {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 40px;
+  padding: 9px 12px;
+  cursor: pointer;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 950;
+  list-style: none;
+}
+
+.inventory-toolbar-section > summary::-webkit-details-marker {
+  display: none;
+}
+
+.inventory-toolbar-section > summary::after {
+  content: "▶";
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.inventory-toolbar-section[open] > summary::after {
+  content: "▼";
+}
+
+.inventory-section-body,
+.inventory-toolbar-section > .inventory-action-summary,
+.inventory-toolbar-section > .quick-actions {
+  padding: 0 12px 12px;
+}
+
+.inventory-section-body {
+  display: grid;
+  gap: 8px;
+}
+
+.inventory-toolbar .inventory-action-summary {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+
+.inventory-toolbar .inventory-action-summary div {
+  min-height: 48px !important;
+  padding: 8px 10px !important;
+}
+
+.inventory-toolbar .inventory-filter-row,
+.inventory-toolbar .inventory-search-filter-row {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+  width: 100% !important;
+}
+
+.inventory-toolbar .inventory-control-group {
+  display: grid !important;
+  gap: 8px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+}
+
+.inventory-toolbar .inventory-target-toggle,
+.inventory-toolbar .storage-view-toggle,
+.inventory-toolbar .quick-actions,
+.inventory-toolbar .view-toggle {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+.inventory-toolbar input,
+.inventory-toolbar select,
+.inventory-toolbar button {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+}
+
+.inventory-toolbar .inventory-control-label {
+  display: none !important;
+}
+
+@media (max-width: 700px) {
+  .inventory-toolbar {
+    gap: 8px !important;
+  }
+
+  .inventory-toolbar-section > summary {
+    min-height: 38px;
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .inventory-section-body,
+  .inventory-toolbar-section > .inventory-action-summary,
+  .inventory-toolbar-section > .quick-actions {
+    padding: 0 10px 10px;
+  }
+
+  .inventory-toolbar .inventory-action-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .inventory-toolbar .inventory-filter-row,
+  .inventory-toolbar .inventory-search-filter-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 }
