@@ -332,6 +332,15 @@
             <input id="listingTitle" name="listingTitle" type="text" maxlength="80" required placeholder="例：春夏 ワンピース Mサイズ">
           </label>
 
+          <div class="image-field compact-image-field">
+            <label for="imageInput">商品画像</label>
+            <input id="imageInput" name="imageInput" type="file" accept="image/*">
+            <div class="image-preview" id="imagePreview" aria-live="polite">
+              <span>＋画像追加</span>
+            </div>
+            <button class="ghost-button hidden" type="button" id="removeImageButton">画像を削除</button>
+          </div>
+
           <label>
             カテゴリ
             <select id="category" name="category" required>
@@ -414,7 +423,7 @@
 
               <label>
                 商品実寸
-                <textarea id="measurements" name="measurements" rows="4" maxlength="500" placeholder="例：高さ 約20cm / 縦10cm × 横8cm / 未計測"></textarea>
+                <input id="measurements" name="measurements" type="text" maxlength="500" placeholder="例：高さ20cm / 縦10×横8cm / 未計測">
               </label>
 
               <label>
@@ -475,29 +484,21 @@
                 <textarea id="memo" name="memo" rows="5" maxlength="500" placeholder="採寸、付属品、気になる点など"></textarea>
               </label>
 
-              <div class="image-field">
-                <label for="imageInput">商品画像</label>
-                <input id="imageInput" name="imageInput" type="file" accept="image/*">
-                <div class="image-preview" id="imagePreview" aria-live="polite">
-                  <span>画像未選択</span>
-                </div>
-                <button class="ghost-button hidden" type="button" id="removeImageButton">画像を削除</button>
-              </div>
             </div>
           </details>
 
           <div class="profit-preview" aria-live="polite">
             <div>
-              <span>手数料</span>
-              <strong id="feePreview">-</strong>
+              <span>利益</span>
+              <strong id="profitPreview">-</strong>
             </div>
             <div>
               <span>最低価格</span>
               <strong id="minimumPricePreview">-</strong>
             </div>
             <div>
-              <span>利益</span>
-              <strong id="profitPreview">-</strong>
+              <span>手数料</span>
+              <strong id="feePreview">-</strong>
             </div>
           </div>
 

@@ -1168,12 +1168,9 @@ function getMonthlyProfitGroups(soldItems) {
 function renderMonthlyProfitList(soldItems) {
   const groups = getMonthlyProfitGroups(soldItems);
   monthlyProfitList.innerHTML = "";
+  setAnalysisListVisibility(monthlyProfitList, groups.length > 0);
 
   if (groups.length === 0) {
-    const emptyMessage = document.createElement("p");
-    emptyMessage.className = "muted";
-    emptyMessage.textContent = "月別利益はまだありません。";
-    monthlyProfitList.append(emptyMessage);
     return;
   }
 
@@ -1197,16 +1194,35 @@ function renderMonthlyProfitList(soldItems) {
   });
 }
 
+function setAnalysisListVisibility(targetList, hasData, blockSelector = "") {
+  const block = blockSelector ? targetList.closest(blockSelector) : null;
+
+  if (block) {
+    block.classList.toggle("hidden", !hasData);
+    return;
+  }
+
+  targetList.classList.toggle("hidden", !hasData);
+
+  let heading = targetList.previousElementSibling;
+
+  while (heading && heading.classList.contains("ranking-note")) {
+    heading.classList.toggle("hidden", !hasData);
+    heading = heading.previousElementSibling;
+  }
+
+  if (heading && /^H[2-4]$/.test(heading.tagName)) {
+    heading.classList.toggle("hidden", !hasData);
+  }
+}
+
 function renderProfitRanking(soldItems) {
   const groups = getMonthlyProfitGroups(soldItems)
     .sort((first, second) => second.profit - first.profit);
   profitRankingList.innerHTML = "";
+  setAnalysisListVisibility(profitRankingList, groups.length > 0);
 
   if (groups.length === 0) {
-    const emptyMessage = document.createElement("p");
-    emptyMessage.className = "muted";
-    emptyMessage.textContent = "利益ランキングはまだありません。";
-    profitRankingList.append(emptyMessage);
     return;
   }
 
@@ -1236,12 +1252,9 @@ function getProfitAmountRanking(targetItems) {
 function renderProfitAmountRanking(soldItems) {
   const rankingItems = getProfitAmountRanking(soldItems);
   profitAmountRankingList.innerHTML = "";
+  setAnalysisListVisibility(profitAmountRankingList, rankingItems.length > 0);
 
   if (rankingItems.length === 0) {
-    const emptyMessage = document.createElement("p");
-    emptyMessage.className = "muted";
-    emptyMessage.textContent = "利益額ランキングはまだありません。";
-    profitAmountRankingList.append(emptyMessage);
     return;
   }
 
@@ -1272,12 +1285,9 @@ function getProfitRateRanking(targetItems) {
 function renderProfitRateRanking(soldItems) {
   const rankingItems = getProfitRateRanking(soldItems);
   profitRateRankingList.innerHTML = "";
+  setAnalysisListVisibility(profitRateRankingList, rankingItems.length > 0);
 
   if (rankingItems.length === 0) {
-    const emptyMessage = document.createElement("p");
-    emptyMessage.className = "muted";
-    emptyMessage.textContent = "利益率ランキングはまだありません。";
-    profitRateRankingList.append(emptyMessage);
     return;
   }
 
@@ -1315,12 +1325,9 @@ function getGroupedProfitRanking(soldItems, getGroupName) {
 
 function renderGroupedProfitRanking(targetList, rankingItems, emptyMessage) {
   targetList.innerHTML = "";
+  setAnalysisListVisibility(targetList, rankingItems.length > 0);
 
   if (rankingItems.length === 0) {
-    const message = document.createElement("p");
-    message.className = "muted";
-    message.textContent = emptyMessage;
-    targetList.append(message);
     return;
   }
 
@@ -1421,12 +1428,9 @@ function formatInventoryTop(group) {
 
 function renderExcavationRanking(storageRanking) {
   excavationRankingList.innerHTML = "";
+  setAnalysisListVisibility(excavationRankingList, storageRanking.length > 0, ".excavation-panel");
 
   if (storageRanking.length === 0) {
-    const emptyMessage = document.createElement("p");
-    emptyMessage.className = "muted";
-    emptyMessage.textContent = "発掘優先ランキングはまだありません。";
-    excavationRankingList.append(emptyMessage);
     return;
   }
 
@@ -1460,12 +1464,9 @@ function getExcavationExpectedRanking(storageRanking) {
 function renderExcavationExpectedRanking(storageRanking) {
   const expectedRanking = getExcavationExpectedRanking(storageRanking);
   excavationExpectedRankingList.innerHTML = "";
+  setAnalysisListVisibility(excavationExpectedRankingList, expectedRanking.length > 0, ".excavation-panel");
 
   if (expectedRanking.length === 0) {
-    const emptyMessage = document.createElement("p");
-    emptyMessage.className = "muted";
-    emptyMessage.textContent = "対象なし";
-    excavationExpectedRankingList.append(emptyMessage);
     return;
   }
 
@@ -1608,21 +1609,10 @@ function renderStorageReports(allItems, storageProfitRanking, expectedRanking) {
     card.innerHTML = `
       <h4></h4>
       <dl>
-        <div><dt>商品総数</dt><dd>${report.totalCount}件</dd></div>
-        <div><dt>売却済</dt><dd>${report.soldCount}件</dd></div>
+        <div><dt>総数</dt><dd>${report.totalCount}件</dd></div>
         <div><dt>未出品</dt><dd>${report.unlistedCount}件</dd></div>
-        <div><dt>出品中</dt><dd>${report.listedCount}件</dd></div>
-        <div><dt>要捜索</dt><dd>${report.searchCount}件</dd></div>
-        <div><dt>累計利益</dt><dd>${formatMoney(report.totalProfit)}</dd></div>
-        <div><dt>平均利益</dt><dd>${formatMoney(report.averageProfit)}</dd></div>
-        <div><dt>利益額順位</dt><dd>${report.profitRank ? `${report.profitRank}位` : "-"}</dd></div>
-        <div><dt>発掘期待値順位</dt><dd>${report.expectedRank ? `${report.expectedRank}位` : "-"}</dd></div>
-        <div><dt>売却率</dt><dd>${Math.round(report.soldRate * 100)}%</dd></div>
-        <div><dt>初回売却日</dt><dd>${report.firstSoldDate || "-"}</dd></div>
-        <div><dt>最終売却日</dt><dd>${report.lastSoldDate || "-"}</dd></div>
-        <div><dt>未出品販売価格合計</dt><dd>${formatMoney(report.unlistedPlannedPriceTotal)}</dd></div>
-        <div><dt>未出品最低出品価格合計</dt><dd>${formatMoney(report.unlistedMinimumPriceTotal)}</dd></div>
-        <div><dt>未出品埋蔵金</dt><dd>${formatMoney(report.unlistedProjectedProfitTotal)}</dd></div>
+        <div><dt>売却済</dt><dd>${report.soldCount}件</dd></div>
+        <div><dt>利益</dt><dd>${formatMoney(report.totalProfit)}</dd></div>
       </dl>
     `;
     card.querySelector("h4").textContent = report.name;
@@ -1632,12 +1622,9 @@ function renderStorageReports(allItems, storageProfitRanking, expectedRanking) {
 
 function renderInventoryRanking(targetList, rankingItems, options) {
   targetList.innerHTML = "";
+  setAnalysisListVisibility(targetList, rankingItems.length > 0, "section");
 
   if (rankingItems.length === 0) {
-    const emptyMessage = document.createElement("p");
-    emptyMessage.className = "muted";
-    emptyMessage.textContent = options.emptyMessage;
-    targetList.append(emptyMessage);
     return;
   }
 
@@ -1689,6 +1676,8 @@ function updateInventoryRankings(allItems) {
   dashboardBuriedTreasureTop.textContent = formatInventoryTop(buriedTreasureRanking[0]);
   dashboardInventoryValueTop.textContent = formatInventoryTop(inventoryValueRanking[0]);
   dashboardUnlistedTreasureTop.textContent = formatInventoryTop(unlistedTreasureRanking[0]);
+  unlistedTreasurePanel.classList.toggle("hidden", unlistedTreasureRanking.length === 0);
+  buriedTreasurePanel.classList.toggle("hidden", buriedTreasureRanking.length === 0 && inventoryValueRanking.length === 0);
 
   renderInventoryRanking(buriedTreasureRankingList, buriedTreasureRanking, {
     countLabel: "未売却商品数",
@@ -1769,10 +1758,6 @@ function renderInputIssueList(issueItems) {
     const title = document.createElement("strong");
     const status = document.createElement("span");
     const issueText = document.createElement("span");
-    const editArea = document.createElement("div");
-    const actions = document.createElement("div");
-    const editButton = document.createElement("button");
-    const saveButton = document.createElement("button");
 
     row.className = "input-issue-item";
     row.dataset.id = item.id;
@@ -1780,78 +1765,7 @@ function renderInputIssueList(issueItems) {
     status.textContent = getItemStatus(item);
     issueText.textContent = issues.join(" / ");
 
-    editArea.className = "input-issue-edit";
-
-    if (issues.includes("保管場所未設定")) {
-      const label = document.createElement("label");
-      label.textContent = "保管場所";
-      const input = document.createElement("input");
-      input.dataset.field = "storageLocation";
-      input.type = "text";
-      input.maxLength = 80;
-      input.placeholder = "例：黒い箱A";
-      label.append(input);
-      editArea.append(label);
-    }
-
-    if (issues.includes("販売価格未設定")) {
-      const label = document.createElement("label");
-      label.textContent = "販売価格";
-      const input = document.createElement("input");
-      input.dataset.field = "plannedPrice";
-      input.type = "number";
-      input.min = "0";
-      input.step = "1";
-      input.inputMode = "numeric";
-      input.placeholder = "例：1200";
-      label.append(input);
-      editArea.append(label);
-    }
-
-    if (issues.includes("カテゴリ未設定")) {
-      const label = document.createElement("label");
-      label.textContent = "カテゴリ";
-      const select = document.createElement("select");
-      select.dataset.field = "category";
-      setSelectOptions(select, settings.categories, "");
-      label.append(select);
-      editArea.append(label);
-    }
-
-    if (issues.includes("状態未設定")) {
-      const label = document.createElement("label");
-      label.textContent = "状態";
-      const select = document.createElement("select");
-      select.dataset.field = "condition";
-      setSelectOptions(select, CONDITION_OPTIONS, "");
-      label.append(select);
-      editArea.append(label);
-    }
-
-    if (issues.includes("説明文未登録")) {
-      const label = document.createElement("label");
-      label.textContent = "説明文";
-      const textarea = document.createElement("textarea");
-      textarea.dataset.field = "description";
-      textarea.rows = 2;
-      textarea.maxLength = 2000;
-      textarea.placeholder = "商品説明文";
-      label.append(textarea);
-      editArea.append(label);
-    }
-
-    actions.className = "input-issue-actions";
-    editButton.className = "ghost-button";
-    editButton.type = "button";
-    editButton.dataset.action = "edit-input-issue";
-    editButton.textContent = "編集";
-    saveButton.className = "primary-button";
-    saveButton.type = "button";
-    saveButton.dataset.action = "save-input-issue";
-    saveButton.textContent = "保存";
-    actions.append(editButton, saveButton);
-
-    row.append(title, status, issueText, editArea, actions);
+    row.append(title, status, issueText);
     inputIssueList.append(row);
   });
 }
@@ -2458,7 +2372,7 @@ function updateImagePreview(imageData) {
   imagePreview.innerHTML = "";
 
   if (!imageData) {
-    imagePreview.textContent = "画像未選択";
+    imagePreview.textContent = "＋画像追加";
     removeImageButton.classList.add("hidden");
     return;
   }
@@ -2909,13 +2823,16 @@ function createSortingRow(item) {
   cells[5].textContent = item.shippingStatus || "未仕分け";
   cells[6].textContent = item.boxNumber || "-";
   cells[7].textContent = bestOffer ? `${bestOffer.label} ${formatMoney(bestOffer.value)}` : "-";
+  cells[2].dataset.value = item.storageLocation || "-";
+  cells[3].dataset.value = item.destination || "未定";
+  cells[7].dataset.value = bestOffer ? `${bestOffer.label} ${formatMoney(bestOffer.value)}` : "-";
   const actions = cells[8].querySelector(".sorting-row-actions");
 
   if (item.sourceItemId) {
     const sourceLabel = document.createElement("span");
     const returnButton = document.createElement("button");
     sourceLabel.className = "source-item-label";
-    sourceLabel.textContent = "元商品あり";
+    sourceLabel.textContent = "連携済";
     returnButton.className = "text-button";
     returnButton.type = "button";
     returnButton.dataset.action = "return-source-item";
