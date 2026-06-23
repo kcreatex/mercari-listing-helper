@@ -8979,7 +8979,8 @@ body.analysis-view .sold-summary div {
   white-space: nowrap;
 }
 
-.category-setting-row {
+.category-setting-row,
+.storage-setting-row {
   grid-template-columns: minmax(0, 1fr) auto auto auto !important;
 }
 
@@ -9109,6 +9110,7 @@ body.analysis-view .sold-summary div {
 
 @media (max-width: 700px) {
   .category-setting-row,
+  .storage-setting-row,
   .shipping-setting-row,
   .template-setting-row {
     grid-template-columns: minmax(0, 1fr) repeat(3, auto) !important;
@@ -9132,5 +9134,92 @@ body.analysis-view .sold-summary div {
 
   .backup-controls-top {
     grid-template-columns: 1fr !important;
+  }
+}
+
+/* 商品登録ページ: 大量登録向けの省スペース調整 */
+.quick-form-section {
+  padding: 14px !important;
+}
+
+.quick-form-section h3,
+.form-details > summary {
+  min-height: 38px !important;
+}
+
+.form-details {
+  margin-top: 10px !important;
+}
+
+.compact-image-field {
+  gap: 6px !important;
+}
+
+.compact-image-field .image-preview {
+  min-height: 72px !important;
+  height: 72px !important;
+  border-style: dashed;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.compact-image-field .image-preview img {
+  max-height: 70px !important;
+  object-fit: contain;
+}
+
+.form-detail-group-grid textarea {
+  min-height: 72px !important;
+}
+
+.submit-profit-preview {
+  margin-top: 10px !important;
+}
+
+#submitButton.submit-incomplete {
+  border-color: #d1d5db !important;
+  background: #d1d5db !important;
+  color: #6b7280 !important;
+  cursor: not-allowed;
+  box-shadow: none !important;
+}
+
+#submitButton.submit-ready {
+  border-color: var(--accent) !important;
+  background: var(--accent) !important;
+  color: #fff !important;
+}
+
+select.placeholder-select {
+  color: #9ca3af !important;
+  font-weight: 500 !important;
+}
+
+select.placeholder-select option {
+  color: #111827;
+}
+
+@media (max-width: 700px) {
+  .quick-form-section {
+    padding: 12px !important;
+  }
+
+  .quick-basic-grid,
+  .form-detail-group-grid,
+  .price-fields {
+    gap: 10px !important;
+  }
+
+  .compact-image-field .image-preview {
+    min-height: 62px !important;
+    height: 62px !important;
+  }
+
+  .submit-profit-preview {
+    margin-bottom: 8px !important;
+  }
+
+  body.work-tab-form {
+    padding-bottom: 128px !important;
   }
 }

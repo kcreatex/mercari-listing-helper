@@ -153,8 +153,8 @@
             <strong id="missingConditionCount">0件</strong>
           </div>
           <div>
-            <span>写真未登録</span>
-            <strong id="missingImageCount">0件</strong>
+            <span>写真</span>
+            <strong id="missingImageCount">任意</strong>
           </div>
           <div>
             <span>説明文未登録</span>
@@ -317,7 +317,7 @@
       <section class="form-panel" aria-labelledby="formTitle">
         <div class="panel-heading">
           <h2 id="formTitle">商品登録</h2>
-          <button class="ghost-button hidden" type="button" id="cancelEditButton">編集をやめる</button>
+          <button class="ghost-button hidden" type="button" id="cancelEditButton">編集終了</button>
         </div>
 
         <div class="form-main-column">
@@ -500,20 +500,6 @@
                     </label>
                   </div>
 
-                  <div class="profit-preview inline-profit-preview" aria-live="polite">
-                    <div>
-                      <span>利益</span>
-                      <strong data-profit-preview-clone>-</strong>
-                    </div>
-                    <div>
-                      <span>最低価格</span>
-                      <strong data-minimum-price-preview-clone>-</strong>
-                    </div>
-                    <div>
-                      <span>手数料</span>
-                      <strong data-fee-preview-clone>-</strong>
-                    </div>
-                  </div>
                 </div>
               </section>
 
@@ -906,6 +892,23 @@
             </div>
             <div class="settings-danger-footer">
               <button class="danger-button settings-reset-button" type="button" id="resetCategoriesButton">カテゴリを初期化</button>
+            </div>
+          </details>
+
+          <details class="settings-group settings-accordion">
+            <summary>
+              <span class="settings-summary-label">保管場所</span>
+              <span class="settings-summary-count" id="storageSettingsCount">0件</span>
+            </summary>
+            <div class="storage-settings-list" id="storageSettingsList"></div>
+            <p class="settings-future-note">商品登録画面の保管場所プルダウンに反映されます</p>
+            <button class="ghost-button settings-add-toggle" type="button" id="toggleStorageAddButton">保管場所を追加</button>
+            <div class="storage-add-row hidden" id="storageAddRow">
+              <input id="newStorageName" type="text" placeholder="保管場所名">
+              <button class="ghost-button" type="button" id="addStorageButton">追加</button>
+            </div>
+            <div class="settings-danger-footer">
+              <button class="danger-button settings-reset-button" type="button" id="resetStorageButton">保管場所を初期化</button>
             </div>
           </details>
 

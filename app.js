@@ -217,10 +217,17 @@ const templateAddRow = document.querySelector("#templateAddRow");
 const newTemplateNameInput = document.querySelector("#newTemplateName");
 const newTemplateContentInput = document.querySelector("#newTemplateContent");
 const addTemplateButton = document.querySelector("#addTemplateButton");
+const storageSettingsList = document.querySelector("#storageSettingsList");
+const storageSettingsCount = document.querySelector("#storageSettingsCount");
+const toggleStorageAddButton = document.querySelector("#toggleStorageAddButton");
+const storageAddRow = document.querySelector("#storageAddRow");
+const newStorageNameInput = document.querySelector("#newStorageName");
+const addStorageButton = document.querySelector("#addStorageButton");
 const saveSettingsButton = document.querySelector("#saveSettingsButton");
 const resetCategoriesButton = document.querySelector("#resetCategoriesButton");
 const resetShippingButton = document.querySelector("#resetShippingButton");
 const resetTemplatesButton = document.querySelector("#resetTemplatesButton");
+const resetStorageButton = document.querySelector("#resetStorageButton");
 const descriptionModal = document.querySelector("#descriptionModal");
 const descriptionModalItemTitle = document.querySelector("#descriptionModalItemTitle");
 const descriptionModalContent = document.querySelector("#descriptionModalContent");
@@ -286,15 +293,14 @@ const CONDITION_OPTIONS = [
   "全体的に状態が悪い",
 ];
 const DEFAULT_STORAGE_LOCATIONS = [
-  "押し入れ右上",
-  "黒い箱A",
-  "玄関横の棚",
-  "安全用品ケース",
-  "CD在庫箱1",
-  "箱",
-  "かご",
-  "本棚",
   "未設定",
+  "押し入れ",
+  "黒い箱A",
+  "かごA",
+  "棚",
+  "クローゼット",
+  "実家",
+  "その他",
 ];
 sortingItems = loadSortingItems();
 const DEFAULT_SETTINGS = {
@@ -334,6 +340,7 @@ const DEFAULT_SETTINGS = {
     { name: "定形外郵便", cost: 0 },
     { name: "その他", cost: 0 },
   ],
+  storageLocations: DEFAULT_STORAGE_LOCATIONS,
 };
 const DEFAULT_TEMPLATES = [
   {
@@ -455,6 +462,7 @@ function normalizeSettings(value) {
   return {
     categories: normalizeList(value.categories, DEFAULT_SETTINGS.categories),
     shippingMethods: normalizeShippingMethods(value.shippingMethods),
+    storageLocations: normalizeList(value.storageLocations, DEFAULT_SETTINGS.storageLocations),
   };
 }
 
@@ -990,7 +998,7 @@ function refreshCategoryOptions(selectedValue = "") {
 
 function getStorageLocationOptions(selectedValue = "") {
   const values = [
-    ...DEFAULT_STORAGE_LOCATIONS,
+    ...settings.storageLocations,
     ...items.map((item) => item.storageLocation),
     selectedValue,
   ];
@@ -1860,10 +1868,6 @@ function getInputIssues(item) {
     issues.push("状態未設定");
   }
 
-  if (!item.imageData) {
-    issues.push("写真未登録");
-  }
-
   if (!String(item.description || "").trim()) {
     issues.push("説明文未登録");
   }
@@ -1929,7 +1933,7 @@ function updateInputIssueDashboard(allItems) {
   missingMinimumPriceCount.textContent = `${targetItems.filter((item) => calculateMinimumPrice(item) <= 0).length}件`;
   missingCategoryCount.textContent = `${targetItems.filter((item) => !String(item.category || "").trim()).length}件`;
   missingConditionCount.textContent = `${targetItems.filter((item) => !String(item.condition || "").trim()).length}件`;
-  missingImageCount.textContent = `${targetItems.filter((item) => !item.imageData).length}件`;
+  missingImageCount.textContent = "任意";
   missingDescriptionCount.textContent = `${targetItems.filter((item) => !String(item.description || "").trim()).length}件`;
   renderInputIssueList(issueItems);
   return issueItems.length;
@@ -2587,6 +2591,7 @@ function updateProfitPreview() {
   profitPreview.classList.toggle("profit-positive", profit !== "" && profit >= 0);
   profitPreview.classList.toggle("profit-negative", profit !== "" && profit < 0);
   updateActualProfitPreview();
+  updateSubmitButtonState();
 }
 
 function updateActualProfitPreview() {
@@ -2605,6 +2610,29 @@ function updateActualProfitPreview() {
   actualProfitPreview.textContent = formatMoney(actualProfit);
   actualProfitPreview.classList.toggle("profit-positive", actualProfit !== "" && actualProfit >= 0);
   actualProfitPreview.classList.toggle("profit-negative", actualProfit !== "" && actualProfit < 0);
+}
+
+function isItemFormReadyToSubmit() {
+  if (statusInput.value === "売却済み" && itemIdInput.value) {
+    return true;
+  }
+
+  return Boolean(
+    listingTitleInput.value.trim()
+      && categoryInput.value
+      && conditionInput.value
+      && plannedPriceInput.value !== ""
+      && shippingMethodInput.value
+      && shippingCostInput.value !== "",
+  );
+}
+
+function updateSubmitButtonState() {
+  const isReady = isItemFormReadyToSubmit();
+  submitButton.classList.toggle("submit-ready", isReady);
+  submitButton.classList.toggle("submit-incomplete", !isReady);
+  submitButton.disabled = isImageProcessing || !isReady;
+  submitButton.textContent = isImageProcessing ? "画像を準備中..." : (itemIdInput.value ? "更新する" : "登録する");
 }
 
 function updateSoldFieldsVisibility() {
@@ -2627,11 +2655,12 @@ function updateSoldFieldsVisibility() {
   }
 
   updateActualProfitPreview();
+  updateSubmitButtonState();
 }
 
 function setSubmitDisabled(disabled) {
-  submitButton.disabled = disabled;
-  submitButton.textContent = disabled ? "画像を準備中..." : (itemIdInput.value ? "更新する" : "登録する");
+  isImageProcessing = disabled;
+  updateSubmitButtonState();
 }
 
 function updateImagePreview(imageData) {
@@ -4210,14 +4239,20 @@ function createMobileCard(item) {
 
 function renderSettings() {
   categorySettingsList.innerHTML = "";
+  storageSettingsList.innerHTML = "";
   shippingSettingsList.innerHTML = "";
   templateSettingsList.innerHTML = "";
   categorySettingsCount.textContent = `${settings.categories.length}件`;
+  storageSettingsCount.textContent = `${settings.storageLocations.length}件`;
   shippingSettingsCount.textContent = `${settings.shippingMethods.length}件`;
   templateSettingsCount.textContent = `${descriptionTemplates.length}件`;
 
   settings.categories.forEach((category, index) => {
     categorySettingsList.append(createCategorySettingsRow(category, index));
+  });
+
+  settings.storageLocations.forEach((location, index) => {
+    storageSettingsList.append(createStorageSettingsRow(location, index));
   });
 
   renderGroupedShippingSettings();
@@ -4306,6 +4341,24 @@ function createCategorySettingsRow(category, index) {
   return row;
 }
 
+function createStorageSettingsRow(location, index) {
+  const row = document.createElement("div");
+  const count = countItemsByField("storageLocation", location);
+  row.className = "storage-setting-row";
+  row.dataset.index = String(index);
+  row.innerHTML = `
+    <div class="settings-row-main">
+      <input type="text" data-field="name" aria-label="保管場所名">
+      <span class="settings-usage-count">${count}件</span>
+    </div>
+    <button class="ghost-button compact-row-button" type="button" data-action="move-up" aria-label="上へ">↑</button>
+    <button class="ghost-button compact-row-button" type="button" data-action="move-down" aria-label="下へ">↓</button>
+    <button class="danger-button" type="button" data-action="remove-storage">削除</button>
+  `;
+  row.querySelector('[data-field="name"]').value = location;
+  return row;
+}
+
 function createShippingSettingsRow(method, index) {
   const row = document.createElement("div");
   const usageCount = countItemsByField("shippingMethod", method.name);
@@ -4356,6 +4409,9 @@ function collectSettingsFromForm() {
   const categories = [...categorySettingsList.querySelectorAll(".category-setting-row")]
     .map((row) => row.querySelector('[data-field="name"]').value.trim())
     .filter(Boolean);
+  const storageLocations = [...storageSettingsList.querySelectorAll(".storage-setting-row")]
+    .map((row) => row.querySelector('[data-field="name"]').value.trim())
+    .filter(Boolean);
   const shippingMethods = [...shippingSettingsList.querySelectorAll(".shipping-setting-row")]
     .map((row) => ({
       name: row.querySelector('[data-field="name"]').value.trim(),
@@ -4365,6 +4421,7 @@ function collectSettingsFromForm() {
 
   return normalizeSettings({
     categories,
+    storageLocations,
     shippingMethods,
   });
 }
@@ -4387,6 +4444,7 @@ function saveSettingsFromForm() {
   saveSettings();
   saveTemplates();
   refreshCategoryOptions(categoryInput.value);
+  refreshStorageLocationOptions(storageLocationInput.value);
   refreshShippingMethodOptions(shippingMethodInput.value);
   refreshTemplateOptions();
   renderSettings();
@@ -4419,6 +4477,21 @@ function addCategoryFromForm() {
   newCategoryNameInput.value = "";
   categoryAddRow.classList.add("hidden");
   toggleCategoryAddButton.textContent = "カテゴリを追加";
+  markSettingsDirty();
+}
+
+function addStorageFromForm() {
+  const name = newStorageNameInput.value.trim();
+
+  if (!name) {
+    alert("保管場所名を入力してください。");
+    return;
+  }
+
+  storageSettingsList.append(createStorageSettingsRow(name, storageSettingsList.children.length));
+  newStorageNameInput.value = "";
+  storageAddRow.classList.add("hidden");
+  toggleStorageAddButton.textContent = "保管場所を追加";
   markSettingsDirty();
 }
 
@@ -4492,6 +4565,25 @@ function resetCategoriesToDefault(event) {
   refreshCategoryOptions(categoryInput.value);
   renderSettings();
   alert("カテゴリを初期設定に戻しました。");
+}
+
+function resetStorageToDefault(event) {
+  event?.preventDefault();
+  event?.stopPropagation();
+  const shouldReset = confirm("保管場所だけを初期設定に戻しますか？\n商品データとクラウド共有設定は変更しません。");
+
+  if (!shouldReset) {
+    return;
+  }
+
+  settings = normalizeSettings({
+    ...settings,
+    storageLocations: DEFAULT_SETTINGS.storageLocations,
+  });
+  saveSettings();
+  refreshStorageLocationOptions(storageLocationInput.value);
+  renderSettings();
+  alert("保管場所を初期設定に戻しました。");
 }
 
 function resetShippingToDefault(event) {
@@ -4608,9 +4700,9 @@ function resetForm() {
     details.open = false;
   });
   formTitle.textContent = "商品登録";
-  submitButton.textContent = "登録する";
   cancelEditButton.classList.add("hidden");
   hideCompletionPanel();
+  updateSubmitButtonState();
   isFormDirty = false;
 }
 
@@ -4655,8 +4747,8 @@ function startEdit(item) {
     details.open = details.classList.contains("form-details-mercari") && getItemStatus(item) === "売却済み";
   });
   formTitle.textContent = "商品編集";
-  submitButton.textContent = "更新する";
   cancelEditButton.classList.remove("hidden");
+  updateSubmitButtonState();
   isFormDirty = false;
   listingTitleInput.focus();
 }
@@ -4790,6 +4882,11 @@ form.addEventListener("submit", (event) => {
   event.preventDefault();
 
   if (isImageProcessing) {
+    return;
+  }
+
+  if (!isItemFormReadyToSubmit()) {
+    updateSubmitButtonState();
     return;
   }
 
@@ -5545,25 +5642,36 @@ shippingMethodInput.addEventListener("change", () => {
 });
 shippingSizeInput.addEventListener("change", applyShippingSizeCost);
 [categoryInput, conditionInput, storageLocationInput, shippingMethodInput, shippingSizeInput].forEach((select) => {
-  select.addEventListener("change", () => updateSelectPlaceholderState(select));
+  select.addEventListener("change", () => {
+    updateSelectPlaceholderState(select);
+    updateSubmitButtonState();
+  });
 });
 conditionQuickButtons.forEach((button) => {
   button.addEventListener("click", () => {
     conditionInput.value = button.dataset.conditionValue;
     updateSelectPlaceholderState(conditionInput);
     updateConditionQuickButtons();
+    updateSubmitButtonState();
     isFormDirty = true;
   });
 });
-conditionInput.addEventListener("change", updateConditionQuickButtons);
+conditionInput.addEventListener("change", () => {
+  updateConditionQuickButtons();
+  updateSubmitButtonState();
+});
 statusInput.addEventListener("change", updateSoldFieldsVisibility);
 descriptionTemplateInput.addEventListener("change", applyDescriptionTemplate);
 saveSettingsButton.addEventListener("click", saveSettingsFromForm);
 addCategoryButton.addEventListener("click", addCategoryFromForm);
+addStorageButton.addEventListener("click", addStorageFromForm);
 addShippingMethodButton.addEventListener("click", addShippingMethodFromForm);
 addTemplateButton.addEventListener("click", addTemplateFromForm);
 toggleCategoryAddButton.addEventListener("click", () => {
   toggleSettingsAddRow(categoryAddRow, toggleCategoryAddButton, "追加フォームを閉じる", "カテゴリを追加");
+});
+toggleStorageAddButton.addEventListener("click", () => {
+  toggleSettingsAddRow(storageAddRow, toggleStorageAddButton, "追加フォームを閉じる", "保管場所を追加");
 });
 toggleShippingAddButton.addEventListener("click", () => {
   toggleSettingsAddRow(shippingAddRow, toggleShippingAddButton, "追加フォームを閉じる", "配送方法を追加");
@@ -5572,9 +5680,10 @@ toggleTemplateAddButton.addEventListener("click", () => {
   toggleSettingsAddRow(templateAddRow, toggleTemplateAddButton, "追加フォームを閉じる", "テンプレートを追加");
 });
 resetCategoriesButton.addEventListener("click", resetCategoriesToDefault);
+resetStorageButton.addEventListener("click", resetStorageToDefault);
 resetShippingButton.addEventListener("click", resetShippingToDefault);
 resetTemplatesButton.addEventListener("click", resetTemplatesToDefault);
-[categorySettingsList, shippingSettingsList, templateSettingsList].forEach((list) => {
+[categorySettingsList, storageSettingsList, shippingSettingsList, templateSettingsList].forEach((list) => {
   list.addEventListener("input", markSettingsDirty);
 });
 categorySettingsList.addEventListener("click", (event) => {
@@ -5586,6 +5695,28 @@ categorySettingsList.addEventListener("click", (event) => {
   }
 
   if (button.dataset.action === "remove-category") {
+    row.remove();
+  }
+
+  if (button.dataset.action === "move-up") {
+    moveSettingsRow(row, "up");
+  }
+
+  if (button.dataset.action === "move-down") {
+    moveSettingsRow(row, "down");
+  }
+
+  markSettingsDirty();
+});
+storageSettingsList.addEventListener("click", (event) => {
+  const button = event.target.closest("button");
+  const row = event.target.closest(".storage-setting-row");
+
+  if (!button || !row) {
+    return;
+  }
+
+  if (button.dataset.action === "remove-storage") {
     row.remove();
   }
 
@@ -5646,6 +5777,7 @@ templateSettingsList.addEventListener("click", (event) => {
 [plannedPriceInput, shippingCostInput, purchaseCostInput].forEach((input) => {
   input.addEventListener("input", updateProfitPreview);
 });
+listingTitleInput.addEventListener("input", updateSubmitButtonState);
 [actualSalePriceInput, actualShippingCostInput, purchaseCostInput].forEach((input) => {
   input.addEventListener("input", updateActualProfitPreview);
 });
