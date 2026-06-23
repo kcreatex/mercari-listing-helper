@@ -24,6 +24,7 @@ const goToListAfterSaveButton = document.querySelector("#goToListAfterSaveButton
 const itemIdInput = document.querySelector("#itemId");
 const nameInput = document.querySelector("#name");
 const listingTitleInput = document.querySelector("#listingTitle");
+const toastNotification = document.querySelector("#toastNotification");
 const categoryInput = document.querySelector("#category");
 const conditionInput = document.querySelector("#condition");
 const conditionQuickButtons = document.querySelectorAll("[data-condition-value]");
@@ -268,6 +269,7 @@ let cloudHouseholdId = "";
 let isCloudReady = false;
 let hasCloudSaveWarning = false;
 let isSettingsDirty = false;
+let toastTimer = null;
 
 function isMobileViewport() {
   return window.matchMedia("(max-width: 700px)").matches;
@@ -604,6 +606,28 @@ function updateCloudLastSyncDisplay() {
   }
 
   cloudLastSync.textContent = formatCloudSyncTime(localStorage.getItem(CLOUD_LAST_SYNC_KEY));
+}
+
+function showToast(message, type = "success") {
+  if (!toastNotification) {
+    return;
+  }
+
+  clearTimeout(toastTimer);
+  toastNotification.textContent = message;
+  toastNotification.classList.remove("hidden", "toast-success", "toast-error", "toast-visible");
+  toastNotification.classList.add(type === "error" ? "toast-error" : "toast-success");
+
+  requestAnimationFrame(() => {
+    toastNotification.classList.add("toast-visible");
+  });
+
+  toastTimer = setTimeout(() => {
+    toastNotification.classList.remove("toast-visible");
+    setTimeout(() => {
+      toastNotification.classList.add("hidden");
+    }, 220);
+  }, 2600);
 }
 
 function markCloudSynced() {
@@ -1226,6 +1250,36 @@ function calculateProjectedProfitRate(item) {
   }
 
   return (profit / purchaseCost) * 100;
+}
+
+function getProfitLevelClass(profit) {
+  const value = parseMoney(profit);
+
+  if (value === "" || value < 500) {
+    return "profit-level-low";
+  }
+
+  if (value >= 3000) {
+    return "profit-level-gold";
+  }
+
+  if (value >= 1500) {
+    return "profit-level-blue";
+  }
+
+  return "profit-level-green";
+}
+
+function applyProfitLevel(element, profit) {
+  element.classList.remove(
+    "profit-positive",
+    "profit-negative",
+    "profit-level-low",
+    "profit-level-green",
+    "profit-level-blue",
+    "profit-level-gold",
+  );
+  element.classList.add(getProfitLevelClass(profit));
 }
 
 function formatPercent(value) {
@@ -2422,7 +2476,7 @@ function openDetailModal(item) {
   } else {
     imageWrap.classList.add("detail-image-empty");
     const placeholder = document.createElement("span");
-    placeholder.textContent = "画像未登録";
+    placeholder.textContent = "画像なし（任意）";
     imageWrap.append(placeholder);
   }
   detailModalContent.append(imageWrap);
@@ -3735,23 +3789,23 @@ function createRecentDockMobileCard(item) {
       </div>
     </div>
     <dl class="mobile-card-details">
-      <div>
+      <div class="mobile-priority-storage">
         <dt>保管場所</dt>
         <dd data-field="storageLocation"></dd>
       </div>
-      <div>
+      <div class="mobile-priority-profit">
         <dt>利益</dt>
         <dd data-field="profit"></dd>
       </div>
-      <div>
+      <div class="mobile-priority-small">
         <dt>出品状態</dt>
         <dd data-field="status"></dd>
       </div>
-      <div>
+      <div class="mobile-priority-small">
         <dt>売却先</dt>
         <dd data-field="destination"></dd>
       </div>
-      <div>
+      <div class="mobile-priority-small">
         <dt>価格</dt>
         <dd data-field="plannedPrice"></dd>
       </div>
@@ -3778,8 +3832,7 @@ function createRecentDockMobileCard(item) {
   const mobileProfit = calculateProfit(item);
   const mobileProfitField = card.querySelector('[data-field="profit"]');
   mobileProfitField.textContent = formatMoney(mobileProfit);
-  mobileProfitField.classList.toggle("profit-positive", mobileProfit !== "" && mobileProfit >= 0);
-  mobileProfitField.classList.toggle("profit-negative", mobileProfit !== "" && mobileProfit < 0);
+  applyProfitLevel(mobileProfitField, mobileProfit);
   const mobileStatusField = card.querySelector('[data-field="status"]');
   mobileStatusField.textContent = getSearchNeededLabel(item) === "要捜索" ? "要捜索" : getItemStatus(item);
   mobileStatusField.classList.toggle("search-needed-cell", getItemStatus(item) === "要捜索");
@@ -3953,8 +4006,7 @@ function createActiveRow(item) {
   row.children[1].textContent = item.storageLocation || "-";
   const profit = calculateProfit(item);
   row.children[2].textContent = formatMoney(profit);
-  row.children[2].classList.toggle("profit-positive", profit !== "" && profit >= 0);
-  row.children[2].classList.toggle("profit-negative", profit !== "" && profit < 0);
+  applyProfitLevel(row.children[2], profit);
   const statusBadge = document.createElement("span");
   statusBadge.className = `status-badge ${STATUS_CLASS_NAMES[getItemStatus(item)] || "status-unlisted"}`;
   statusBadge.textContent = getItemStatus(item);
@@ -4047,7 +4099,10 @@ function createMobileCompactTableCard(item) {
 
   card.querySelector(".mobile-compact-title").textContent = getListingTitle(item) || "-";
   card.querySelector(".mobile-compact-storage").textContent = item.storageLocation || "-";
-  card.querySelector(".mobile-compact-profit").textContent = formatMoney(calculateProfit(item));
+  const compactProfit = calculateProfit(item);
+  const compactProfitField = card.querySelector(".mobile-compact-profit");
+  compactProfitField.textContent = formatMoney(compactProfit);
+  applyProfitLevel(compactProfitField, compactProfit);
   card.querySelector(".mobile-compact-status").textContent = getSearchNeededLabel(item) === "要捜索" ? "要捜索" : getItemStatus(item);
   card.querySelector(".mobile-compact-status").classList.toggle("search-needed-cell", getItemStatus(item) === "要捜索");
   card.querySelector(".mobile-compact-destination").textContent = getSortingDestinationForItem(item);
@@ -4080,7 +4135,7 @@ function createInventoryShelfCard(item) {
       </details>
     </div>
     <div class="shelf-card-meta">
-      <span class="shelf-location"></span>
+      <span class="shelf-location shelf-priority-storage"></span>
       <span class="profit-cell shelf-profit" data-field="profit"></span>
     </div>
     <div class="shelf-action-state">
@@ -4088,7 +4143,7 @@ function createInventoryShelfCard(item) {
       <span class="search-needed-label"></span>
       <span class="destination-label"></span>
     </div>
-    <dl class="shelf-card-money shelf-card-aux">
+    <dl class="shelf-card-money shelf-card-aux shelf-priority-small">
       <div><dt>価格</dt><dd data-field="plannedPrice"></dd></div>
     </dl>
   `;
@@ -4105,8 +4160,7 @@ function createInventoryShelfCard(item) {
   card.querySelector('[data-field="plannedPrice"]').textContent = formatMoney(parseMoney(item.plannedPrice));
   const profitField = card.querySelector('[data-field="profit"]');
   profitField.textContent = formatMoney(profit);
-  profitField.classList.toggle("profit-positive", profit !== "" && profit >= 0);
-  profitField.classList.toggle("profit-negative", profit !== "" && profit < 0);
+  applyProfitLevel(profitField, profit);
 
   return card;
 }
@@ -4183,23 +4237,23 @@ function createMobileCard(item) {
       </div>
     </div>
     <dl class="mobile-card-details">
-      <div>
+      <div class="mobile-priority-storage">
         <dt>保管場所</dt>
         <dd data-field="storageLocation"></dd>
       </div>
-      <div>
+      <div class="mobile-priority-profit">
         <dt>利益</dt>
         <dd data-field="profit"></dd>
       </div>
-      <div>
+      <div class="mobile-priority-small">
         <dt>出品状態</dt>
         <dd data-field="status"></dd>
       </div>
-      <div>
+      <div class="mobile-priority-small">
         <dt>売却先</dt>
         <dd data-field="destination"></dd>
       </div>
-      <div>
+      <div class="mobile-priority-small">
         <dt>価格</dt>
         <dd data-field="plannedPrice"></dd>
       </div>
@@ -4226,8 +4280,7 @@ function createMobileCard(item) {
   const mobileProfit = calculateProfit(item);
   const mobileProfitField = card.querySelector('[data-field="profit"]');
   mobileProfitField.textContent = formatMoney(mobileProfit);
-  mobileProfitField.classList.toggle("profit-positive", mobileProfit !== "" && mobileProfit >= 0);
-  mobileProfitField.classList.toggle("profit-negative", mobileProfit !== "" && mobileProfit < 0);
+  applyProfitLevel(mobileProfitField, mobileProfit);
   const mobileStatusField = card.querySelector('[data-field="status"]');
   mobileStatusField.textContent = getSearchNeededLabel(item) === "要捜索" ? "要捜索" : getItemStatus(item);
   mobileStatusField.classList.toggle("search-needed-cell", getItemStatus(item) === "要捜索");
@@ -4887,6 +4940,7 @@ form.addEventListener("submit", (event) => {
 
   if (!isItemFormReadyToSubmit()) {
     updateSubmitButtonState();
+    showToast("必須項目を入力してください", "error");
     return;
   }
 
@@ -4940,9 +4994,11 @@ form.addEventListener("submit", (event) => {
 
   if (!saveItems()) {
     items = previousItems;
+    showToast("保存できませんでした", "error");
     return;
   }
 
+  showToast(isNewItem ? "✓ 商品を登録しました" : "✓ 商品を更新しました", "success");
   resetForm();
   render();
 

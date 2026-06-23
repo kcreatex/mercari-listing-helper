@@ -22,6 +22,8 @@
       <a href="#settingsTitle" data-view="settings">設定</a>
     </nav>
 
+    <div class="toast-notification hidden" id="toastNotification" role="status" aria-live="polite"></div>
+
     <section class="dashboard-panel" aria-labelledby="analysisTitle">
       <div class="panel-heading">
         <div>
@@ -152,7 +154,7 @@
             <span>状態未設定</span>
             <strong id="missingConditionCount">0件</strong>
           </div>
-          <div>
+          <div class="optional-image-metric">
             <span>写真</span>
             <strong id="missingImageCount">任意</strong>
           </div>
