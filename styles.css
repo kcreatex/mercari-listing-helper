@@ -5749,6 +5749,502 @@ body.analysis-view .analysis-accordion summary {
   }
 }
 
+/* UI統一調整フェーズ: 全ページの視覚ルール */
+:root {
+  --ui-outer: 16px;
+  --ui-card-pad: 12px;
+  --ui-gap: 10px;
+  --ui-section-gap: 20px;
+  --ui-radius: 8px;
+  --ui-control-height: 40px;
+  --ui-accordion-height: 38px;
+}
+
+body {
+  background: #f4f5f6;
+}
+
+.app-header {
+  padding: 12px var(--ui-outer) !important;
+}
+
+.app-shell {
+  gap: var(--ui-section-gap) !important;
+  padding: var(--ui-section-gap) var(--ui-outer) calc(var(--ui-section-gap) * 2) 196px !important;
+}
+
+.dashboard-panel,
+.cloud-panel,
+.quick-search-panel {
+  margin: var(--ui-section-gap) var(--ui-outer) 0 196px !important;
+}
+
+.form-panel,
+.list-panel,
+.sorting-panel,
+.settings-panel,
+.dashboard-panel,
+.sold-panel,
+.cloud-panel,
+.shipping-management-panel,
+.packing-list-panel,
+.modal-panel,
+.description-modal-content {
+  padding: var(--ui-card-pad) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--ui-radius) !important;
+  background: var(--surface) !important;
+}
+
+.dashboard-card,
+.dashboard-card-large,
+.dashboard-grid div,
+.input-issue-grid div,
+.storage-report-card,
+.excavation-ranking-item,
+.buried-ranking-item,
+.monthly-profit-item,
+.profit-ranking-item,
+.grouped-profit-ranking-item,
+.shipping-dashboard-card,
+.shipping-list-item,
+.packing-destination,
+.packing-box,
+.inventory-shelf-card,
+.mobile-item-card,
+.quick-search-result,
+.completion-panel,
+.sorting-form-card,
+.form-detail-group,
+.settings-group,
+.category-setting-row,
+.shipping-setting-row,
+.template-setting-row,
+.category-add-row,
+.shipping-add-row,
+.template-add-row,
+.detail-hero,
+.detail-section {
+  padding: var(--ui-card-pad) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--ui-radius) !important;
+  box-shadow: none !important;
+}
+
+.panel-heading,
+.dashboard-panel .panel-heading,
+.sorting-panel .panel-heading,
+.settings-panel .panel-heading,
+.list-panel .panel-heading,
+.list-heading,
+.storage-report-heading,
+.dock-heading,
+.modal-heading {
+  align-items: center !important;
+  gap: var(--ui-gap) !important;
+  min-height: 0 !important;
+  margin-bottom: var(--ui-gap) !important;
+}
+
+.panel-heading h2,
+.dashboard-panel h2,
+.sorting-panel h2,
+.settings-panel h2,
+.list-panel h2 {
+  margin: 0 !important;
+  font-size: 16px !important;
+  line-height: 1.25 !important;
+}
+
+.muted,
+.ranking-note,
+.dashboard-panel .muted,
+.sorting-panel .muted,
+.settings-panel .muted,
+.list-panel .muted {
+  margin: 2px 0 0 !important;
+  font-size: 11px !important;
+  line-height: 1.3 !important;
+}
+
+form,
+#itemForm,
+.form-details-grid,
+.form-detail-group-grid,
+.price-fields,
+.profit-preview,
+.sorting-form,
+.sorting-card-grid,
+.sorting-price-grid,
+.sorting-controls,
+.sorting-summary-grid,
+.inventory-toolbar,
+.inventory-control-group,
+.inventory-filter-row,
+.quick-actions,
+.view-toggle,
+.settings-grid,
+.category-settings-list,
+.shipping-settings-list,
+.template-settings-list,
+.cloud-form,
+.cloud-config-grid,
+.input-issue-list,
+.storage-report-list,
+.excavation-ranking-list,
+.buried-ranking-list,
+.monthly-profit-list,
+.profit-ranking-list,
+.profit-amount-ranking-list,
+.profit-rate-ranking-list,
+.category-profit-ranking-list,
+.storage-profit-ranking-list,
+.shipping-dashboard-grid,
+.shipping-priority-list,
+.shipping-completed-list,
+.mobile-card-list,
+.inventory-shelf-list,
+.compact-table-grid,
+.registration-dock,
+.form-assist-grid,
+.completion-panel,
+.completion-panel div {
+  gap: var(--ui-gap) !important;
+}
+
+label {
+  gap: 5px !important;
+  font-size: 12px !important;
+  line-height: 1.25 !important;
+}
+
+input,
+select,
+button,
+.primary-button,
+.ghost-button,
+.text-button,
+.danger-button {
+  min-height: var(--ui-control-height) !important;
+}
+
+input,
+select,
+textarea {
+  padding: 8px 10px !important;
+}
+
+button,
+.primary-button,
+.ghost-button,
+.text-button,
+.danger-button {
+  padding: 8px 12px !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #9aa3ad !important;
+  font-weight: 400 !important;
+}
+
+select.placeholder-select {
+  color: #9aa3ad !important;
+  font-weight: 400 !important;
+}
+
+.analysis-accordion,
+.settings-accordion,
+.sorting-extra-card,
+.cloud-panel.settings-accordion {
+  margin: 0 0 var(--ui-gap) !important;
+  padding: 0 !important;
+  overflow: hidden;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--ui-radius) !important;
+  background: #fff !important;
+}
+
+.analysis-accordion > summary,
+.settings-accordion > summary,
+.sorting-extra-card > summary,
+.cloud-panel.settings-accordion > summary,
+.cloud-summary {
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 8px !important;
+  align-items: center !important;
+  min-height: var(--ui-accordion-height) !important;
+  padding: 7px 10px !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+  line-height: 1.2 !important;
+}
+
+.settings-accordion > summary .settings-reset-button {
+  min-height: 26px !important;
+  padding: 3px 8px !important;
+  font-size: 11px !important;
+}
+
+.analysis-accordion[open] > summary,
+.settings-accordion[open] > summary,
+.sorting-extra-card[open] > summary,
+.cloud-panel.settings-accordion[open] > summary {
+  border-bottom: 1px solid var(--line) !important;
+}
+
+.analysis-accordion > .input-issue-list,
+.analysis-accordion > .analysis-panel,
+.analysis-accordion > .monthly-profit-panel,
+.settings-accordion > :not(summary),
+.sorting-extra-card > :not(summary) {
+  padding: var(--ui-card-pad) !important;
+}
+
+body.analysis-view .dashboard-panel {
+  padding: var(--ui-card-pad) !important;
+}
+
+body.analysis-view .dashboard-panel .panel-heading {
+  margin-bottom: 8px !important;
+}
+
+body.analysis-view .dashboard-hero-grid,
+body.analysis-view .dashboard-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+
+body.analysis-view .dashboard-card,
+body.analysis-view .dashboard-card-large,
+body.analysis-view .dashboard-grid div {
+  display: grid !important;
+  align-content: center !important;
+  min-height: 42px !important;
+  padding: 8px 10px !important;
+}
+
+body.analysis-view .dashboard-card span,
+body.analysis-view .dashboard-grid span {
+  margin: 0 !important;
+  font-size: 10px !important;
+  line-height: 1.1 !important;
+}
+
+body.analysis-view .dashboard-card strong,
+body.analysis-view .dashboard-card-large strong,
+body.analysis-view .dashboard-grid strong {
+  margin: 2px 0 0 !important;
+  font-size: 14px !important;
+  line-height: 1.1 !important;
+}
+
+.settings-grid {
+  gap: var(--ui-gap) !important;
+}
+
+.settings-group {
+  min-height: 0 !important;
+}
+
+.inventory-toolbar {
+  gap: 8px !important;
+}
+
+.inventory-toolbar input,
+.inventory-toolbar select,
+.inventory-toolbar button {
+  min-height: 36px !important;
+  font-size: 12px !important;
+}
+
+.inventory-toolbar .inventory-control-group {
+  gap: 4px !important;
+}
+
+.inventory-control-label {
+  font-size: 9px !important;
+  letter-spacing: 0 !important;
+}
+
+.inventory-shelf-list {
+  align-items: start;
+}
+
+.inventory-shelf-card {
+  min-height: 0 !important;
+  padding: 9px !important;
+}
+
+.shelf-card-top {
+  grid-template-columns: minmax(0, 1fr) 30px !important;
+  gap: 8px !important;
+}
+
+.shelf-card-title {
+  font-size: 12px !important;
+  line-height: 1.25 !important;
+}
+
+.shelf-card-meta,
+.shelf-card-money {
+  margin-top: 6px !important;
+}
+
+.shelf-card-money div {
+  padding: 4px 6px !important;
+}
+
+.sorting-form-card {
+  min-height: 0 !important;
+}
+
+.sorting-form-card h3 {
+  margin: 0 !important;
+  font-size: 13px !important;
+  line-height: 1.25 !important;
+}
+
+.sorting-card-grid label,
+.sorting-price-grid label {
+  min-width: 0 !important;
+}
+
+.sorting-summary-grid {
+  gap: 5px !important;
+}
+
+.sorting-summary-grid div {
+  min-height: 26px !important;
+  padding: 3px 7px !important;
+  border-radius: 999px !important;
+}
+
+.sorting-summary-grid span,
+.sorting-summary-grid strong,
+.sorting-summary-grid small {
+  font-size: 10px !important;
+  line-height: 1.1 !important;
+}
+
+.row-action-menu .actions,
+.mobile-more-actions-panel,
+#sortingTableWrap .sorting-action-panel {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 5px !important;
+}
+
+.row-action-menu .actions button,
+.mobile-more-actions-panel .text-button,
+.mobile-more-actions-panel .danger-button,
+#sortingTableWrap .sorting-action-panel button {
+  min-height: 34px !important;
+  padding: 6px 8px !important;
+}
+
+@media (max-width: 900px) {
+  .app-shell {
+    padding: var(--ui-outer) var(--ui-outer) calc(var(--ui-section-gap) * 2) !important;
+  }
+
+  .dashboard-panel,
+  .cloud-panel,
+  .quick-search-panel {
+    margin: var(--ui-section-gap) var(--ui-outer) 0 !important;
+  }
+
+  .side-nav {
+    gap: 6px !important;
+    padding: 10px var(--ui-outer) !important;
+  }
+}
+
+@media (max-width: 700px) {
+  :root {
+    --ui-outer: 12px;
+    --ui-card-pad: 10px;
+    --ui-gap: 8px;
+    --ui-section-gap: 16px;
+    --ui-control-height: 38px;
+    --ui-accordion-height: 34px;
+  }
+
+  .app-header,
+  .side-nav,
+  .form-panel,
+  .list-panel,
+  .sorting-panel,
+  .settings-panel,
+  .dashboard-panel,
+  .cloud-panel,
+  .sold-panel {
+    padding: var(--ui-card-pad) !important;
+  }
+
+  .app-shell {
+    gap: var(--ui-section-gap) !important;
+    padding: 10px var(--ui-outer) calc(76px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .panel-heading h2,
+  .dashboard-panel h2,
+  .sorting-panel h2,
+  .settings-panel h2,
+  .list-panel h2 {
+    font-size: 15px !important;
+  }
+
+  .analysis-accordion > summary,
+  .settings-accordion > summary,
+  .sorting-extra-card > summary,
+  .cloud-summary {
+    min-height: var(--ui-accordion-height) !important;
+    padding: 6px 9px !important;
+  }
+
+  body.analysis-view .dashboard-card,
+  body.analysis-view .dashboard-card-large,
+  body.analysis-view .dashboard-grid div {
+    min-height: 38px !important;
+    padding: 7px 8px !important;
+  }
+
+  body.analysis-view .dashboard-card strong,
+  body.analysis-view .dashboard-card-large strong,
+  body.analysis-view .dashboard-grid strong {
+    font-size: 12px !important;
+  }
+
+  .inventory-toolbar {
+    gap: 6px !important;
+  }
+
+  .inventory-toolbar input,
+  .inventory-toolbar select,
+  .inventory-toolbar button {
+    min-height: 34px !important;
+    padding: 6px 8px !important;
+  }
+
+  .form-details-grid,
+  .form-detail-group-grid,
+  .sorting-card-grid,
+  .sorting-price-grid {
+    gap: 8px !important;
+  }
+
+  .sorting-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+  }
+
+  .sorting-summary-grid div {
+    min-height: 24px !important;
+    padding: 3px 6px !important;
+  }
+}
+
 /* 全ページ共通の余白・入力高さルール */
 .app-header {
   gap: var(--space-element) !important;
