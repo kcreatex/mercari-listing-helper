@@ -2884,6 +2884,7 @@ function setSoldOnlyFormMode(isSold) {
   listingTitleInput.required = !isSold;
   categoryInput.required = !isSold;
   conditionInput.required = !isSold;
+  storageLocationInput.required = !isSold;
 
   if (!isSold) {
     applyShippingMethodCost();
@@ -2996,9 +2997,7 @@ function isItemFormReadyToSubmit() {
     listingTitleInput.value.trim()
       && categoryInput.value
       && conditionInput.value
-      && plannedPriceInput.value !== ""
-      && shippingMethodInput.value
-      && shippingCostInput.value !== "",
+      && storageLocationInput.value,
   );
 }
 
@@ -4197,9 +4196,7 @@ function showCompletionPanel(item) {
 
 function render() {
   const filteredItems = getFilteredItems();
-  const activeItems = itemListTargetMode === "all"
-    ? filteredItems
-    : filteredItems.filter((item) => ["未出品", "出品中", "保留", "要捜索"].includes(getItemStatus(item)));
+  const activeItems = filteredItems;
   const sortedActiveItems = sortActiveItems(activeItems);
   const soldItems = sortSoldItems(filteredItems.filter((item) => getItemStatus(item) === "売却済み"));
   const allSoldItems = items.filter((item) => getItemStatus(item) === "売却済み");
@@ -4233,8 +4230,8 @@ function render() {
   storageListModeButton.classList.toggle("active", itemListGroupMode === "storage");
   listViewButton.classList.toggle("active", itemListViewMode === "list");
   cardViewButton.classList.toggle("active", itemListViewMode === "card");
-  listShowAllButton.classList.toggle("active", itemListTargetMode === "all");
-  listInventoryOnlyButton.classList.toggle("active", itemListTargetMode === "inventory");
+  listShowAllButton?.classList.toggle("active", itemListTargetMode === "all");
+  listInventoryOnlyButton?.classList.toggle("active", itemListTargetMode === "inventory");
   viewToggle.classList.toggle("hidden", shouldRenderFullItemList && (items.length === 0 || itemListGroupMode === "storage"));
   inventoryShelfList.classList.toggle("card-grid", itemListViewMode === "card");
 
@@ -5620,7 +5617,7 @@ form.addEventListener("submit", (event) => {
     updatedAt: new Date().toISOString(),
   };
 
-  if ((!isSold || editingIndex < 0) && (!formItem.listingTitle || !formItem.category || !formItem.condition)) {
+  if ((!isSold || editingIndex < 0) && (!formItem.listingTitle || !formItem.category || !formItem.condition || !formItem.storageLocation)) {
     return;
   }
 
@@ -5781,7 +5778,7 @@ openShippingManagementButton.addEventListener("click", () => {
   document.querySelector("#shippingManagementTitle")?.scrollIntoView({ behavior: "smooth", block: "start" });
 });
 
-listShowAllButton.addEventListener("click", () => {
+listShowAllButton?.addEventListener("click", () => {
   statusFilter.value = "";
   itemListTargetMode = "all";
   itemListViewMode = "list";
@@ -5790,7 +5787,7 @@ listShowAllButton.addEventListener("click", () => {
   document.querySelector("#listTitle")?.scrollIntoView({ behavior: "smooth", block: "start" });
 });
 
-listInventoryOnlyButton.addEventListener("click", () => {
+listInventoryOnlyButton?.addEventListener("click", () => {
   statusFilter.value = "";
   itemListTargetMode = "inventory";
   setActiveNavigation("list");
@@ -6021,12 +6018,7 @@ formCopyItemCodeButton.addEventListener("click", () => {
 
 cancelEditButton?.addEventListener("click", resetForm);
 searchInput.addEventListener("input", render);
-statusFilter.addEventListener("change", () => {
-  if (statusFilter.value === "売却済み") {
-    itemListTargetMode = "all";
-  }
-  render();
-});
+statusFilter.addEventListener("change", render);
 sortOrderInput.addEventListener("change", render);
 soldSortInput.addEventListener("change", render);
 storageReportSortInput.addEventListener("change", render);

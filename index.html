@@ -399,7 +399,7 @@
 
               <label class="quick-storage-field">
                 保管場所
-                <select id="storageLocation" name="storageLocation">
+                <select id="storageLocation" name="storageLocation" required>
                   <option value="">保管場所を選択</option>
                 </select>
               </label>
@@ -646,19 +646,15 @@
             <summary><span class="section-icon">探</span>検索・絞り込み</summary>
             <div class="inventory-section-body">
               <input class="search-input" id="searchInput" type="search" placeholder="商品を検索">
-              <div class="inventory-filter-row inventory-search-filter-row" aria-label="ステータスと表示対象">
+              <div class="inventory-filter-row inventory-search-filter-row" aria-label="ステータス絞り込み">
                 <select class="status-filter" id="statusFilter" aria-label="ステータスで絞り込み">
-                  <option value="">すべてのステータス</option>
+                  <option value="">ステータスで絞る</option>
                   <option>未出品</option>
                   <option>出品中</option>
                   <option>売却済み</option>
                   <option>保留</option>
                   <option>要捜索</option>
                 </select>
-                <div class="inventory-control-group inventory-target-toggle" aria-label="表示対象">
-                  <button class="ghost-button active" type="button" id="listShowAllButton">すべて</button>
-                  <button class="ghost-button" type="button" id="listInventoryOnlyButton">在庫のみ</button>
-                </div>
               </div>
             </div>
           </details>
@@ -666,26 +662,31 @@
           <details class="inventory-toolbar-section" open>
             <summary><span class="section-icon">表</span>表示設定</summary>
             <div class="inventory-section-body">
-              <div class="inventory-control-group storage-view-toggle" aria-label="一覧種別">
-                <button class="ghost-button active" type="button" id="normalListModeButton">通常一覧</button>
-                <button class="ghost-button" type="button" id="storageListModeButton">保管場所別</button>
-              </div>
-              <div class="inventory-filter-row" aria-label="並び順と表示形式">
-                <select class="status-filter" id="sortOrder" aria-label="並び順">
-                  <option value="newest">登録順（新しい順）</option>
-                  <option value="storageLocation">保管場所</option>
-                  <option value="profit">利益</option>
-                  <optgroup label="詳細ソート">
+              <div class="inventory-setting-grid" aria-label="表示設定">
+                <div class="inventory-setting-group">
+                  <span class="inventory-setting-label">表示モード</span>
+                  <div class="inventory-control-group storage-view-toggle" aria-label="表示モード">
+                    <button class="ghost-button active" type="button" id="normalListModeButton">通常一覧</button>
+                    <button class="ghost-button" type="button" id="storageListModeButton">保管場所別</button>
+                  </div>
+                </div>
+                <label class="inventory-setting-field">
+                  <span class="inventory-setting-label">並び順</span>
+                  <select class="status-filter" id="sortOrder" aria-label="並び順">
+                    <option value="newest">登録順（新しい順）</option>
                     <option value="oldest">登録順（古い順）</option>
                     <option value="title">商品名</option>
-                    <option value="condition">状態</option>
-                    <option value="status">ステータス</option>
+                    <option value="storageLocation">保管場所</option>
+                    <option value="profit">利益</option>
                     <option value="plannedPrice">販売価格</option>
-                  </optgroup>
-                </select>
-                <div class="inventory-control-group view-toggle" aria-label="表示形式">
-                  <button class="ghost-button active" type="button" id="listViewButton">一覧</button>
-                  <button class="ghost-button" type="button" id="cardViewButton">カード</button>
+                  </select>
+                </label>
+                <div class="inventory-setting-group">
+                  <span class="inventory-setting-label">表示形式</span>
+                  <div class="inventory-control-group view-toggle" aria-label="表示形式">
+                    <button class="ghost-button active" type="button" id="listViewButton">一覧</button>
+                    <button class="ghost-button" type="button" id="cardViewButton">カード</button>
+                  </div>
                 </div>
               </div>
             </div>
