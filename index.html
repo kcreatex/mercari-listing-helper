@@ -395,41 +395,68 @@
           <details class="form-details">
             <summary>詳細設定</summary>
             <div class="form-details-grid">
-              <label>
-                出品ステータス
-                <select id="status" name="status" required>
-                  <option>未出品</option>
-                  <option>出品中</option>
-                  <option>売却済み</option>
-                  <option>保留</option>
-                  <option>要捜索</option>
-                </select>
-              </label>
+              <section class="form-detail-group">
+                <h3>出品情報</h3>
+                <div class="form-detail-group-grid">
+                  <label>
+                    出品ステータス
+                    <select id="status" name="status" required>
+                      <option>未出品</option>
+                      <option>出品中</option>
+                      <option>売却済み</option>
+                      <option>保留</option>
+                      <option>要捜索</option>
+                    </select>
+                  </label>
 
-              <label>
-                出品日
-                <input id="listingDate" name="listingDate" type="date">
-              </label>
+                  <label>
+                    出品日
+                    <input id="listingDate" name="listingDate" type="date">
+                  </label>
 
-              <label>
-                出品URL
-                <input id="listingUrl" name="listingUrl" type="url" maxlength="500" placeholder="例：https://jp.mercari.com/item/...">
-              </label>
+                  <label class="wide-field">
+                    出品URL
+                    <input id="listingUrl" name="listingUrl" type="url" maxlength="500" placeholder="例：https://jp.mercari.com/item/...">
+                  </label>
 
-              <label>
-                購入時期
-                <input id="purchaseDate" name="purchaseDate" type="text" maxlength="40" placeholder="例：2024年春 / 2年前">
-              </label>
+                  <label>
+                    商品説明テンプレート
+                    <select id="descriptionTemplate" name="descriptionTemplate">
+                      <option value="">テンプレート選択</option>
+                    </select>
+                  </label>
 
-              <label>
-                商品実寸
-                <input id="measurements" name="measurements" type="text" maxlength="500" placeholder="例：高さ20cm / 縦10×横8cm / 未計測">
-              </label>
+                  <label class="wide-field">
+                    商品説明文
+                    <textarea id="description" name="description" rows="7" maxlength="2000" placeholder="メルカリに貼り付ける説明文"></textarea>
+                  </label>
+                </div>
+              </section>
 
-              <label>
-                原価
-                <input id="purchaseCost" name="purchaseCost" type="number" min="0" step="1" inputmode="numeric" placeholder="例：1000">
-              </label>
+              <section class="form-detail-group">
+                <h3>管理情報</h3>
+                <div class="form-detail-group-grid">
+                  <label>
+                    購入時期
+                    <input id="purchaseDate" name="purchaseDate" type="text" maxlength="40" placeholder="例：2024年春 / 2年前">
+                  </label>
+
+                  <label>
+                    原価
+                    <input id="purchaseCost" name="purchaseCost" type="number" min="0" step="1" inputmode="numeric" placeholder="例：1000">
+                  </label>
+
+                  <label>
+                    商品実寸
+                    <input id="measurements" name="measurements" type="text" maxlength="500" placeholder="例：高さ20cm / 縦10×横8cm / 未計測">
+                  </label>
+
+                  <label class="wide-field">
+                    メモ
+                    <textarea id="memo" name="memo" rows="5" maxlength="500" placeholder="採寸、付属品、気になる点など"></textarea>
+                  </label>
+                </div>
+              </section>
 
               <div class="sold-fields hidden" id="soldFields" aria-labelledby="soldFieldsTitle">
                 <h3 id="soldFieldsTitle">売却情報</h3>
@@ -466,24 +493,6 @@
                   <textarea id="soldMemo" name="soldMemo" rows="4" maxlength="500" placeholder="実際の取引メモ、値下げ理由、購入者対応など"></textarea>
                 </label>
               </div>
-
-              <label>
-                商品説明テンプレート
-                <select id="descriptionTemplate" name="descriptionTemplate">
-                  <option value="">テンプレート選択</option>
-                </select>
-              </label>
-
-              <label>
-                商品説明文
-                <textarea id="description" name="description" rows="7" maxlength="2000" placeholder="メルカリに貼り付ける説明文"></textarea>
-              </label>
-
-              <label>
-                メモ
-                <textarea id="memo" name="memo" rows="5" maxlength="500" placeholder="採寸、付属品、気になる点など"></textarea>
-              </label>
-
             </div>
           </details>
 

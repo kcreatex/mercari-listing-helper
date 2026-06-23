@@ -10,6 +10,11 @@
   --accent-dark: #b73027;
   --focus: #0f766e;
   --shadow: 0 18px 45px rgba(36, 42, 50, 0.1);
+  --space-outer: 16px;
+  --space-card: 16px;
+  --space-element: 12px;
+  --space-section: 24px;
+  --control-height: 44px;
 }
 
 * {
@@ -5302,5 +5307,1004 @@ button:disabled {
 
   body.analysis-view .storage-report-card {
     padding: 4px !important;
+  }
+}
+
+/* スマホ業務UIの圧縮・視線誘導 */
+.form-detail-group {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.form-detail-group h3 {
+  margin: 0;
+  color: #34424f;
+  font-size: 13px;
+}
+
+.form-detail-group-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.form-detail-group-grid .wide-field {
+  grid-column: 1 / -1;
+}
+
+.form-details-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  padding: 12px !important;
+}
+
+.form-details-grid > .form-detail-group,
+.form-details-grid > .sold-fields {
+  grid-column: 1 / -1;
+}
+
+.compact-image-field .image-preview {
+  min-height: 56px !important;
+  max-height: 120px;
+}
+
+.compact-image-field .image-preview img {
+  max-height: 118px;
+}
+
+#description {
+  min-height: 76px !important;
+}
+
+#memo,
+#soldMemo {
+  min-height: 58px !important;
+}
+
+#itemForm > .profit-preview {
+  gap: 8px !important;
+}
+
+#itemForm > .profit-preview div {
+  min-height: 40px !important;
+  padding: 7px 8px !important;
+}
+
+#itemForm > .profit-preview div:first-child {
+  border-width: 2px;
+}
+
+#itemForm > .profit-preview div:first-child strong {
+  font-size: 18px;
+}
+
+.inventory-toolbar {
+  align-items: stretch;
+}
+
+.inventory-toolbar .inventory-control-group {
+  gap: 6px !important;
+}
+
+.inventory-toolbar .inventory-control-label {
+  font-size: 10px;
+}
+
+.inventory-toolbar .quick-actions,
+.inventory-toolbar .inventory-target-toggle,
+.inventory-toolbar .view-toggle {
+  gap: 6px !important;
+}
+
+.inventory-toolbar button,
+.inventory-toolbar input,
+.inventory-toolbar select {
+  min-height: 40px !important;
+}
+
+.card-grid .inventory-shelf-card {
+  display: grid;
+  gap: 8px;
+  padding: 10px !important;
+}
+
+.card-grid .shelf-card-money {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.row-action-menu .actions,
+.mobile-more-actions-panel,
+#sortingTableWrap .sorting-action-panel {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 6px !important;
+  min-width: min(220px, calc(100vw - 32px)) !important;
+}
+
+.row-action-menu .actions button,
+.mobile-more-actions-panel .text-button,
+.mobile-more-actions-panel .danger-button,
+#sortingTableWrap .sorting-action-panel button {
+  min-height: 36px !important;
+  padding: 7px 8px !important;
+  text-align: center !important;
+}
+
+.source-item-label {
+  min-height: 28px !important;
+  padding: 3px 8px !important;
+}
+
+.detail-modal-content {
+  gap: 10px !important;
+}
+
+.detail-hero,
+.detail-section {
+  padding: 10px !important;
+}
+
+.detail-section dl {
+  gap: 6px !important;
+}
+
+.detail-section dl div {
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 6px !important;
+}
+
+.detail-image-empty {
+  min-height: 36px !important;
+}
+
+.sorting-controls {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+.sorting-summary-grid div {
+  min-height: 28px !important;
+  padding: 4px 8px !important;
+}
+
+body.analysis-view .dashboard-hero-grid,
+body.analysis-view .dashboard-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+
+body.analysis-view .dashboard-card,
+body.analysis-view .dashboard-card-large,
+body.analysis-view .dashboard-grid div {
+  min-height: 40px !important;
+  padding: 8px 10px !important;
+}
+
+body.analysis-view .dashboard-card span,
+body.analysis-view .dashboard-grid span {
+  font-size: 10px !important;
+}
+
+body.analysis-view .dashboard-card strong,
+body.analysis-view .dashboard-card-large strong,
+body.analysis-view .dashboard-grid strong {
+  font-size: 14px !important;
+}
+
+body.analysis-view .analysis-accordion:not([open]) {
+  padding: 0 !important;
+}
+
+body.analysis-view .analysis-accordion summary {
+  min-height: 40px !important;
+  padding: 8px 12px !important;
+}
+
+@media (max-width: 700px) {
+  :root {
+    --space-outer: 12px;
+    --space-card: 12px;
+    --space-element: 8px;
+    --space-section: 18px;
+    --control-height: 40px;
+  }
+
+  .app-header {
+    padding: 10px 12px !important;
+  }
+
+  .app-shell {
+    gap: var(--space-section) !important;
+    padding: 10px 12px calc(80px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .form-panel,
+  .list-panel,
+  .sorting-panel,
+  .settings-panel,
+  .dashboard-panel,
+  .cloud-panel,
+  .sold-panel {
+    padding: var(--space-card) !important;
+  }
+
+  input,
+  select,
+  button,
+  .primary-button,
+  .ghost-button,
+  .text-button,
+  .danger-button {
+    min-height: var(--control-height) !important;
+  }
+
+  input,
+  select,
+  textarea {
+    padding: 8px 10px !important;
+  }
+
+  button,
+  .primary-button,
+  .ghost-button,
+  .text-button,
+  .danger-button {
+    padding: 8px 10px !important;
+  }
+
+  label {
+    gap: 5px;
+    font-size: 12px;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: #a0a8b0;
+  }
+
+  select.placeholder-select {
+    color: #9aa3ad !important;
+    font-weight: 400 !important;
+  }
+
+  .compact-image-field .image-preview {
+    min-height: 48px !important;
+    max-height: 96px;
+    font-size: 12px;
+  }
+
+  .form-details summary {
+    min-height: 40px !important;
+    padding: 8px 10px !important;
+  }
+
+  .form-details-grid,
+  .form-detail-group-grid {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    padding: 8px !important;
+  }
+
+  .form-detail-group {
+    gap: 8px !important;
+    padding: 10px !important;
+  }
+
+  #description {
+    min-height: 68px !important;
+  }
+
+  #memo,
+  #soldMemo {
+    min-height: 52px !important;
+  }
+
+  #itemForm > .profit-preview {
+    grid-template-columns: 1.2fr 1fr 1fr !important;
+    gap: 6px !important;
+  }
+
+  #itemForm > .profit-preview div {
+    min-height: 36px !important;
+    padding: 5px 6px !important;
+  }
+
+  #itemForm > .profit-preview span {
+    font-size: 9px !important;
+  }
+
+  #itemForm > .profit-preview strong {
+    font-size: 12px !important;
+  }
+
+  #itemForm > .profit-preview div:first-child strong {
+    font-size: 14px !important;
+  }
+
+  .inventory-toolbar {
+    gap: 8px !important;
+  }
+
+  .inventory-toolbar .inventory-control-group {
+    gap: 4px !important;
+  }
+
+  .inventory-toolbar .inventory-control-label {
+    font-size: 9px;
+  }
+
+  .inventory-toolbar button,
+  .inventory-toolbar input,
+  .inventory-toolbar select {
+    min-height: 36px !important;
+    font-size: 12px !important;
+  }
+
+  .card-grid .inventory-shelf-card {
+    padding: 9px !important;
+  }
+
+  .shelf-card-top {
+    grid-template-columns: minmax(0, 1fr) 30px;
+  }
+
+  .shelf-card-money div {
+    padding: 3px 5px;
+  }
+
+  .row-action-menu summary,
+  .mobile-more-actions summary,
+  #sortingTableWrap .sorting-action-menu summary {
+    width: 34px !important;
+    min-width: 34px !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    padding: 0 !important;
+  }
+
+  .row-action-menu .actions,
+  .mobile-more-actions-panel,
+  #sortingTableWrap .sorting-action-panel {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 5px !important;
+    padding: 6px !important;
+  }
+
+  .detail-modal-panel {
+    padding: 10px !important;
+  }
+
+  .detail-modal-content {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .detail-hero,
+  .detail-image-wrap,
+  .detail-section-product,
+  .detail-section-sold {
+    grid-column: 1 / -1;
+  }
+
+  .detail-section-basic dl,
+  .detail-section-price dl {
+    grid-template-columns: 1fr !important;
+  }
+
+  .detail-section dl div {
+    grid-template-columns: 70px minmax(0, 1fr) !important;
+    gap: 4px !important;
+  }
+
+  .detail-section dt {
+    font-size: 10px !important;
+  }
+
+  .detail-section dd {
+    font-size: 11px !important;
+  }
+
+  .sorting-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+  }
+
+  .sorting-summary-grid {
+    gap: 5px !important;
+  }
+
+  .sorting-summary-grid div {
+    min-height: 26px !important;
+    padding: 3px 7px !important;
+  }
+
+  body.work-view.work-tab-sorting #sortingTableWrap tr {
+    padding: 8px !important;
+  }
+
+  body.analysis-view .dashboard-hero-grid,
+  body.analysis-view .dashboard-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+  }
+
+  body.analysis-view .dashboard-card,
+  body.analysis-view .dashboard-card-large,
+  body.analysis-view .dashboard-grid div {
+    min-height: 36px !important;
+    padding: 7px 8px !important;
+  }
+
+  body.analysis-view .dashboard-card span,
+  body.analysis-view .dashboard-grid span {
+    font-size: 9px !important;
+  }
+
+  body.analysis-view .dashboard-card strong,
+  body.analysis-view .dashboard-card-large strong,
+  body.analysis-view .dashboard-grid strong {
+    font-size: 12px !important;
+  }
+}
+
+/* 全ページ共通の余白・入力高さルール */
+.app-header {
+  gap: var(--space-element) !important;
+  padding: var(--space-outer) !important;
+}
+
+.app-shell {
+  gap: var(--space-section) !important;
+  padding: var(--space-section) var(--space-outer) calc(var(--space-section) * 2) 196px !important;
+}
+
+.dashboard-panel,
+.cloud-panel {
+  margin: var(--space-section) var(--space-outer) 0 196px !important;
+}
+
+.form-panel,
+.list-panel,
+.sold-panel,
+.sorting-panel,
+.settings-panel,
+.dashboard-panel,
+.cloud-panel,
+.quick-search-panel,
+.shipping-management-panel,
+.packing-list-panel,
+.analysis-panel,
+.analysis-shipping-panel,
+.input-issue-panel,
+.excavation-panel,
+.buried-treasure-panel,
+.storage-report-panel,
+.monthly-profit-panel {
+  gap: var(--space-element) !important;
+  padding: var(--space-card) !important;
+}
+
+.panel-heading,
+.dashboard-panel .panel-heading,
+.sorting-panel .panel-heading,
+.settings-panel .panel-heading,
+.list-panel .panel-heading,
+.list-heading,
+.storage-report-heading,
+.dock-heading,
+.modal-heading {
+  gap: var(--space-element) !important;
+  margin-bottom: var(--space-element) !important;
+}
+
+form,
+#itemForm,
+.form-details-grid,
+.price-fields,
+.profit-preview,
+.sorting-form,
+.sorting-card-grid,
+.sorting-price-grid,
+.sorting-controls,
+.sorting-summary-grid,
+.inventory-toolbar,
+.inventory-control-group,
+.inventory-filter-row,
+.quick-actions,
+.view-toggle,
+.settings-grid,
+.category-settings-list,
+.shipping-settings-list,
+.template-settings-list,
+.cloud-form,
+.cloud-config-grid,
+.input-issue-list,
+.storage-report-list,
+.excavation-ranking-list,
+.buried-ranking-list,
+.monthly-profit-list,
+.profit-ranking-list,
+.profit-amount-ranking-list,
+.profit-rate-ranking-list,
+.category-profit-ranking-list,
+.storage-profit-ranking-list,
+.shipping-dashboard-grid,
+.shipping-priority-list,
+.shipping-completed-list,
+.mobile-card-list,
+.inventory-shelf-list,
+.compact-table-grid,
+.registration-dock,
+.form-assist-grid,
+.completion-panel,
+.completion-panel div {
+  gap: var(--space-element) !important;
+}
+
+.form-panel,
+.list-panel,
+.sorting-panel,
+.settings-panel,
+.dashboard-panel,
+.sold-panel,
+.shipping-management-panel,
+.analysis-accordion,
+.settings-accordion,
+.cloud-panel {
+  margin-bottom: var(--space-section) !important;
+}
+
+.dashboard-card,
+.dashboard-card-large,
+.dashboard-grid div,
+.input-issue-grid div,
+.input-issue-item,
+.storage-report-card,
+.excavation-ranking-item,
+.buried-ranking-item,
+.monthly-profit-item,
+.profit-ranking-item,
+.grouped-profit-ranking-item,
+.shipping-dashboard-card,
+.shipping-list-item,
+.packing-destination,
+.packing-box,
+.inventory-shelf-card,
+.mobile-item-card,
+.quick-search-result,
+.completion-panel,
+.sorting-form-card,
+.settings-group,
+.category-setting-row,
+.shipping-setting-row,
+.template-setting-row,
+.category-add-row,
+.shipping-add-row,
+.template-add-row,
+.detail-hero,
+.detail-section,
+.modal-panel {
+  padding: var(--space-card) !important;
+}
+
+input,
+select,
+button,
+.primary-button,
+.ghost-button,
+.text-button,
+.danger-button,
+summary {
+  min-height: var(--control-height) !important;
+}
+
+input,
+select,
+textarea {
+  padding: 10px 12px !important;
+}
+
+button,
+.primary-button,
+.ghost-button,
+.text-button,
+.danger-button {
+  padding: 10px 14px !important;
+}
+
+textarea {
+  min-height: 88px !important;
+}
+
+.view-toggle .ghost-button,
+.inventory-toolbar button,
+.backup-controls-top .ghost-button,
+.backup-controls-bottom .ghost-button,
+#sortingCsvButton.compact-export-button,
+.settings-reset-button,
+.row-action-menu summary,
+#sortingTableWrap .sorting-action-menu summary {
+  min-height: var(--control-height) !important;
+}
+
+body.analysis-view .dashboard-hero-grid,
+body.analysis-view .dashboard-grid {
+  gap: var(--space-element) !important;
+}
+
+body.analysis-view .dashboard-card,
+body.analysis-view .dashboard-grid div,
+body.analysis-view .dashboard-card-large,
+body.analysis-view .storage-report-card {
+  min-height: var(--control-height) !important;
+  padding: var(--space-card) !important;
+}
+
+@media (max-width: 900px) {
+  .app-shell {
+    padding: var(--space-outer) var(--space-outer) calc(var(--space-section) * 2) !important;
+  }
+
+  .dashboard-panel,
+  .cloud-panel,
+  .quick-search-panel {
+    margin: var(--space-section) var(--space-outer) 0 !important;
+  }
+
+  .side-nav {
+    gap: var(--space-element) !important;
+    padding: var(--space-outer) !important;
+  }
+}
+
+@media (max-width: 700px) {
+  body {
+    padding-bottom: calc(var(--space-section) + env(safe-area-inset-bottom)) !important;
+  }
+
+  .app-header,
+  .side-nav,
+  .form-panel,
+  .list-panel,
+  .sorting-panel,
+  .settings-panel,
+  .dashboard-panel,
+  .cloud-panel,
+  .sold-panel {
+    padding: var(--space-card) !important;
+  }
+
+  .app-shell {
+    gap: var(--space-section) !important;
+    padding: var(--space-outer) var(--space-outer) calc(80px + env(safe-area-inset-bottom)) !important;
+  }
+
+  input,
+  select,
+  button,
+  .primary-button,
+  .ghost-button,
+  .text-button,
+  .danger-button {
+    min-height: var(--control-height) !important;
+  }
+}
+
+/* 最終上書き: スマホ業務アプリとしての密度調整 */
+.form-detail-group {
+  display: grid;
+  gap: 10px !important;
+  min-width: 0;
+  padding: 12px !important;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.form-detail-group h3 {
+  margin: 0;
+  color: #34424f;
+  font-size: 13px;
+}
+
+.form-detail-group-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px !important;
+}
+
+.form-detail-group-grid .wide-field {
+  grid-column: 1 / -1;
+}
+
+.form-details-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+.form-details-grid > .form-detail-group,
+.form-details-grid > .sold-fields {
+  grid-column: 1 / -1;
+}
+
+.compact-image-field .image-preview {
+  min-height: 56px !important;
+  max-height: 120px;
+}
+
+.compact-image-field .image-preview img {
+  max-height: 118px;
+}
+
+#description {
+  min-height: 76px !important;
+}
+
+#memo,
+#soldMemo {
+  min-height: 58px !important;
+}
+
+#itemForm > .profit-preview div {
+  min-height: 40px !important;
+  padding: 7px 8px !important;
+}
+
+#itemForm > .profit-preview div:first-child {
+  border-width: 2px;
+}
+
+#itemForm > .profit-preview div:first-child strong {
+  font-size: 18px;
+}
+
+.inventory-toolbar button,
+.inventory-toolbar input,
+.inventory-toolbar select {
+  min-height: 40px !important;
+}
+
+.row-action-menu .actions,
+.mobile-more-actions-panel,
+#sortingTableWrap .sorting-action-panel {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 6px !important;
+  min-width: min(220px, calc(100vw - 32px)) !important;
+}
+
+.row-action-menu .actions button,
+.mobile-more-actions-panel .text-button,
+.mobile-more-actions-panel .danger-button,
+#sortingTableWrap .sorting-action-panel button {
+  min-height: 36px !important;
+  padding: 7px 8px !important;
+  text-align: center !important;
+}
+
+.detail-modal-content {
+  gap: 10px !important;
+}
+
+.detail-hero,
+.detail-section {
+  padding: 10px !important;
+}
+
+.detail-section dl div {
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 6px !important;
+}
+
+.sorting-controls {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+.sorting-summary-grid div {
+  min-height: 28px !important;
+  padding: 4px 8px !important;
+}
+
+body.analysis-view .dashboard-hero-grid,
+body.analysis-view .dashboard-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+
+body.analysis-view .dashboard-card,
+body.analysis-view .dashboard-card-large,
+body.analysis-view .dashboard-grid div {
+  min-height: 40px !important;
+  padding: 8px 10px !important;
+}
+
+body.analysis-view .analysis-accordion:not([open]) {
+  padding: 0 !important;
+}
+
+body.analysis-view .analysis-accordion summary {
+  min-height: 40px !important;
+  padding: 8px 12px !important;
+}
+
+@media (max-width: 700px) {
+  :root {
+    --space-outer: 12px;
+    --space-card: 12px;
+    --space-element: 8px;
+    --space-section: 18px;
+    --control-height: 40px;
+  }
+
+  input,
+  select,
+  button,
+  .primary-button,
+  .ghost-button,
+  .text-button,
+  .danger-button {
+    min-height: var(--control-height) !important;
+  }
+
+  input,
+  select,
+  textarea {
+    padding: 8px 10px !important;
+  }
+
+  button,
+  .primary-button,
+  .ghost-button,
+  .text-button,
+  .danger-button {
+    padding: 8px 10px !important;
+  }
+
+  label {
+    gap: 5px;
+    font-size: 12px;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: #a0a8b0;
+  }
+
+  select.placeholder-select {
+    color: #9aa3ad !important;
+    font-weight: 400 !important;
+  }
+
+  .compact-image-field .image-preview {
+    min-height: 48px !important;
+    max-height: 96px;
+    font-size: 12px;
+  }
+
+  .form-details summary {
+    min-height: 40px !important;
+    padding: 8px 10px !important;
+  }
+
+  .form-details-grid,
+  .form-detail-group-grid {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    padding: 8px !important;
+  }
+
+  .form-detail-group {
+    gap: 8px !important;
+    padding: 10px !important;
+  }
+
+  #description {
+    min-height: 68px !important;
+  }
+
+  #memo,
+  #soldMemo {
+    min-height: 52px !important;
+  }
+
+  #itemForm > .profit-preview {
+    grid-template-columns: 1.2fr 1fr 1fr !important;
+    gap: 6px !important;
+  }
+
+  #itemForm > .profit-preview div {
+    min-height: 36px !important;
+    padding: 5px 6px !important;
+  }
+
+  #itemForm > .profit-preview span {
+    font-size: 9px !important;
+  }
+
+  #itemForm > .profit-preview strong {
+    font-size: 12px !important;
+  }
+
+  #itemForm > .profit-preview div:first-child strong {
+    font-size: 14px !important;
+  }
+
+  .inventory-toolbar button,
+  .inventory-toolbar input,
+  .inventory-toolbar select {
+    min-height: 36px !important;
+    font-size: 12px !important;
+  }
+
+  .card-grid .inventory-shelf-card {
+    padding: 9px !important;
+  }
+
+  .shelf-card-top {
+    grid-template-columns: minmax(0, 1fr) 30px;
+  }
+
+  .row-action-menu summary,
+  .mobile-more-actions summary,
+  #sortingTableWrap .sorting-action-menu summary {
+    width: 34px !important;
+    min-width: 34px !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    padding: 0 !important;
+  }
+
+  .detail-modal-panel {
+    padding: 10px !important;
+  }
+
+  .detail-modal-content {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .detail-hero,
+  .detail-image-wrap,
+  .detail-section-product,
+  .detail-section-sold {
+    grid-column: 1 / -1;
+  }
+
+  .detail-section-basic dl,
+  .detail-section-price dl {
+    grid-template-columns: 1fr !important;
+  }
+
+  .detail-section dl div {
+    grid-template-columns: 70px minmax(0, 1fr) !important;
+    gap: 4px !important;
+  }
+
+  .sorting-controls {
+    gap: 6px !important;
+  }
+
+  body.analysis-view .dashboard-hero-grid,
+  body.analysis-view .dashboard-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+  }
+
+  body.analysis-view .dashboard-card,
+  body.analysis-view .dashboard-card-large,
+  body.analysis-view .dashboard-grid div {
+    min-height: 36px !important;
+    padding: 7px 8px !important;
+  }
+
+  body.analysis-view .dashboard-card span,
+  body.analysis-view .dashboard-grid span {
+    font-size: 9px !important;
+  }
+
+  body.analysis-view .dashboard-card strong,
+  body.analysis-view .dashboard-card-large strong,
+  body.analysis-view .dashboard-grid strong {
+    font-size: 12px !important;
   }
 }
