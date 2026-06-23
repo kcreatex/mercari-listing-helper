@@ -3155,13 +3155,6 @@ tbody tr:last-child td {
   font-weight: 800;
 }
 
-#prepareRelistButton {
-  border-color: #0f766e;
-  background: #0f766e;
-  color: #fff;
-  font-weight: 900;
-}
-
 .description-modal-content {
   min-height: 180px;
   max-height: 420px;

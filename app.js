@@ -209,7 +209,7 @@ const detailModalContent = document.querySelector("#detailModalContent");
 const copyDetailTitleButton = document.querySelector("#copyDetailTitleButton");
 const copyDetailDescriptionButton = document.querySelector("#copyDetailDescriptionButton");
 const prepareRelistButton = document.querySelector("#prepareRelistButton");
-const closeDetailModalButton = document.querySelector("#closeDetailModalButton");
+const editDetailItemButton = document.querySelector("#editDetailItemButton");
 const closeDetailModalFooterButton = document.querySelector("#closeDetailModalFooterButton");
 
 let items = loadItems();
@@ -2264,7 +2264,7 @@ function openDetailModal(item) {
   }
 
   detailModal.classList.remove("hidden");
-  closeDetailModalButton.focus();
+  closeDetailModalFooterButton.focus();
 }
 
 function closeDetailModal() {
@@ -4960,7 +4960,13 @@ prepareRelistButton.addEventListener("click", () => {
     relistItem(currentDetailItem);
   }
 });
-closeDetailModalButton.addEventListener("click", closeDetailModal);
+editDetailItemButton.addEventListener("click", () => {
+  if (currentDetailItem) {
+    const itemToEdit = currentDetailItem;
+    closeDetailModal();
+    startEdit(itemToEdit);
+  }
+});
 closeDetailModalFooterButton.addEventListener("click", closeDetailModal);
 detailModal.addEventListener("click", (event) => {
   if (event.target === detailModal) {
