@@ -5749,6 +5749,324 @@ body.analysis-view .analysis-accordion summary {
   }
 }
 
+/* UI統一調整フェーズ 2: ページ間の高さ・余白・見出し位置を統一 */
+:root {
+  --ds-page-gap: 24px;
+  --ds-card-pad: 20px;
+  --ds-item-gap: 12px;
+  --ds-radius: 8px;
+  --ds-control: 44px;
+  --ds-accordion: 48px;
+}
+
+.app-shell {
+  gap: var(--ds-page-gap) !important;
+}
+
+.form-panel,
+.list-panel,
+.sorting-panel,
+.settings-panel,
+.dashboard-panel,
+.sold-panel,
+.cloud-panel {
+  padding: var(--ds-card-pad) !important;
+  border-radius: var(--ds-radius) !important;
+}
+
+.panel-heading,
+.list-heading,
+.dashboard-panel .panel-heading,
+.sorting-panel .panel-heading,
+.settings-panel .panel-heading,
+.list-panel .panel-heading {
+  display: flex !important;
+  align-items: center !important;
+  min-height: 0 !important;
+  margin-bottom: var(--ds-item-gap) !important;
+}
+
+.panel-heading h2,
+.list-heading h2 {
+  line-height: 1.2 !important;
+}
+
+.muted,
+.ranking-note {
+  line-height: 1.25 !important;
+}
+
+input,
+select,
+button,
+.primary-button,
+.ghost-button,
+.text-button,
+.danger-button {
+  min-height: var(--ds-control) !important;
+}
+
+.analysis-accordion,
+.settings-accordion,
+.sorting-extra-card,
+.cloud-panel.settings-accordion {
+  margin-bottom: var(--ds-item-gap) !important;
+  border-radius: var(--ds-radius) !important;
+}
+
+.analysis-accordion > summary,
+.settings-accordion > summary,
+.sorting-extra-card > summary,
+.cloud-summary {
+  min-height: var(--ds-accordion) !important;
+  padding: 8px 12px !important;
+}
+
+.settings-accordion > summary,
+.sorting-extra-card > summary {
+  grid-template-columns: auto minmax(0, 1fr) auto !important;
+}
+
+.settings-accordion > summary .settings-summary-label,
+.sorting-extra-card > summary {
+  align-items: center;
+}
+
+.settings-accordion > summary .settings-reset-button {
+  min-height: 28px !important;
+  padding: 3px 8px !important;
+}
+
+/* 商品一覧: 検索エリアを業務向けに圧縮 */
+.inventory-toolbar {
+  gap: 8px !important;
+}
+
+.inventory-toolbar .inventory-control-label {
+  display: none !important;
+}
+
+.inventory-toolbar .inventory-target-toggle,
+.inventory-toolbar .quick-actions,
+.inventory-toolbar .view-toggle {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+
+.inventory-toolbar .inventory-filter-row {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+
+.inventory-toolbar input,
+.inventory-toolbar select,
+.inventory-toolbar button {
+  min-height: 38px !important;
+  padding: 7px 9px !important;
+}
+
+.compact-table-wrap table {
+  table-layout: fixed;
+}
+
+.compact-table-wrap th:nth-child(1),
+.compact-table-wrap td:nth-child(1) {
+  width: 46%;
+}
+
+.compact-table-wrap th:nth-child(3),
+.compact-table-wrap td:nth-child(3) {
+  width: 25%;
+}
+
+.compact-table-wrap th:nth-child(5),
+.compact-table-wrap td:nth-child(5) {
+  width: 16%;
+  text-align: right;
+}
+
+.compact-table-wrap th:nth-child(2),
+.compact-table-wrap td:nth-child(2),
+.compact-table-wrap th:nth-child(4),
+.compact-table-wrap td:nth-child(4),
+.compact-table-wrap th:nth-child(6),
+.compact-table-wrap td:nth-child(6),
+.compact-table-wrap th:nth-child(7),
+.compact-table-wrap td:nth-child(7) {
+  width: auto;
+}
+
+.inventory-shelf-list,
+.compact-table-grid {
+  margin-bottom: 0 !important;
+  align-items: start !important;
+}
+
+.inventory-shelf-card {
+  min-height: auto !important;
+}
+
+/* 売却先仕分け: 入力カードとチップの高さを揃える */
+.sorting-form {
+  align-items: stretch !important;
+}
+
+.sorting-form-card {
+  display: grid !important;
+  align-content: start !important;
+  gap: var(--ds-item-gap) !important;
+  min-height: 0 !important;
+}
+
+.sorting-card-grid,
+.sorting-price-grid {
+  gap: var(--ds-item-gap) !important;
+}
+
+.sorting-summary-grid {
+  gap: 6px !important;
+}
+
+.sorting-summary-grid div {
+  min-height: 26px !important;
+  height: auto !important;
+  padding: 3px 8px !important;
+}
+
+body.work-view.work-tab-sorting #sortingTableWrap tr {
+  gap: 4px 8px !important;
+  padding: 8px !important;
+}
+
+body.work-view.work-tab-sorting #sortingTableWrap td:nth-child(1) {
+  font-size: 12px !important;
+}
+
+/* 分析: 最上段は重要KPIだけにする */
+body.analysis-view .dashboard-hero-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+
+body.analysis-view .dashboard-hero-grid .dashboard-card {
+  display: grid !important;
+  align-content: center !important;
+  min-height: 48px !important;
+  padding: 10px 12px !important;
+}
+
+body.analysis-view .dashboard-grid {
+  display: none !important;
+}
+
+body.analysis-view .dashboard-card span {
+  font-size: 10px !important;
+  line-height: 1.1 !important;
+}
+
+body.analysis-view .dashboard-card strong {
+  margin-top: 2px !important;
+  font-size: 15px !important;
+  line-height: 1.1 !important;
+}
+
+body.analysis-view .dashboard-panel .muted {
+  margin-top: 2px !important;
+}
+
+body.analysis-view .excavation-panel,
+body.analysis-view .input-issue-panel {
+  margin-top: var(--ds-item-gap) !important;
+}
+
+/* 設定: 閉じたカードの高さと三角位置を統一 */
+.settings-grid {
+  gap: var(--ds-item-gap) !important;
+}
+
+.settings-accordion:not([open]) {
+  min-height: 0 !important;
+}
+
+.settings-accordion:not([open]) > summary {
+  min-height: var(--ds-accordion) !important;
+}
+
+.settings-accordion > summary::before,
+.cloud-panel.settings-accordion > .cloud-summary::before {
+  align-self: center !important;
+}
+
+@media (max-width: 700px) {
+  :root {
+    --ds-page-gap: 18px;
+    --ds-card-pad: 12px;
+    --ds-item-gap: 8px;
+    --ds-control: 38px;
+    --ds-accordion: 38px;
+  }
+
+  .form-panel,
+  .list-panel,
+  .sorting-panel,
+  .settings-panel,
+  .dashboard-panel,
+  .sold-panel,
+  .cloud-panel {
+    padding: var(--ds-card-pad) !important;
+  }
+
+  .panel-heading,
+  .list-heading,
+  .dashboard-panel .panel-heading,
+  .sorting-panel .panel-heading,
+  .settings-panel .panel-heading,
+  .list-panel .panel-heading {
+    margin-bottom: 8px !important;
+  }
+
+  .inventory-toolbar {
+    gap: 6px !important;
+  }
+
+  .inventory-toolbar .inventory-target-toggle,
+  .inventory-toolbar .quick-actions,
+  .inventory-toolbar .view-toggle,
+  .inventory-toolbar .inventory-filter-row {
+    gap: 6px !important;
+  }
+
+  .inventory-toolbar input,
+  .inventory-toolbar select,
+  .inventory-toolbar button {
+    min-height: 34px !important;
+    padding: 6px 8px !important;
+    font-size: 12px !important;
+  }
+
+  body.analysis-view .dashboard-hero-grid .dashboard-card {
+    min-height: 42px !important;
+    padding: 8px 9px !important;
+  }
+
+  body.analysis-view .dashboard-card span {
+    font-size: 9px !important;
+  }
+
+  body.analysis-view .dashboard-card strong {
+    font-size: 13px !important;
+  }
+
+  .analysis-accordion > summary,
+  .settings-accordion > summary,
+  .sorting-extra-card > summary,
+  .cloud-summary {
+    min-height: var(--ds-accordion) !important;
+    padding: 6px 9px !important;
+  }
+}
+
 /* UI統一調整フェーズ: 全ページの視覚ルール */
 :root {
   --ui-outer: 16px;
