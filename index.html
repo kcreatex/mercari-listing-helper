@@ -27,72 +27,119 @@
     <section class="dashboard-panel" aria-labelledby="analysisTitle">
       <div class="panel-heading">
         <div>
-          <h2 id="analysisTitle">分析ダッシュボード</h2>
-          <p class="muted">次に何をやれば利益になるかを判断するための作業ダッシュボードです</p>
+          <h2 id="analysisTitle">在庫・利益分析</h2>
+          <p class="muted">在庫、保管場所、利益候補、発送状況をまとめて確認できます</p>
         </div>
       </div>
 
-      <section class="today-command-panel" aria-labelledby="todayCommandTitle">
+      <section class="mobile-asset-summary" aria-labelledby="mobileAssetSummaryTitle">
+        <div class="mobile-asset-summary-heading">
+          <h3 id="mobileAssetSummaryTitle">在庫サマリー</h3>
+          <span>現在の状況</span>
+        </div>
+        <div class="mobile-asset-summary-grid">
+          <div><span>登録商品</span><strong id="mobileAssetItemCount">0件</strong></div>
+          <div><span>未出品</span><strong id="analysisSummaryUnlistedCount">0件</strong></div>
+          <div><span>出品中</span><strong id="analysisSummaryListedCount">0件</strong></div>
+          <div><span>売却済み</span><strong id="mobileAssetSoldCount">0件</strong></div>
+          <div><span>見込み利益</span><strong id="mobileAssetProjectedProfit">0円</strong></div>
+          <div><span>入力不足</span><strong id="analysisSummaryInputIssueCount">0件</strong></div>
+        </div>
+        <div class="analysis-legacy-values hidden" aria-hidden="true">
+          <span id="mobileAssetStorageCount">0か所</span>
+          <span id="mobileAssetTotalProfit">0円</span>
+          <span id="mobileAssetMonthlyProfit">0円</span>
+          <span id="mobileAssetMonthlySoldCount">0件</span>
+        </div>
+      </section>
+
+      <section class="today-command-panel desktop-task-panel" aria-labelledby="todayCommandTitle">
         <div class="today-command-heading">
-          <h3 id="todayCommandTitle">本日の優先作業</h3>
-          <span>優先順：未仕分け → 発送待ち → 査定待ち → 入力不足</span>
+          <h3 id="todayCommandTitle">要確認リスト</h3>
+          <span>未処理・発送・査定の状況</span>
         </div>
         <div class="today-command-list" id="todayCommandList" aria-live="polite"></div>
       </section>
 
-      <div class="today-work-heading">
-        <h3>本日の作業</h3>
+      <div class="today-work-heading desktop-task-panel">
+        <h3>処理状況</h3>
       </div>
 
-      <div class="dashboard-hero-grid today-work-grid" aria-live="polite">
+      <div class="dashboard-hero-grid today-work-grid desktop-task-panel" aria-live="polite">
         <div class="dashboard-card dashboard-card-large dashboard-card-warning">
           <span>入力不足</span>
-          <em class="work-state-label">要対応</em>
+          <em class="work-state-label">あり</em>
           <strong id="dashboardHeroTotalProfit">0件</strong>
         </div>
         <div class="dashboard-card dashboard-card-large dashboard-card-unlisted">
           <span>未仕分け</span>
-          <em class="work-state-label">作業中</em>
+          <em class="work-state-label">あり</em>
           <strong id="dashboardHeroUnlistedCount">0件</strong>
         </div>
         <div class="dashboard-card dashboard-card-large dashboard-card-shipping">
           <span>発送待ち</span>
-          <em class="work-state-label">完了</em>
+          <em class="work-state-label">なし</em>
           <strong id="dashboardHeroShippingWaitCount">0件</strong>
         </div>
         <div class="dashboard-card dashboard-card-large dashboard-card-shipping">
           <span>査定待ち</span>
-          <em class="work-state-label">完了</em>
+          <em class="work-state-label">なし</em>
           <strong id="dashboardHeroBuriedValue">0件</strong>
         </div>
       </div>
 
       <section class="today-buried-panel analysis-action-panel" aria-labelledby="todayBuriedTitle">
-        <div>
-          <h3 id="todayBuriedTitle">利益候補</h3>
-          <p id="todayBuriedSummary">未出品の利益候補を確認します</p>
+        <div class="profit-candidate-card">
+          <div>
+            <h3 id="todayBuriedTitle">利益候補</h3>
+            <p id="todayBuriedSummary">保管場所別の利益候補を確認します</p>
+          </div>
+          <button class="ghost-button" type="button" id="todayBuriedButton">利益候補を見る</button>
         </div>
-        <button class="ghost-button" type="button" id="todayBuriedButton">確認する</button>
+        <div class="profit-candidate-card">
+          <div>
+            <h3>売却先別の見込み利益</h3>
+            <p id="destinationProfitSummary">売却先が決まった商品の見込み額を確認します</p>
+          </div>
+          <button class="ghost-button" type="button" id="destinationProfitButton">売却先別に見る</button>
+        </div>
       </section>
 
-      <div class="today-priority-grid">
+      <div class="today-priority-grid desktop-task-panel">
         <section class="today-priority-panel analysis-action-panel" aria-labelledby="sortingPriorityTitle">
-          <h3 id="sortingPriorityTitle">仕分け優先</h3>
-          <p class="ranking-note">未仕分けの商品を推定価値順で表示</p>
+          <h3 id="sortingPriorityTitle">仕分け状況</h3>
+          <p class="ranking-note">未仕分けの商品を見込み額順で確認</p>
           <div class="today-priority-list" id="sortingPriorityList"></div>
         </section>
 
         <section class="today-priority-panel analysis-action-panel" aria-labelledby="shippingProfitPriorityTitle">
-          <h3 id="shippingProfitPriorityTitle">発送優先</h3>
-          <p class="ranking-note">発送待ち商品を利益順で表示</p>
+          <h3 id="shippingProfitPriorityTitle">発送状況</h3>
+          <p class="ranking-note">発送待ち商品を見込み利益順で確認</p>
           <div class="today-priority-list" id="shippingProfitPriorityList"></div>
         </section>
       </div>
 
-      <div class="input-issue-panel" aria-labelledby="inputIssueTitle">
-        <h3 id="inputIssueTitle">入力不足商品</h3>
-        <p class="ranking-note">対象：未出品・出品中・要捜索</p>
-        <div class="input-issue-grid" aria-live="polite">
+      <section class="analysis-input-preview" aria-labelledby="analysisInputPreviewTitle">
+        <div>
+          <h3 id="analysisInputPreviewTitle">⚠ 入力不足 <strong id="analysisInputIssueCount">0件</strong></h3>
+          <strong id="analysisInputIssueItem">入力不足の商品はありません</strong>
+          <p id="analysisInputIssueText">利益計算や出品判断に必要な項目を確認します</p>
+        </div>
+        <button class="ghost-button" type="button" id="analysisInputIssueEditButton">不足項目を編集</button>
+      </section>
+
+      <section class="analysis-detail-menu" aria-labelledby="analysisDetailMenuTitle">
+        <div class="analysis-detail-menu-heading">
+          <h3 id="analysisDetailMenuTitle">詳細分析</h3>
+          <p>必要な分析だけ開いて確認できます</p>
+        </div>
+
+        <details class="analysis-accordion app-accordion analysis-detail-section">
+          <summary>
+            <span class="accordion-leading-icon accordion-leading-icon-empty" aria-hidden="true"></span>
+            <span class="accordion-label" id="inputIssueTitle">入力不足商品</span>
+          </summary>
+          <div class="input-issue-grid hidden" aria-live="polite">
           <div>
             <span>保管場所未設定</span>
             <strong id="missingStorageCount">0件</strong>
@@ -117,21 +164,14 @@
             <span>説明文未登録</span>
             <strong id="missingDescriptionCount">0件</strong>
           </div>
-        </div>
-
-        <details class="analysis-accordion app-accordion">
-          <summary>
-            <span class="accordion-leading-icon accordion-leading-icon-empty" aria-hidden="true"></span>
-            <span class="accordion-label">入力不足商品を開く</span>
-          </summary>
+          </div>
           <div class="input-issue-list" id="inputIssueList"></div>
         </details>
-      </div>
 
-      <details class="analysis-accordion app-accordion">
+      <details class="analysis-accordion app-accordion analysis-detail-section">
         <summary>
           <span class="accordion-leading-icon accordion-leading-icon-empty" aria-hidden="true"></span>
-          <span class="accordion-label">保管場所カルテを開く</span>
+          <span class="accordion-label">📦 保管場所別に見る</span>
         </summary>
         <div class="analysis-panel" id="analysisPanel">
           <div class="storage-report-panel" aria-labelledby="storageReportTitle">
@@ -153,10 +193,10 @@
         </div>
       </details>
 
-      <details class="analysis-accordion app-accordion">
+      <details class="analysis-accordion app-accordion analysis-detail-section">
         <summary>
           <span class="accordion-leading-icon accordion-leading-icon-empty" aria-hidden="true"></span>
-          <span class="accordion-label">その他分析を開く</span>
+          <span class="accordion-label">その他分析</span>
         </summary>
         <div class="analysis-panel">
         <div class="dashboard-grid" aria-live="polite">
@@ -247,10 +287,10 @@
       </div>
       </details>
 
-      <details class="analysis-accordion app-accordion">
+      <details class="analysis-accordion app-accordion analysis-detail-section">
         <summary>
           <span class="accordion-leading-icon accordion-leading-icon-empty" aria-hidden="true"></span>
-          <span class="accordion-label">発送履歴・売却済み分析</span>
+          <span class="accordion-label">🚚 発送履歴・売却済み分析</span>
         </summary>
         <div class="analysis-shipping-panel" aria-labelledby="analysisShippingCompletedTitle">
           <h3>発送優先ランキング</h3>
@@ -347,6 +387,7 @@
           </div>
         </section>
       </details>
+      </section>
     </section>
 
     <main class="app-shell">
@@ -653,7 +694,27 @@
         </div>
         <div class="inventory-primary-search" aria-label="商品検索">
           <input class="search-input" id="searchInput" type="search" placeholder="🔍 商品を検索">
+          <select class="status-filter" id="statusFilter" aria-label="ステータスで絞り込み">
+            <option value="">ステータス</option>
+            <option>未出品</option>
+            <option>出品中</option>
+            <option>売却済み</option>
+            <option>保留</option>
+            <option>要捜索</option>
+          </select>
+          <select class="status-filter" id="storageFilter" aria-label="保管場所で絞り込み">
+            <option value="">保管場所</option>
+          </select>
+          <select class="status-filter" id="sortOrder" aria-label="並び順">
+            <option value="newest">新しい順</option>
+            <option value="oldest">古い順</option>
+            <option value="title">商品名</option>
+            <option value="storageLocation">保管場所</option>
+            <option value="profit">利益</option>
+            <option value="plannedPrice">販売価格</option>
+          </select>
         </div>
+        <input class="hidden" id="listPhotoInput" type="file" accept="image/*">
 
         <div class="empty-state" id="emptyState">
           <h3>まだ商品がありません</h3>
@@ -691,29 +752,6 @@
               <div><span>未出品</span><strong id="listUnlistedCount">0件</strong></div>
               <div><span>🔍 要捜索</span><strong id="listSearchNeededCount">0件</strong></div>
               <div><span>💴 高利益候補</span><strong id="listHighProfitCount">0件</strong></div>
-            </div>
-          </details>
-
-          <details class="inventory-toolbar-section inventory-filter-section app-accordion">
-            <summary>
-              <span class="section-icon">絞</span>
-              <span class="inventory-option-summary-copy">
-                <strong>絞り込み</strong>
-                <small id="inventoryFilterSummary">すべてのステータス</small>
-              </span>
-            </summary>
-            <div class="inventory-section-body">
-              <label class="inventory-setting-field">
-                <span class="inventory-setting-label">出品ステータス</span>
-                <select class="status-filter" id="statusFilter" aria-label="ステータスで絞り込み">
-                  <option value="">ステータスで絞る</option>
-                  <option>未出品</option>
-                  <option>出品中</option>
-                  <option>売却済み</option>
-                  <option>保留</option>
-                  <option>要捜索</option>
-                </select>
-              </label>
             </div>
           </details>
 
@@ -757,17 +795,6 @@
                   </div>
                 </div>
               </div>
-              <label class="inventory-setting-field inventory-sort-group">
-                <span class="inventory-setting-label">並び順</span>
-                <select class="status-filter" id="sortOrder" aria-label="並び順">
-                  <option value="newest">登録順（新しい順）</option>
-                  <option value="oldest">登録順（古い順）</option>
-                  <option value="title">商品名</option>
-                  <option value="storageLocation">保管場所</option>
-                  <option value="profit">利益</option>
-                  <option value="plannedPrice">販売価格</option>
-                </select>
-              </label>
             </div>
           </details>
         </div>
@@ -898,9 +925,20 @@
           <div class="sorting-list-heading">
             <div>
               <h3 id="sortingListTitle">登録済み仕分け</h3>
-              <p class="muted">検索・絞り込みは下の仕分け一覧にだけ反映されます</p>
+              <p class="muted">商品を探し、保管場所から取り出して発送準備できます</p>
             </div>
           </div>
+
+        <div class="sorting-work-toolbar">
+          <input id="sortingItemSearch" type="search" placeholder="商品名・保管場所で検索" aria-label="仕分け商品を検索">
+          <select id="sortingOrder" aria-label="仕分け商品の並び順">
+            <option value="offerDesc">予定買取額が高い順</option>
+            <option value="storage">保管場所順</option>
+            <option value="destination">売却先別</option>
+            <option value="newest">登録順</option>
+          </select>
+          <button class="ghost-button sorting-shipping-mode-button" type="button" id="sortingShippingModeButton" aria-pressed="false">発送モード（一覧）</button>
+        </div>
 
         <div class="sorting-controls">
           <select id="sortingDestinationFilter" aria-label="最終売却先で絞り込み">
@@ -916,6 +954,14 @@
         </div>
 
         <div class="sorting-summary-grid" id="sortingSummaryGrid" aria-live="polite"></div>
+
+        <section class="sorting-shipping-recommendation hidden" id="sortingShippingRecommendation" aria-live="polite">
+          <span>おすすめ発送</span>
+          <strong id="sortingRecommendationTitle">-</strong>
+          <small id="sortingRecommendationMeta">-</small>
+        </section>
+
+        <div class="sorting-work-card-list" id="sortingWorkCardList" aria-label="仕分け商品カード一覧"></div>
 
         <div class="empty-state hidden" id="sortingEmptyState">
           <h3>仕分け商品はまだありません</h3>
@@ -938,6 +984,12 @@
           </table>
         </div>
         </section>
+
+        <aside class="sorting-shipping-summary hidden" id="sortingShippingSummary" aria-live="polite">
+          <div><span>発送予定</span><strong id="sortingShippingPlannedCount">0件</strong></div>
+          <div><span>予定合計</span><strong id="sortingShippingPlannedTotal">0円</strong></div>
+          <div><span>チェック済み</span><strong id="sortingShippingCheckedCount">0/0件</strong></div>
+        </aside>
 
         <div class="shipping-management-panel" aria-labelledby="shippingManagementTitle">
           <h3 id="shippingManagementTitle">🚚 発送管理</h3>
@@ -996,8 +1048,10 @@
                 カテゴリ
                 <small>商品登録時のジャンル分類を管理</small>
               </span>
-              <span class="settings-summary-count" id="categorySettingsCount">0件</span>
-              <span class="settings-summary-count" id="categorySettingsUsageCount">使用中 0件</span>
+              <span class="settings-summary-metrics">
+                <span class="settings-summary-count" id="categorySettingsCount">0件</span>
+                <span class="settings-summary-count" id="categorySettingsUsageCount">使用中 0件</span>
+              </span>
             </summary>
             <div class="settings-insight-box" id="categoryUnusedInsight"></div>
             <div class="category-settings-list" id="categorySettingsList"></div>
@@ -1015,8 +1069,10 @@
                 保管場所
                 <small>商品の収納場所を管理</small>
               </span>
-              <span class="settings-summary-count" id="storageSettingsCount">0件</span>
-              <span class="settings-summary-count" id="storageSettingsUsageCount">使用中 0件</span>
+              <span class="settings-summary-metrics">
+                <span class="settings-summary-count" id="storageSettingsCount">0件</span>
+                <span class="settings-summary-count" id="storageSettingsUsageCount">使用中 0件</span>
+              </span>
             </summary>
             <div class="settings-insight-box" id="storageProfitInsight"></div>
             <div class="storage-settings-list" id="storageSettingsList"></div>
@@ -1034,8 +1090,10 @@
                 配送方法と送料
                 <small>送料計算で使用する配送設定</small>
               </span>
-              <span class="settings-summary-count" id="shippingSettingsCount">0件</span>
-              <span class="settings-summary-count" id="shippingSettingsUsageCount">利用 0回</span>
+              <span class="settings-summary-metrics">
+                <span class="settings-summary-count" id="shippingSettingsCount">0件</span>
+                <span class="settings-summary-count" id="shippingSettingsUsageCount">利用 0回</span>
+              </span>
             </summary>
             <div class="settings-insight-box" id="shippingUsageInsight"></div>
             <div class="shipping-settings-list" id="shippingSettingsList"></div>
@@ -1054,8 +1112,10 @@
                 商品説明テンプレート
                 <small>説明文テンプレートを管理</small>
               </span>
-              <span class="settings-summary-count" id="templateSettingsCount">0件</span>
-              <span class="settings-summary-count" id="templateSettingsUsageCount">利用 0回</span>
+              <span class="settings-summary-metrics">
+                <span class="settings-summary-count" id="templateSettingsCount">0件</span>
+                <span class="settings-summary-count" id="templateSettingsUsageCount">利用 0回</span>
+              </span>
             </summary>
             <div class="template-settings-list" id="templateSettingsList"></div>
             <p class="settings-future-note">将来候補：商品登録画面でテンプレート適用ボタンを追加</p>

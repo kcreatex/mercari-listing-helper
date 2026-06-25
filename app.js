@@ -79,6 +79,7 @@ const migrateToSupabaseButton = document.querySelector("#migrateToSupabaseButton
 const cloudLastSync = document.querySelector("#cloudLastSync");
 const cloudSyncState = document.querySelector("#cloudSyncState");
 const searchInput = document.querySelector("#searchInput");
+const listPhotoInput = document.querySelector("#listPhotoInput");
 const listUnlistedCount = document.querySelector("#listUnlistedCount");
 const listSearchNeededCount = document.querySelector("#listSearchNeededCount");
 const listHighProfitCount = document.querySelector("#listHighProfitCount");
@@ -91,6 +92,7 @@ const listShippingManagementButton = document.querySelector("#listShippingManage
 const normalListModeButton = document.querySelector("#normalListModeButton");
 const storageListModeButton = document.querySelector("#storageListModeButton");
 const statusFilter = document.querySelector("#statusFilter");
+const storageFilter = document.querySelector("#storageFilter");
 const sortOrderInput = document.querySelector("#sortOrder");
 const listViewButton = document.querySelector("#listViewButton");
 const cardViewButton = document.querySelector("#cardViewButton");
@@ -120,9 +122,25 @@ const dashboardHeroTotalProfit = document.querySelector("#dashboardHeroTotalProf
 const dashboardHeroUnlistedCount = document.querySelector("#dashboardHeroUnlistedCount");
 const dashboardHeroShippingWaitCount = document.querySelector("#dashboardHeroShippingWaitCount");
 const dashboardHeroBuriedValue = document.querySelector("#dashboardHeroBuriedValue");
+const mobileAssetItemCount = document.querySelector("#mobileAssetItemCount");
+const mobileAssetStorageCount = document.querySelector("#mobileAssetStorageCount");
+const mobileAssetProjectedProfit = document.querySelector("#mobileAssetProjectedProfit");
+const mobileAssetTotalProfit = document.querySelector("#mobileAssetTotalProfit");
+const mobileAssetMonthlyProfit = document.querySelector("#mobileAssetMonthlyProfit");
+const mobileAssetSoldCount = document.querySelector("#mobileAssetSoldCount");
+const mobileAssetMonthlySoldCount = document.querySelector("#mobileAssetMonthlySoldCount");
+const analysisSummaryUnlistedCount = document.querySelector("#analysisSummaryUnlistedCount");
+const analysisSummaryListedCount = document.querySelector("#analysisSummaryListedCount");
+const analysisSummaryInputIssueCount = document.querySelector("#analysisSummaryInputIssueCount");
+const analysisInputIssueCount = document.querySelector("#analysisInputIssueCount");
+const analysisInputIssueItem = document.querySelector("#analysisInputIssueItem");
+const analysisInputIssueText = document.querySelector("#analysisInputIssueText");
+const analysisInputIssueEditButton = document.querySelector("#analysisInputIssueEditButton");
 const todayCommandList = document.querySelector("#todayCommandList");
 const todayBuriedSummary = document.querySelector("#todayBuriedSummary");
 const todayBuriedButton = document.querySelector("#todayBuriedButton");
+const destinationProfitSummary = document.querySelector("#destinationProfitSummary");
+const destinationProfitButton = document.querySelector("#destinationProfitButton");
 const dashboardTopProfitAmount = document.querySelector("#dashboardTopProfitAmount");
 const dashboardTopProfitRate = document.querySelector("#dashboardTopProfitRate");
 const dashboardTopCategory = document.querySelector("#dashboardTopCategory");
@@ -197,7 +215,18 @@ const sortingDestinationFilter = document.querySelector("#sortingDestinationFilt
 const sortingStatusFilter = document.querySelector("#sortingStatusFilter");
 const sortingGenreFilter = document.querySelector("#sortingGenreFilter");
 const sortingBoxSearchInput = document.querySelector("#sortingBoxSearch");
+const sortingItemSearchInput = document.querySelector("#sortingItemSearch");
+const sortingOrderInput = document.querySelector("#sortingOrder");
+const sortingShippingModeButton = document.querySelector("#sortingShippingModeButton");
 const sortingSummaryGrid = document.querySelector("#sortingSummaryGrid");
+const sortingWorkCardList = document.querySelector("#sortingWorkCardList");
+const sortingShippingRecommendation = document.querySelector("#sortingShippingRecommendation");
+const sortingRecommendationTitle = document.querySelector("#sortingRecommendationTitle");
+const sortingRecommendationMeta = document.querySelector("#sortingRecommendationMeta");
+const sortingShippingSummary = document.querySelector("#sortingShippingSummary");
+const sortingShippingPlannedCount = document.querySelector("#sortingShippingPlannedCount");
+const sortingShippingPlannedTotal = document.querySelector("#sortingShippingPlannedTotal");
+const sortingShippingCheckedCount = document.querySelector("#sortingShippingCheckedCount");
 const shippingDashboardGrid = document.querySelector("#shippingDashboardGrid");
 const shippingPriorityList = document.querySelector("#shippingPriorityList");
 const analysisShippingPriorityList = document.querySelector("#analysisShippingPriorityList");
@@ -302,6 +331,9 @@ let isCloudReady = false;
 let hasCloudSaveWarning = false;
 let isSettingsDirty = false;
 let toastTimer = null;
+let isSortingShippingMode = false;
+let pendingPhotoItemId = "";
+const sortingShippingCheckedIds = new Set();
 
 function isMobileViewport() {
   return window.matchMedia("(max-width: 700px)").matches;
@@ -342,7 +374,8 @@ function restoreInventoryOptionsOpenState() {
     return;
   }
 
-  inventoryDisplaySection.open = localStorage.getItem(INVENTORY_OPTIONS_OPEN_KEY) === "true";
+  inventoryDisplaySection.open = false;
+  localStorage.setItem(INVENTORY_OPTIONS_OPEN_KEY, "false");
   updateInventoryOptionSummary();
   updateInventoryFilterSummary();
 }
@@ -860,7 +893,7 @@ async function loadItemsFromSupabase() {
         category: row.data?.category || row.category || "",
         storageLocation: row.data?.storageLocation || row.storage_location || "",
         plannedPrice: row.data?.plannedPrice ?? row.planned_price ?? "",
-        imageData: localItem?.imageData || row.data?.imageData || "",
+        imageData: localItem?.imageData || "",
       };
     })
     .filter((item) => item.id);
@@ -1038,6 +1071,61 @@ function getItemCode(item) {
   return item?.itemCode || "";
 }
 
+function getLocalItemImage(item) {
+  return String(item?.imageData || "");
+}
+
+function saveLocalItemImage(item, imageData) {
+  if (!item) {
+    return false;
+  }
+
+  const previousImage = item.imageData || "";
+  item.imageData = imageData || "";
+
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    return true;
+  } catch (error) {
+    item.imageData = previousImage;
+    console.warn("ローカル画像保存エラー:", error);
+    return false;
+  }
+}
+
+function getSortingSourceItem(sortingItem) {
+  if (!sortingItem) {
+    return null;
+  }
+
+  return items.find((item) => item.id === sortingItem.sourceItemId)
+    || items.find((item) => getListingTitle(item) === sortingItem.name)
+    || null;
+}
+
+function createListThumbnail(item, options = {}) {
+  const button = document.createElement("button");
+  const imageData = getLocalItemImage(item);
+  button.className = `list-thumbnail-button${options.compact ? " compact" : ""}`;
+  button.type = "button";
+  button.dataset.action = "change-photo";
+  button.setAttribute("aria-label", imageData ? "商品写真を変更" : "商品写真を追加");
+
+  if (imageData) {
+    const image = document.createElement("img");
+    image.src = imageData;
+    image.alt = "";
+    button.append(image);
+  } else {
+    const placeholder = document.createElement("span");
+    placeholder.className = "list-thumbnail-placeholder";
+    placeholder.textContent = "写真";
+    button.append(placeholder);
+  }
+
+  return button;
+}
+
 function createBackupFileName() {
   const date = new Date();
   const year = date.getFullYear();
@@ -1168,6 +1256,22 @@ function getStorageLocationOptions(selectedValue = "") {
 
 function refreshStorageLocationOptions(selectedValue = "") {
   setSelectOptions(storageLocationInput, getStorageLocationOptions(selectedValue), selectedValue);
+}
+
+function refreshListStorageFilter() {
+  if (!storageFilter) {
+    return;
+  }
+
+  const selectedValue = storageFilter.value;
+  storageFilter.innerHTML = '<option value="">保管場所</option>';
+  getStorageLocationOptions(selectedValue).forEach((storageLocation) => {
+    const option = document.createElement("option");
+    option.value = storageLocation;
+    option.textContent = storageLocation;
+    storageFilter.append(option);
+  });
+  storageFilter.value = selectedValue;
 }
 
 function updateConditionQuickButtons() {
@@ -2139,6 +2243,20 @@ function updateInputIssueDashboard(allItems) {
   }
   missingDescriptionCount.textContent = `${targetItems.filter((item) => !String(item.description || "").trim()).length}件`;
   renderInputIssueList(issueItems);
+  analysisInputIssueCount.textContent = `${issueItems.length}件`;
+  analysisInputIssueEditButton.disabled = issueItems.length === 0;
+
+  if (issueItems.length === 0) {
+    analysisInputIssueItem.textContent = "入力不足の商品はありません";
+    analysisInputIssueText.textContent = "出品判断に必要な情報が揃っています";
+    delete analysisInputIssueEditButton.dataset.id;
+  } else {
+    const firstIssue = issueItems[0];
+    analysisInputIssueItem.textContent = getListingTitle(firstIssue.item) || "商品タイトル未入力";
+    analysisInputIssueText.textContent = firstIssue.issues.join(" / ");
+    analysisInputIssueEditButton.dataset.id = firstIssue.item.id;
+  }
+
   return issueItems.length;
 }
 
@@ -2350,7 +2468,7 @@ function renderTodayCommands(allItems) {
       title: "査定待ち",
       detail: `${top.item.name || "商品名未入力"} / ${top.item.destination || "未定"}`,
       value: `推定利益 ${formatMoney(top.value)}`,
-      actionLabel: "確認する",
+      actionLabel: "査定状況を見る",
       action: "open-sorting",
     }));
   }
@@ -2362,7 +2480,7 @@ function renderTodayCommands(allItems) {
       title: "入力不足",
       detail: summarizeInputIssues(inputIssueEntries) || "入力不足あり",
       value: inputIssueEntries[0]?.item ? getListingTitle(inputIssueEntries[0].item) || "商品タイトル未入力" : "",
-      actionLabel: "商品登録へ",
+      actionLabel: "不足項目を編集",
       action: "open-input-issues",
       targetId: inputIssueEntries[0]?.item?.id || "",
     }));
@@ -2371,7 +2489,7 @@ function renderTodayCommands(allItems) {
   if (cards.length === 0) {
     const emptyMessage = document.createElement("p");
     emptyMessage.className = "today-command-empty";
-    emptyMessage.textContent = "本日の優先作業はありません";
+    emptyMessage.textContent = "確認が必要な商品はありません";
     todayCommandList.append(emptyMessage);
     return;
   }
@@ -2387,7 +2505,7 @@ function updateDashboardStateLabel(target, count) {
     return;
   }
 
-  label.textContent = count > 0 ? "要対応" : "完了";
+  label.textContent = count > 0 ? "あり" : "なし";
   label.classList.toggle("work-state-alert", count > 0);
 }
 
@@ -2408,6 +2526,38 @@ function updateTodayBuriedTreasure(allItems) {
   todayBuriedButton.dataset.storage = top.name;
 }
 
+function updateDestinationProfitCandidate() {
+  const groups = new Map();
+
+  sortingItems.forEach((item) => {
+    const destination = item.destination || "未定";
+
+    if (destination === "未定" || ["発送済", "入金済", "完了"].includes(item.shippingStatus || "")) {
+      return;
+    }
+
+    const current = groups.get(destination) || { name: destination, count: 0, value: 0 };
+    current.count += 1;
+    current.value += getSortingEstimatedValue(item);
+    groups.set(destination, current);
+  });
+
+  const top = [...groups.values()].sort((first, second) => {
+    return second.value - first.value || second.count - first.count || compareText(first.name, second.name);
+  })[0] || null;
+
+  destinationProfitButton.disabled = !top;
+
+  if (!top) {
+    destinationProfitSummary.textContent = "売却先が決まった利益候補はありません";
+    delete destinationProfitButton.dataset.destination;
+    return;
+  }
+
+  destinationProfitSummary.textContent = `${top.name} / ${top.count}件 / 見込み額 ${formatMoney(top.value)}`;
+  destinationProfitButton.dataset.destination = top.name;
+}
+
 function updateDashboard(allItems, soldItems) {
   const monthlySoldItems = getCurrentMonthSoldItems(soldItems);
   const totalProfitValue = sumActualProfit(soldItems);
@@ -2420,17 +2570,31 @@ function updateDashboard(allItems, soldItems) {
   const storageTop = storageRanking[0] || null;
   const searchCount = allItems.filter((item) => getItemStatus(item) === "要捜索").length;
   const unlistedCount = allItems.filter((item) => getItemStatus(item) === "未出品").length;
+  const listedCount = allItems.filter((item) => getItemStatus(item) === "出品中").length;
   const inputIssueCount = getInputIssueEntries(allItems).length;
   const unsortedCount = sortingItems.filter((item) => (item.shippingStatus || "未仕分け") === "未仕分け").length;
   const shippingWaitCount = sortingItems.filter((item) => (item.shippingStatus || "") === "箱詰め済").length;
   const assessmentWaitCount = sortingItems.filter((item) => (item.shippingStatus || "") === "査定待ち").length;
   const buriedValue = getInventoryValueRanking(getUnsoldItems(allItems))
     .reduce((total, group) => total + group.projectedProfitTotal, 0);
+  const storageCount = new Set(
+    allItems.map((item) => String(item.storageLocation || "").trim() || "未設定"),
+  ).size;
 
   dashboardHeroTotalProfit.textContent = `${inputIssueCount}件`;
   dashboardHeroUnlistedCount.textContent = `${unsortedCount}件`;
   dashboardHeroShippingWaitCount.textContent = `${shippingWaitCount}件`;
   dashboardHeroBuriedValue.textContent = `${assessmentWaitCount}件`;
+  mobileAssetItemCount.textContent = `${allItems.length}件`;
+  analysisSummaryUnlistedCount.textContent = `${unlistedCount}件`;
+  analysisSummaryListedCount.textContent = `${listedCount}件`;
+  analysisSummaryInputIssueCount.textContent = `${inputIssueCount}件`;
+  mobileAssetStorageCount.textContent = `${storageCount}か所`;
+  mobileAssetProjectedProfit.textContent = formatMoney(buriedValue);
+  mobileAssetTotalProfit.textContent = formatMoney(totalProfitValue);
+  mobileAssetMonthlyProfit.textContent = formatMoney(monthlyProfitValue);
+  mobileAssetSoldCount.textContent = `${soldItems.length}件`;
+  mobileAssetMonthlySoldCount.textContent = `${monthlySoldItems.length}件`;
   updateDashboardStateLabel(dashboardHeroTotalProfit, inputIssueCount);
   updateDashboardStateLabel(dashboardHeroUnlistedCount, unsortedCount);
   updateDashboardStateLabel(dashboardHeroShippingWaitCount, shippingWaitCount);
@@ -2451,6 +2615,7 @@ function updateDashboard(allItems, soldItems) {
   dashboardSearchCount.textContent = `${searchCount}件`;
   renderTodayCommands(allItems);
   updateTodayBuriedTreasure(allItems);
+  updateDestinationProfitCandidate();
   updateInputIssueDashboard(allItems);
   renderSortingPriority();
   renderShippingProfitPriority();
@@ -3140,6 +3305,38 @@ function readImageFile(file) {
   });
 }
 
+function requestLocalPhoto(itemId) {
+  const item = items.find((currentItem) => currentItem.id === itemId);
+
+  if (!item) {
+    showToast("元の商品データが見つかりません", "error");
+    return;
+  }
+
+  pendingPhotoItemId = itemId;
+  listPhotoInput.value = "";
+  listPhotoInput.click();
+}
+
+function removeLocalPhoto(item) {
+  if (!item || !getLocalItemImage(item)) {
+    showToast("削除する写真がありません", "error");
+    return;
+  }
+
+  if (!confirm(`「${getListingTitle(item)}」のこの端末の写真を削除しますか？`)) {
+    return;
+  }
+
+  if (!saveLocalItemImage(item, "")) {
+    showToast("写真を削除できませんでした", "error");
+    return;
+  }
+
+  showToast("この端末の写真を削除しました", "success");
+  render();
+}
+
 function getSortingPriceEntries(item) {
   return [
     { label: "メルカリ", value: parseMoney(item.mercariPrice) },
@@ -3271,11 +3468,138 @@ function refreshSortingFilters() {
 
 function getFilteredSortingItems() {
   return sortingItems.filter((item) => {
+    const keyword = String(sortingItemSearchInput?.value || "").trim().toLowerCase();
+    const boxKeyword = String(sortingBoxSearchInput?.value || "").trim().toLowerCase();
     const matchesDestination = !sortingDestinationFilter.value || item.destination === sortingDestinationFilter.value;
     const matchesStatus = !sortingStatusFilter.value || item.status === sortingStatusFilter.value;
     const matchesGenre = !sortingGenreFilter.value || item.genre === sortingGenreFilter.value;
-    return matchesDestination && matchesStatus && matchesGenre;
+    const matchesBox = !boxKeyword || String(item.boxNumber || "").toLowerCase().includes(boxKeyword);
+    const matchesKeyword = !keyword || [
+      item.name,
+      item.storageLocation,
+      item.destination,
+      item.boxNumber,
+      item.memo,
+    ].join(" ").toLowerCase().includes(keyword);
+    return matchesDestination && matchesStatus && matchesGenre && matchesBox && matchesKeyword;
   });
+}
+
+function sortSortingItems(sourceItems) {
+  const order = sortingOrderInput?.value || "offerDesc";
+
+  return [...sourceItems].sort((first, second) => {
+    if (order === "storage") {
+      return compareText(first.storageLocation || "未設定", second.storageLocation || "未設定")
+        || compareText(first.name, second.name);
+    }
+
+    if (order === "destination") {
+      return compareText(first.destination || "未定", second.destination || "未定")
+        || compareText(first.storageLocation || "未設定", second.storageLocation || "未設定");
+    }
+
+    if (order === "newest") {
+      return new Date(second.createdAt || second.updatedAt || 0) - new Date(first.createdAt || first.updatedAt || 0);
+    }
+
+    return getSortingEstimatedValue(second) - getSortingEstimatedValue(first)
+      || compareText(first.name, second.name);
+  });
+}
+
+function isSortingShippingCandidate(item) {
+  return !["発送済", "査定待ち", "入金済", "完了"].includes(item.shippingStatus || "未仕分け");
+}
+
+function createSortingWorkCard(item) {
+  const card = document.createElement("article");
+  const bestOffer = getBestSortingOffer(item);
+  const checked = sortingShippingCheckedIds.has(item.id);
+  const sourceItem = getSortingSourceItem(item);
+
+  card.className = "sorting-work-card";
+  card.classList.toggle("shipping-mode-card", isSortingShippingMode);
+  card.classList.toggle("is-picked", checked);
+  card.dataset.id = item.id;
+  card.tabIndex = 0;
+  card.setAttribute("role", "button");
+  card.setAttribute("aria-label", `${item.name || "商品"}の詳細を開く`);
+  card.innerHTML = `
+    <label class="sorting-pick-check ${isSortingShippingMode ? "" : "hidden"}">
+      <input type="checkbox" data-action="toggle-shipping-pick" ${checked ? "checked" : ""}>
+      <span aria-hidden="true"></span>
+    </label>
+    <div class="sorting-work-thumb"></div>
+    <div class="sorting-work-card-body">
+      <strong class="sorting-work-title"></strong>
+      <b class="sorting-work-offer"></b>
+      <span class="sorting-work-storage"></span>
+      <span class="sorting-work-destination"></span>
+    </div>
+    <details class="row-action-menu sorting-action-menu">
+      <summary aria-label="操作メニュー">⋯</summary>
+      <div class="actions sorting-row-actions sorting-action-panel">
+        <button class="text-button" type="button" data-action="view-sorting-detail">詳細</button>
+        <button class="text-button" type="button" data-action="edit-sorting">編集</button>
+        <button class="text-button sorting-source-action hidden" type="button" data-action="copy-source-item-code">商品IDコピー</button>
+        <button class="text-button sorting-source-action hidden" type="button" data-action="change-source-photo">写真追加・変更</button>
+        <button class="text-button sorting-source-action hidden" type="button" data-action="remove-source-photo">写真削除</button>
+        <button class="danger-button" type="button" data-action="delete-sorting">削除</button>
+      </div>
+    </details>
+  `;
+  const thumbnail = createListThumbnail(sourceItem, { compact: true });
+  thumbnail.classList.add("sorting-thumbnail-button");
+  thumbnail.dataset.action = sourceItem ? "change-source-photo" : "";
+  thumbnail.disabled = !sourceItem;
+  card.querySelector(".sorting-work-thumb").append(thumbnail);
+  card.querySelector(".sorting-work-title").textContent = item.name || "商品名未設定";
+  card.querySelector(".sorting-work-offer").textContent = bestOffer ? formatMoney(bestOffer.value) : "査定額未設定";
+  card.querySelector(".sorting-work-storage").textContent = `📦 ${item.storageLocation || "保管場所未設定"}`;
+  card.querySelector(".sorting-work-destination").textContent = `🏪 ${item.destination || "未定"}`;
+  if (sourceItem) {
+    card.dataset.sourceId = sourceItem.id;
+    card.querySelectorAll(".sorting-source-action").forEach((button) => button.classList.remove("hidden"));
+  }
+  return card;
+}
+
+function renderSortingShippingSummary(sourceItems) {
+  const candidates = sourceItems.filter(isSortingShippingCandidate);
+  const total = candidates.reduce((sum, item) => sum + getSortingEstimatedValue(item), 0);
+  const checkedCount = candidates.filter((item) => sortingShippingCheckedIds.has(item.id)).length;
+
+  sortingShippingSummary.classList.toggle("hidden", !isSortingShippingMode);
+  sortingShippingRecommendation.classList.toggle("hidden", !isSortingShippingMode);
+  sortingShippingPlannedCount.textContent = `${candidates.length}件`;
+  sortingShippingPlannedTotal.textContent = formatMoney(total);
+  sortingShippingCheckedCount.textContent = `${checkedCount}/${candidates.length}件`;
+
+  const groups = new Map();
+  candidates.forEach((item) => {
+    const destination = item.destination || "未定";
+    const storageLocation = item.storageLocation || "未設定";
+    const key = `${destination}__${storageLocation}`;
+    const group = groups.get(key) || { destination, storageLocation, items: [], total: 0 };
+    group.items.push(item);
+    group.total += getSortingEstimatedValue(item);
+    groups.set(key, group);
+  });
+  const recommended = [...groups.values()].sort((first, second) => {
+    return second.items.length - first.items.length
+      || second.total - first.total
+      || compareText(first.destination, second.destination);
+  })[0];
+
+  if (!recommended) {
+    sortingRecommendationTitle.textContent = "対象商品なし";
+    sortingRecommendationMeta.textContent = "未発送の商品がありません";
+    return;
+  }
+
+  sortingRecommendationTitle.textContent = `${recommended.destination} / ${recommended.storageLocation}`;
+  sortingRecommendationMeta.textContent = `${recommended.items.length}商品 / 予定合計 ${formatMoney(recommended.total)}`;
 }
 
 function renderSortingSummary() {
@@ -3724,19 +4048,40 @@ function renderSorting() {
   refreshSortingFilters();
   renderSortingSummary();
   renderShippingManagement();
-  const filteredItems = getFilteredSortingItems();
+  const filteredItems = sortSortingItems(getFilteredSortingItems());
+  const displayItems = isSortingShippingMode
+    ? filteredItems.filter(isSortingShippingCandidate)
+    : filteredItems;
   sortingTableBody.innerHTML = "";
+  sortingWorkCardList.innerHTML = "";
+  sortingShippingModeButton.classList.toggle("active", isSortingShippingMode);
+  sortingShippingModeButton.setAttribute("aria-pressed", String(isSortingShippingMode));
+  sortingShippingModeButton.textContent = isSortingShippingMode ? "発送モード終了" : "発送モード（一覧）";
+  document.body.classList.toggle(
+    "sorting-shipping-mode-active",
+    isSortingShippingMode && document.body.classList.contains("work-tab-sorting"),
+  );
+  renderSortingShippingSummary(filteredItems);
 
-  if (filteredItems.length === 0) {
+  if (displayItems.length === 0) {
     sortingTableWrap.classList.add("hidden");
+    sortingWorkCardList.classList.add("hidden");
     sortingEmptyState.classList.remove("hidden");
+    sortingEmptyState.querySelector("h3").textContent = isSortingShippingMode
+      ? "発送準備中の商品はありません"
+      : "仕分け商品はまだありません";
+    sortingEmptyState.querySelector("p").textContent = isSortingShippingMode
+      ? "未発送の商品はすべて処理済みです。"
+      : "上のフォームから、売却先を決めたい商品を登録できます。";
     return;
   }
 
   sortingEmptyState.classList.add("hidden");
   sortingTableWrap.classList.remove("hidden");
-  filteredItems.forEach((item) => {
+  sortingWorkCardList.classList.remove("hidden");
+  displayItems.forEach((item) => {
     sortingTableBody.append(createSortingRow(item));
+    sortingWorkCardList.append(createSortingWorkCard(item));
   });
 }
 
@@ -3990,6 +4335,7 @@ function renderQuickSearchResults() {
 function getFilteredItems() {
   const keyword = searchInput.value.trim().toLowerCase();
   const selectedStatus = statusFilter.value;
+  const selectedStorage = storageFilter?.value || "";
 
   return items.filter((item) => {
     const matchesKeyword = !keyword || [
@@ -4010,8 +4356,9 @@ function getFilteredItems() {
       .toLowerCase()
       .includes(keyword);
     const matchesStatus = !selectedStatus || getItemStatus(item) === selectedStatus;
+    const matchesStorage = !selectedStorage || (item.storageLocation || "") === selectedStorage;
 
-    return matchesKeyword && matchesStatus;
+    return matchesKeyword && matchesStatus && matchesStorage;
   });
 }
 
@@ -4254,6 +4601,7 @@ function showCompletionPanel(item) {
 }
 
 function render() {
+  refreshListStorageFilter();
   const filteredItems = getFilteredItems();
   const shouldIgnoreInventoryFilter = statusFilter.value === "売却済み";
   const activeItems = itemListTargetMode === "inventory" && !shouldIgnoreInventoryFilter
@@ -4466,10 +4814,12 @@ function createCompactTableBlock(sourceItems) {
   table.innerHTML = `
     <thead>
       <tr>
+        <th class="compact-photo-column">写真</th>
         <th>商品名</th>
-        <th>出品状態</th>
         <th>📦 保管場所</th>
-        <th>警告</th>
+        <th>売却先</th>
+        <th>予定買取額</th>
+        <th>操作</th>
       </tr>
     </thead>
   `;
@@ -4485,30 +4835,39 @@ function createCompactTableBlock(sourceItems) {
 
 function createCompactListRow(item) {
   const row = document.createElement("tr");
-  const warningText = getCompactListWarning(item);
   row.className = "compact-list-row";
   row.dataset.id = item.id;
   row.tabIndex = 0;
   row.setAttribute("role", "button");
   row.setAttribute("aria-label", `${getListingTitle(item) || "商品"}の詳細を開く`);
   row.innerHTML = `
-    <td class="title-cell"></td>
+    <td class="compact-photo-cell"></td>
+    <td class="title-cell">
+      <strong></strong>
+      <small></small>
+    </td>
     <td></td>
     <td></td>
-    <td class="compact-warning-cell"></td>
+    <td class="money-cell"></td>
+    <td>
+      <details class="row-action-menu compact-list-actions">
+        <summary aria-label="操作メニュー">⋯</summary>
+        <div class="actions">
+          <button class="text-button" type="button" data-action="copy-item-code">商品IDコピー</button>
+          <button class="text-button" type="button" data-action="change-photo">写真追加・変更</button>
+          <button class="text-button" type="button" data-action="remove-photo">写真削除</button>
+          <button class="text-button" type="button" data-action="view-detail">詳細</button>
+          <button class="text-button" type="button" data-action="edit">編集</button>
+        </div>
+      </details>
+    </td>
   `;
-  row.children[0].textContent = getListingTitle(item) || "-";
-  row.children[1].textContent = getItemStatus(item);
+  row.querySelector(".compact-photo-cell").append(createListThumbnail(item, { compact: true }));
+  row.querySelector(".title-cell strong").textContent = getListingTitle(item) || "-";
+  row.querySelector(".title-cell small").textContent = getItemCode(item) || "ID未設定";
   row.children[2].textContent = item.storageLocation || "未設定";
-
-  if (warningText) {
-    const warning = document.createElement("span");
-    warning.className = "compact-list-warning";
-    warning.textContent = warningText;
-    row.children[3].append(warning);
-  } else {
-    row.children[3].textContent = "-";
-  }
+  row.children[3].textContent = getSortingDestinationForItem(item);
+  row.children[4].textContent = getHighestOfferForItem(item);
 
   return row;
 }
@@ -4634,7 +4993,6 @@ function renderStorageLocationView(sourceItems) {
 
 function createMobileCompactTableCard(item) {
   const card = document.createElement("article");
-  const warningText = getCompactListWarning(item);
 
   card.className = "mobile-compact-table-card";
   card.dataset.id = item.id;
@@ -4642,27 +5000,30 @@ function createMobileCompactTableCard(item) {
   card.setAttribute("role", "button");
   card.setAttribute("aria-label", `${getListingTitle(item) || "商品"}の詳細を開く`);
   card.innerHTML = `
-    <div class="mobile-compact-title"></div>
-    <div class="mobile-compact-meta mobile-compact-status">
-      <span data-field="status"></span>
+    <div class="mobile-compact-thumb"></div>
+    <div class="mobile-compact-content">
+      <strong class="mobile-compact-title"></strong>
+      <span class="mobile-compact-storage"></span>
+      <span class="mobile-compact-destination"></span>
+      <b class="mobile-compact-offer"></b>
     </div>
-    <div class="mobile-compact-meta mobile-compact-storage"></div>
-    <div class="mobile-compact-meta mobile-compact-warning">
-      <span class="compact-list-warning hidden" data-field="warning"></span>
-    </div>
+    <details class="row-action-menu mobile-compact-actions">
+      <summary aria-label="操作メニュー">⋯</summary>
+      <div class="actions">
+        <button class="text-button" type="button" data-action="copy-item-code">商品IDコピー</button>
+        <button class="text-button" type="button" data-action="change-photo">写真追加・変更</button>
+        <button class="text-button" type="button" data-action="remove-photo">写真削除</button>
+        <button class="text-button" type="button" data-action="view-detail">詳細</button>
+        <button class="text-button" type="button" data-action="edit">編集</button>
+      </div>
+    </details>
   `;
 
+  card.querySelector(".mobile-compact-thumb").append(createListThumbnail(item, { compact: true }));
   card.querySelector(".mobile-compact-title").textContent = getListingTitle(item) || "-";
-  card.querySelector('[data-field="status"]').textContent = getItemStatus(item);
-  card.querySelector(".mobile-compact-status").classList.toggle("search-needed-cell", getItemStatus(item) === "要捜索");
-  const warning = card.querySelector('[data-field="warning"]');
-  warning.textContent = warningText;
-  warning.classList.toggle("hidden", !warningText);
-  card.querySelector(".mobile-compact-warning").classList.toggle("muted-empty", !warningText);
-  if (!warningText) {
-    card.querySelector(".mobile-compact-warning").textContent = "-";
-  }
-  card.querySelector(".mobile-compact-storage").textContent = item.storageLocation || "未設定";
+  card.querySelector(".mobile-compact-storage").textContent = `📦 ${item.storageLocation || "未設定"}`;
+  card.querySelector(".mobile-compact-destination").textContent = `🏪 ${getSortingDestinationForItem(item)}`;
+  card.querySelector(".mobile-compact-offer").textContent = `💰 ${getHighestOfferForItem(item)}`;
 
   return card;
 }
@@ -4687,6 +5048,9 @@ function createInventoryShelfCard(item) {
           <button class="text-button" type="button" data-action="view-detail">詳細</button>
           <button class="text-button" type="button" data-action="copy-title">タイトルコピー</button>
           <button class="text-button" type="button" data-action="copy-description">説明文コピー</button>
+          <button class="text-button" type="button" data-action="copy-item-code">商品IDコピー</button>
+          <button class="text-button" type="button" data-action="change-photo">写真追加・変更</button>
+          <button class="text-button" type="button" data-action="remove-photo">写真削除</button>
           <button class="text-button" type="button" data-action="relist">再出品</button>
           <button class="text-button" type="button" data-action="send-to-sorting">仕分けへ送る</button>
           <button class="text-button" type="button" data-action="mark-sold">売却済み</button>
@@ -4841,6 +5205,9 @@ function createMobileCard(item) {
       <div class="mobile-more-actions-panel">
         <button class="text-button" type="button" data-action="copy-title">タイトルコピー</button>
         <button class="text-button" type="button" data-action="copy-description">説明コピー</button>
+        <button class="text-button" type="button" data-action="copy-item-code">商品IDコピー</button>
+        <button class="text-button" type="button" data-action="change-photo">写真追加・変更</button>
+        <button class="text-button" type="button" data-action="remove-photo">写真削除</button>
         <button class="text-button" type="button" data-action="relist">再出品</button>
         <button class="text-button" type="button" data-action="send-to-sorting">仕分けへ</button>
         <button class="danger-button" type="button" data-action="delete">削除</button>
@@ -5578,8 +5945,13 @@ function setActiveNavigation(view, tab = "form") {
     document.body.classList.add("work-view", `work-tab-${workTab}`);
   }
 
+  document.body.classList.toggle(
+    "sorting-shipping-mode-active",
+    view === "sorting" && isSortingShippingMode,
+  );
+
   if (workTab === "list") {
-    document.querySelectorAll(".inventory-filter-section, .inventory-work-section").forEach((details) => {
+    document.querySelectorAll(".inventory-work-section, .inventory-display-section").forEach((details) => {
       details.open = false;
     });
   }
@@ -5702,13 +6074,11 @@ inventoryDisplaySection?.querySelector("summary")?.addEventListener("click", (ev
     inventoryOptionsCloseTimer = window.setTimeout(() => {
       inventoryDisplaySection.open = false;
       inventoryDisplaySection.classList.remove("is-closing");
-      localStorage.setItem(INVENTORY_OPTIONS_OPEN_KEY, "false");
     }, 240);
     return;
   }
 
   inventoryDisplaySection.open = true;
-  localStorage.setItem(INVENTORY_OPTIONS_OPEN_KEY, "true");
 });
 
 form.addEventListener("submit", (event) => {
@@ -5849,6 +6219,18 @@ function handleItemTableAction(event) {
 
   if (button.dataset.action === "copy-description") {
     copyText(item.description || "", "商品説明文をコピーしました。");
+  }
+
+  if (button.dataset.action === "copy-item-code") {
+    copyText(getItemCode(item), "商品IDをコピーしました。");
+  }
+
+  if (button.dataset.action === "change-photo") {
+    requestLocalPhoto(item.id);
+  }
+
+  if (button.dataset.action === "remove-photo") {
+    removeLocalPhoto(item);
   }
 
   if (button.dataset.action === "relist") {
@@ -6107,6 +6489,18 @@ mobileCardList.addEventListener("click", (event) => {
     copyText(item.description || "", "商品説明文をコピーしました。");
   }
 
+  if (button.dataset.action === "copy-item-code") {
+    copyText(getItemCode(item), "商品IDをコピーしました。");
+  }
+
+  if (button.dataset.action === "change-photo") {
+    requestLocalPhoto(item.id);
+  }
+
+  if (button.dataset.action === "remove-photo") {
+    removeLocalPhoto(item);
+  }
+
   if (button.dataset.action === "relist") {
     relistItem(item);
   }
@@ -6190,6 +6584,39 @@ cloudLogoutButton.addEventListener("click", async () => {
 
 migrateToSupabaseButton.addEventListener("click", migrateLocalItemsToSupabase);
 
+listPhotoInput.addEventListener("change", async () => {
+  const file = listPhotoInput.files[0];
+  const item = items.find((currentItem) => currentItem.id === pendingPhotoItemId);
+
+  if (!file || !item) {
+    pendingPhotoItemId = "";
+    return;
+  }
+
+  if (!file.type.startsWith("image/")) {
+    showToast("画像ファイルを選択してください", "error");
+    listPhotoInput.value = "";
+    pendingPhotoItemId = "";
+    return;
+  }
+
+  try {
+    const imageData = await readImageFile(file);
+
+    if (!saveLocalItemImage(item, imageData)) {
+      throw new Error("この端末へ写真を保存できませんでした");
+    }
+
+    showToast("この端末へ写真を保存しました", "success");
+    render();
+  } catch (error) {
+    showToast(error.message || "写真を保存できませんでした", "error");
+  } finally {
+    listPhotoInput.value = "";
+    pendingPhotoItemId = "";
+  }
+});
+
 imageInput.addEventListener("change", async () => {
   const file = imageInput.files[0];
 
@@ -6246,6 +6673,7 @@ statusFilter.addEventListener("change", () => {
   updateInventoryFilterSummary();
   render();
 });
+storageFilter?.addEventListener("change", render);
 sortOrderInput.addEventListener("change", () => {
   updateInventoryOptionSummary();
   render();
@@ -6256,6 +6684,7 @@ sortingDestinationFilter.addEventListener("change", renderSorting);
 sortingStatusFilter.addEventListener("change", renderSorting);
 sortingGenreFilter.addEventListener("change", renderSorting);
 sortingBoxSearchInput.addEventListener("input", () => {
+  renderSorting();
   renderBoxSearchList();
   renderPackingList();
 });
@@ -6289,7 +6718,9 @@ sortingForm.addEventListener("submit", (event) => {
 });
 
 function closeSortingActionMenus(exceptMenu = null) {
-  sortingTableBody.querySelectorAll(".row-action-menu[open]").forEach((menu) => {
+  document.querySelectorAll(
+    "#sortingTableBody .row-action-menu[open], #sortingWorkCardList .row-action-menu[open]",
+  ).forEach((menu) => {
     if (menu !== exceptMenu) {
       menu.removeAttribute("open");
     }
@@ -6366,8 +6797,98 @@ sortingTableBody.addEventListener("keydown", (event) => {
   }
 });
 
+sortingShippingModeButton.addEventListener("click", () => {
+  isSortingShippingMode = !isSortingShippingMode;
+  if (!isSortingShippingMode) {
+    sortingShippingCheckedIds.clear();
+  }
+  renderSorting();
+});
+
+sortingItemSearchInput.addEventListener("input", renderSorting);
+sortingOrderInput.addEventListener("change", renderSorting);
+
+sortingWorkCardList.addEventListener("click", (event) => {
+  const card = event.target.closest(".sorting-work-card");
+
+  if (!card) {
+    return;
+  }
+
+  const summary = event.target.closest(".row-action-menu summary");
+  if (summary) {
+    closeSortingActionMenus(summary.closest(".row-action-menu"));
+    return;
+  }
+
+  const item = sortingItems.find((currentItem) => currentItem.id === card.dataset.id);
+
+  if (!item) {
+    return;
+  }
+
+  const checkbox = event.target.closest('[data-action="toggle-shipping-pick"]');
+  if (checkbox) {
+    event.stopPropagation();
+    if (checkbox.checked) {
+      sortingShippingCheckedIds.add(item.id);
+    } else {
+      sortingShippingCheckedIds.delete(item.id);
+    }
+    renderSorting();
+    return;
+  }
+
+  const button = event.target.closest("button");
+  if (button?.dataset.action === "view-sorting-detail") {
+    closeSortingActionMenus();
+    openSortingDetailModal(item);
+    return;
+  }
+  if (button?.dataset.action === "edit-sorting") {
+    closeSortingActionMenus();
+    startSortingEdit(item);
+    return;
+  }
+  if (button?.dataset.action === "delete-sorting") {
+    closeSortingActionMenus();
+    deleteSortingItem(item);
+    return;
+  }
+  if (button?.dataset.action === "copy-source-item-code") {
+    const sourceItem = items.find((currentItem) => currentItem.id === card.dataset.sourceId);
+    copyText(getItemCode(sourceItem), "商品IDをコピーしました。");
+    return;
+  }
+  if (button?.dataset.action === "change-source-photo") {
+    requestLocalPhoto(card.dataset.sourceId);
+    return;
+  }
+  if (button?.dataset.action === "remove-source-photo") {
+    const sourceItem = items.find((currentItem) => currentItem.id === card.dataset.sourceId);
+    removeLocalPhoto(sourceItem);
+    return;
+  }
+
+  if (!event.target.closest("summary, button, label, input")) {
+    openSortingDetailModal(item);
+  }
+});
+
+sortingWorkCardList.addEventListener("keydown", (event) => {
+  if ((event.key !== "Enter" && event.key !== " ") || event.target.closest("button, summary, input, label")) {
+    return;
+  }
+  const card = event.target.closest(".sorting-work-card");
+  const item = card ? sortingItems.find((currentItem) => currentItem.id === card.dataset.id) : null;
+  if (item) {
+    event.preventDefault();
+    openSortingDetailModal(item);
+  }
+});
+
 document.addEventListener("click", (event) => {
-  if (!event.target.closest("#sortingTableWrap .row-action-menu")) {
+  if (!event.target.closest("#sortingTableWrap .row-action-menu, #sortingWorkCardList .row-action-menu")) {
     closeSortingActionMenus();
   }
 });
@@ -6413,6 +6934,25 @@ todayBuriedButton?.addEventListener("click", () => {
   setActiveNavigation("list");
   render();
   document.querySelector("#listTitle")?.scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
+destinationProfitButton?.addEventListener("click", () => {
+  sortingDestinationFilter.value = destinationProfitButton.dataset.destination || "";
+  setActiveNavigation("sorting");
+  renderSorting();
+  document.querySelector("#sortingListTitle")?.scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
+analysisInputIssueEditButton?.addEventListener("click", () => {
+  const item = items.find((currentItem) => currentItem.id === analysisInputIssueEditButton.dataset.id);
+
+  if (item) {
+    startEdit(item);
+  } else {
+    setActiveNavigation("form");
+  }
+
+  document.querySelector("#formTitle")?.scrollIntoView({ behavior: "smooth", block: "start" });
 });
 
 sortingPriorityList?.addEventListener("click", (event) => {
