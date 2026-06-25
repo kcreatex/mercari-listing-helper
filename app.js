@@ -285,7 +285,7 @@ let currentImageData = "";
 let isImageProcessing = false;
 let lastSavedShortcut = null;
 let isFormDirty = false;
-let itemListViewMode = window.matchMedia?.("(max-width: 700px)").matches ? "card" : "list";
+let itemListViewMode = "list";
 let itemListTargetMode = "inventory";
 let itemListGroupMode = "normal";
 let selectedStorageGroup = "";
@@ -1220,6 +1220,11 @@ function formatMoney(value) {
   return `${Number(value).toLocaleString("ja-JP")}円`;
 }
 
+function formatStatusDisplay(status) {
+  const value = status || "未設定";
+  return value === "要捜索" ? "🔍 要捜索" : `📤 ${value}`;
+}
+
 function parseDateValue(value) {
   if (!value) {
     return null;
@@ -1904,7 +1909,7 @@ function renderStorageReports(allItems, storageProfitRanking, expectedRanking) {
     const summary = document.createElement("summary");
     const detail = document.createElement("dl");
 
-    card.className = "storage-report-card";
+    card.className = "storage-report-card app-accordion";
     summary.innerHTML = `
       <h4></h4>
       <dl>
@@ -1918,7 +1923,7 @@ function renderStorageReports(allItems, storageProfitRanking, expectedRanking) {
     detail.innerHTML = `
       <div><dt>売却済</dt><dd>${report.soldCount}件</dd></div>
       <div><dt>出品中</dt><dd>${report.listedCount}件</dd></div>
-      <div><dt>要捜索</dt><dd>${report.searchCount}件</dd></div>
+      <div><dt>🔍 要捜索</dt><dd>${report.searchCount}件</dd></div>
       <div><dt>平均利益</dt><dd>${formatMoney(report.averageProfit)}</dd></div>
       <div><dt>売却率</dt><dd>${Math.round(report.soldRate * 100)}%</dd></div>
       <div><dt>未出品見込み</dt><dd>${formatMoney(report.unlistedProjectedProfitTotal)}</dd></div>
@@ -2048,7 +2053,7 @@ function renderInputIssueList(issueItems) {
   if (issueItems.length === 0) {
     const emptyMessage = document.createElement("p");
     emptyMessage.className = "muted";
-    emptyMessage.textContent = "入力不足の商品はありません。";
+    emptyMessage.textContent = "⚠️ 入力不足の商品はありません。";
     inputIssueList.append(emptyMessage);
     return;
   }
@@ -2065,8 +2070,8 @@ function renderInputIssueList(issueItems) {
     row.role = "button";
     row.tabIndex = 0;
     title.textContent = getListingTitle(item) || "商品タイトル未入力";
-    status.textContent = getItemStatus(item);
-    issueText.textContent = issues.join(" / ");
+    status.textContent = formatStatusDisplay(getItemStatus(item));
+    issueText.textContent = `⚠️ ${issues.join(" / ")}`;
     arrow.className = "input-issue-arrow";
     arrow.textContent = "›";
 
@@ -2168,8 +2173,8 @@ function renderSortingPriority() {
     sortingPriorityList.append(createTodayPriorityRow(
       index + 1,
       item.name || "商品名未入力",
-      `推奨売却先 ${item.destination || "未定"} / ${item.storageLocation || "保管場所未設定"}`,
-      `推定価値 ${formatMoney(value)}`,
+      `推奨売却先 ${item.destination || "未定"} / 📦 ${item.storageLocation || "保管場所未設定"}`,
+      `💴 推定価値 ${formatMoney(value)}`,
       "仕分けする",
     ));
   });
@@ -2190,7 +2195,7 @@ function renderShippingProfitPriority() {
   if (priorityItems.length === 0) {
     const emptyMessage = document.createElement("p");
     emptyMessage.className = "muted";
-    emptyMessage.textContent = "発送待ちの商品はありません。";
+    emptyMessage.textContent = "🚚 発送待ちの商品はありません。";
     shippingProfitPriorityList.append(emptyMessage);
     return;
   }
@@ -2199,8 +2204,8 @@ function renderShippingProfitPriority() {
     shippingProfitPriorityList.append(createTodayPriorityRow(
       index + 1,
       item.name || "商品名未入力",
-      `${item.destination || "未定"} / ${item.storageLocation || "保管場所未設定"}`,
-      `利益 ${formatMoney(value)}`,
+      `${item.destination || "未定"} / 📦 ${item.storageLocation || "保管場所未設定"}`,
+      `💴 利益 ${formatMoney(value)}`,
     ));
   });
 }
@@ -2271,9 +2276,9 @@ function renderTodayCommands(allItems) {
     cards.push(createTodayCommandCard({
       type: "unsorted",
       count: unsortedItems.length,
-      title: "未仕分け",
+      title: "📦 未仕分け",
       detail: top.item.name || "商品名未入力",
-      value: `推定利益 ${formatMoney(top.value)}`,
+      value: `💴 推定利益 ${formatMoney(top.value)}`,
       actionLabel: "仕分けする",
       action: "open-sorting",
     }));
@@ -2284,9 +2289,9 @@ function renderTodayCommands(allItems) {
     cards.push(createTodayCommandCard({
       type: "shipping",
       count: shippingWaitItems.length,
-      title: "発送待ち",
+      title: "🚚 発送待ち",
       detail: `${top.item.name || "商品名未入力"} / ${top.item.destination || "未定"}`,
-      value: `推定利益 ${formatMoney(top.value)}`,
+      value: `💴 推定利益 ${formatMoney(top.value)}`,
       actionLabel: "発送管理へ",
       action: "open-shipping",
     }));
@@ -2297,9 +2302,9 @@ function renderTodayCommands(allItems) {
     cards.push(createTodayCommandCard({
       type: "assessment",
       count: assessmentWaitItems.length,
-      title: "査定待ち",
+      title: "🚚 査定待ち",
       detail: `${top.item.name || "商品名未入力"} / ${top.item.destination || "未定"}`,
-      value: `推定利益 ${formatMoney(top.value)}`,
+      value: `💴 推定利益 ${formatMoney(top.value)}`,
       actionLabel: "確認する",
       action: "open-sorting",
     }));
@@ -2309,7 +2314,7 @@ function renderTodayCommands(allItems) {
     cards.push(createTodayCommandCard({
       type: "input",
       count: inputIssueEntries.length,
-      title: "入力不足",
+      title: "⚠️ 入力不足",
       detail: summarizeInputIssues(inputIssueEntries) || "入力不足あり",
       value: inputIssueEntries[0]?.item ? getListingTitle(inputIssueEntries[0].item) || "商品タイトル未入力" : "",
       actionLabel: "商品登録へ",
@@ -2337,7 +2342,7 @@ function updateDashboardStateLabel(target, count) {
     return;
   }
 
-  label.textContent = count > 0 ? "🔴 要対応" : "🟢 完了";
+  label.textContent = count > 0 ? "要対応" : "完了";
   label.classList.toggle("work-state-alert", count > 0);
 }
 
@@ -2679,7 +2684,7 @@ function createDetailSection(title, rows) {
 
 function createDetailCollapsibleSection(title, rows, emptyText) {
   const section = document.createElement("details");
-  section.className = "detail-section detail-section-collapsible detail-section-product";
+  section.className = "detail-section detail-section-collapsible detail-section-product app-accordion";
 
   const summary = document.createElement("summary");
   summary.textContent = title;
@@ -2714,7 +2719,7 @@ function createDetailFutureSection() {
   const summary = document.createElement("summary");
   const list = document.createElement("ul");
 
-  section.className = "detail-section detail-section-collapsible detail-section-future";
+  section.className = "detail-section detail-section-collapsible detail-section-future app-accordion";
   summary.textContent = "将来機能";
   ["Googleフォト検索", "発送番号管理", "画像管理拡張"].forEach((text) => {
     const item = document.createElement("li");
@@ -2740,7 +2745,7 @@ function createDetailHero(item) {
 
   const tagList = document.createElement("div");
   tagList.className = "detail-tag-list";
-  [item.category, item.condition, getItemStatus(item)].forEach((value) => {
+  [formatStatusDisplay(getItemStatus(item)), item.category, item.condition].forEach((value) => {
     const tag = document.createElement("span");
     tag.textContent = value || "-";
     tagList.append(tag);
@@ -2755,25 +2760,25 @@ function createDetailSummary(item) {
   const profit = calculateProfit(item);
   summary.className = "detail-priority-summary";
   summary.innerHTML = `
-    <div class="detail-summary-card detail-summary-storage">
-      <span>📦 保管場所</span>
-      <strong></strong>
-    </div>
     <div class="detail-summary-card detail-summary-profit">
-      <span>💰 利益</span>
+      <span>💴 利益</span>
       <strong></strong>
     </div>
     <div class="detail-summary-card detail-summary-status">
       <span>📤 出品状態</span>
       <strong></strong>
     </div>
+    <div class="detail-summary-card detail-summary-storage">
+      <span>📦 保管場所</span>
+      <strong></strong>
+    </div>
   `;
 
-  summary.querySelector(".detail-summary-storage strong").textContent = item.storageLocation || "-";
   const profitValue = summary.querySelector(".detail-summary-profit strong");
   profitValue.textContent = formatMoney(profit);
   applyProfitLevel(profitValue, profit);
-  summary.querySelector(".detail-summary-status strong").textContent = getItemStatus(item);
+  summary.querySelector(".detail-summary-status strong").textContent = formatStatusDisplay(getItemStatus(item));
+  summary.querySelector(".detail-summary-storage strong").textContent = item.storageLocation || "-";
   return summary;
 }
 
@@ -2801,9 +2806,9 @@ function openDetailModal(item) {
 
   detailModalContent.append(createDetailSection("基本情報", [
     ["商品ID", getItemCode(item)],
-    ["保管場所", item.storageLocation],
+    ["📤 出品ステータス", getItemStatus(item)],
+    ["📦 保管場所", item.storageLocation],
     ["状態", item.condition],
-    ["出品ステータス", getItemStatus(item)],
     ["カテゴリ", item.category],
     ["購入時期", item.purchaseDate],
   ]));
@@ -2811,7 +2816,7 @@ function openDetailModal(item) {
   const projectedProfit = calculateProfit(item);
   const projectedProfitRate = calculateProjectedProfitRate(item);
   detailModalContent.append(createDetailSection("金額情報", [
-    ["見込み利益", formatMoney(projectedProfit)],
+    ["💴 見込み利益", formatMoney(projectedProfit)],
     ["利益率", formatPercent(projectedProfitRate)],
     ["販売価格", formatMoney(parseMoney(item.plannedPrice))],
     ["送料", formatMoney(parseMoney(item.shippingCost))],
@@ -3329,7 +3334,7 @@ function renderShippingPriorityItems(container) {
   if (rankingItems.length === 0) {
     const emptyMessage = document.createElement("p");
     emptyMessage.className = "muted";
-    emptyMessage.textContent = "発送待ちの商品はありません。";
+    emptyMessage.textContent = "🚚 発送待ちの商品はありません。";
     container.append(emptyMessage);
     return;
   }
@@ -3595,9 +3600,9 @@ function openSortingDetailModal(item) {
   summary.className = "sorting-detail-section";
   summary.innerHTML = `<h3>${item.name || "-"}</h3>`;
   summaryList.append(
-    createSortingDetailMeta("保管場所", item.storageLocation || "-"),
+    createSortingDetailMeta("📦 保管場所", item.storageLocation || "-"),
     createSortingDetailMeta("売却先", item.destination || "未定"),
-    createSortingDetailMeta("発送状態", item.shippingStatus || "未仕分け"),
+    createSortingDetailMeta("🚚 発送状態", item.shippingStatus || "未仕分け"),
     createSortingDetailMeta("ステータス", item.status || "未確認"),
     createSortingDetailMeta("箱番号", item.boxNumber || "-"),
     createSortingDetailMeta("メモ", item.memo || "-"),
@@ -3607,7 +3612,7 @@ function openSortingDetailModal(item) {
   const detail = document.createElement("details");
   const detailSummary = document.createElement("summary");
   const priceList = document.createElement("dl");
-  detail.className = "sorting-detail-price-details";
+  detail.className = "sorting-detail-price-details app-accordion";
   detailSummary.textContent = "その他査定先";
   priceEntries.forEach((entry) => {
     priceList.append(createSortingDetailMeta(entry.label, formatMoney(entry.value)));
@@ -3626,6 +3631,9 @@ function createSortingRow(item) {
   const bestOffer = getBestSortingOffer(item);
 
   row.dataset.id = item.id;
+  row.tabIndex = 0;
+  row.setAttribute("role", "button");
+  row.setAttribute("aria-label", `${item.name || "商品"}の仕分け詳細を開く`);
   row.innerHTML = `
     <td class="title-cell"></td>
     <td></td>
@@ -4065,6 +4073,7 @@ function createRecentDockRow(item) {
 
   row.innerHTML = `
       <td class="title-cell"></td>
+      <td class="profit-cell"></td>
       <td></td>
       <td></td>
       <td>
@@ -4086,13 +4095,16 @@ function createRecentDockRow(item) {
 
   row.dataset.id = item.id;
   row.querySelector(".title-cell").textContent = getListingTitle(item) || "-";
+  const profit = calculateProfit(item);
+  row.children[1].textContent = formatMoney(profit);
+  applyProfitLevel(row.children[1], profit);
 
   const statusBadge = document.createElement("span");
   statusBadge.className = `status-badge ${STATUS_CLASS_NAMES[getItemStatus(item)] || "status-unlisted"}`;
-  statusBadge.textContent = getItemStatus(item);
-  row.children[1].append(statusBadge);
+  statusBadge.textContent = formatStatusDisplay(getItemStatus(item));
+  row.children[2].append(statusBadge);
 
-  row.children[2].textContent = item.storageLocation || "-";
+  row.children[3].textContent = item.storageLocation || "-";
 
   return row;
 }
@@ -4101,26 +4113,28 @@ function createRecentDockMobileCard(item) {
   const card = document.createElement("article");
   card.className = "mobile-item-card recent-dock-mobile-card";
   card.dataset.id = item.id;
+  card.tabIndex = 0;
+  card.setAttribute("role", "button");
+  card.setAttribute("aria-label", `${getListingTitle(item) || "商品"}の詳細を開く`);
 
   card.innerHTML = `
     <div class="mobile-card-main">
       <div>
         <h3 class="mobile-card-name"></h3>
-        <span class="status-badge mobile-card-status"></span>
       </div>
     </div>
     <dl class="mobile-card-details">
-      <div class="mobile-priority-storage">
-        <dt>保管場所</dt>
-        <dd data-field="storageLocation"></dd>
-      </div>
       <div class="mobile-priority-profit">
-        <dt>利益</dt>
+        <dt>💴 利益</dt>
         <dd data-field="profit"></dd>
       </div>
       <div class="mobile-priority-small">
-        <dt>出品状態</dt>
+        <dt>📤 出品状態</dt>
         <dd data-field="status"></dd>
+      </div>
+      <div class="mobile-priority-storage">
+        <dt>📦 保管場所</dt>
+        <dd data-field="storageLocation"></dd>
       </div>
       <div class="mobile-priority-small">
         <dt>売却先</dt>
@@ -4136,7 +4150,7 @@ function createRecentDockMobileCard(item) {
       <button class="text-button" type="button" data-action="edit">編集</button>
     </div>
     <details class="mobile-more-actions">
-      <summary aria-label="その他の操作">…</summary>
+      <summary aria-label="その他の操作">その他</summary>
       <div class="mobile-more-actions-panel">
         <button class="text-button" type="button" data-action="copy-title">タイトルコピー</button>
         <button class="text-button" type="button" data-action="copy-description">説明コピー</button>
@@ -4148,17 +4162,14 @@ function createRecentDockMobileCard(item) {
   `;
 
   card.querySelector(".mobile-card-name").textContent = getListingTitle(item) || "-";
-  const statusBadge = card.querySelector(".mobile-card-status");
-  statusBadge.textContent = getItemStatus(item);
-  statusBadge.classList.add(STATUS_CLASS_NAMES[getItemStatus(item)] || "status-unlisted");
-  card.querySelector('[data-field="storageLocation"]').textContent = item.storageLocation || "-";
   const mobileProfit = calculateProfit(item);
   const mobileProfitField = card.querySelector('[data-field="profit"]');
   mobileProfitField.textContent = formatMoney(mobileProfit);
   applyProfitLevel(mobileProfitField, mobileProfit);
   const mobileStatusField = card.querySelector('[data-field="status"]');
-  mobileStatusField.textContent = getSearchNeededLabel(item) === "要捜索" ? "要捜索" : getItemStatus(item);
+  mobileStatusField.textContent = formatStatusDisplay(getSearchNeededLabel(item) === "要捜索" ? "要捜索" : getItemStatus(item));
   mobileStatusField.classList.toggle("search-needed-cell", getItemStatus(item) === "要捜索");
+  card.querySelector('[data-field="storageLocation"]').textContent = item.storageLocation || "-";
   card.querySelector('[data-field="destination"]').textContent = getSortingDestinationForItem(item);
   card.querySelector('[data-field="plannedPrice"]').textContent = formatMoney(parseMoney(item.plannedPrice));
 
@@ -4257,7 +4268,7 @@ function render() {
     emptyState.classList.remove("hidden");
     emptyState.querySelector("h3").textContent = items.length === 0 ? "まだ商品がありません" : "通常一覧に表示する商品がありません";
     emptyState.querySelector("p").textContent = items.length === 0
-      ? "左のフォームから、出品準備中の商品を登録できます。"
+      ? "商品登録画面から、出品準備中の商品を登録できます。"
       : "検索条件を変えるか、売却済み欄を確認してください。";
   } else {
     emptyState.classList.add("hidden");
@@ -4312,8 +4323,8 @@ function createActiveRow(item) {
 
   row.innerHTML = `
       <td class="title-cell"></td>
-      <td></td>
       <td class="profit-cell"></td>
+      <td></td>
       <td></td>
       <td></td>
       <td></td>
@@ -4337,15 +4348,15 @@ function createActiveRow(item) {
 
   row.dataset.id = item.id;
   row.querySelector(".title-cell").textContent = getListingTitle(item) || "-";
-  row.children[1].textContent = item.storageLocation || "-";
   const profit = calculateProfit(item);
-  row.children[2].textContent = formatMoney(profit);
-  applyProfitLevel(row.children[2], profit);
+  row.children[1].textContent = formatMoney(profit);
+  applyProfitLevel(row.children[1], profit);
   const statusBadge = document.createElement("span");
   statusBadge.className = `status-badge ${STATUS_CLASS_NAMES[getItemStatus(item)] || "status-unlisted"}`;
-  statusBadge.textContent = getItemStatus(item);
-  row.children[3].append(statusBadge);
-  row.children[4].textContent = getSearchNeededLabel(item);
+  statusBadge.textContent = formatStatusDisplay(getItemStatus(item));
+  row.children[2].append(statusBadge);
+  row.children[3].textContent = item.storageLocation || "-";
+  row.children[4].textContent = getItemStatus(item) === "要捜索" ? "🔍 要捜索" : "-";
   row.children[4].classList.toggle("search-needed-cell", getItemStatus(item) === "要捜索");
   row.children[5].textContent = getSortingDestinationForItem(item);
   const elapsedDays = calculateElapsedDays(item.listingDate);
@@ -4355,7 +4366,7 @@ function createActiveRow(item) {
     const warning = document.createElement("span");
     warning.className = `long-inventory-label ${longInventoryLevel.className}`;
     warning.textContent = longInventoryLevel.label;
-    row.children[3].append(warning);
+    row.children[2].append(warning);
   }
 
   const plannedPrice = parseMoney(item.plannedPrice);
@@ -4384,6 +4395,21 @@ function createItemChunks(sourceItems, chunkSize) {
   return chunks;
 }
 
+function getCompactListWarning(item) {
+  const plannedPrice = parseMoney(item.plannedPrice);
+  const minimumPrice = calculateMinimumPrice(item);
+
+  if (plannedPrice !== "" && minimumPrice > 0 && plannedPrice <= minimumPrice) {
+    return "利益限界";
+  }
+
+  if (minimumPrice <= 0) {
+    return "最低価格未設定";
+  }
+
+  return "";
+}
+
 function createCompactTableBlock(sourceItems) {
   const wrap = document.createElement("div");
   const table = document.createElement("table");
@@ -4394,9 +4420,9 @@ function createCompactTableBlock(sourceItems) {
     <thead>
       <tr>
         <th>商品名</th>
-        <th>保管場所</th>
-        <th>利益</th>
-        <th>状態</th>
+        <th>💴 利益</th>
+        <th>📤 出品ステータス</th>
+        <th>📦 保管場所</th>
       </tr>
     </thead>
   `;
@@ -4413,6 +4439,7 @@ function createCompactTableBlock(sourceItems) {
 function createCompactListRow(item) {
   const row = document.createElement("tr");
   const profit = calculateProfit(item);
+  const warningText = getCompactListWarning(item);
   row.className = "compact-list-row";
   row.dataset.id = item.id;
   row.tabIndex = 0;
@@ -4420,15 +4447,23 @@ function createCompactListRow(item) {
   row.setAttribute("aria-label", `${getListingTitle(item) || "商品"}の詳細を開く`);
   row.innerHTML = `
     <td class="title-cell"></td>
-    <td></td>
     <td class="profit-cell"></td>
+    <td></td>
     <td></td>
   `;
   row.children[0].textContent = getListingTitle(item) || "-";
-  row.children[1].textContent = item.storageLocation || "-";
-  row.children[2].textContent = formatMoney(profit);
-  applyProfitLevel(row.children[2], profit);
-  row.children[3].textContent = getItemStatus(item);
+  row.children[1].textContent = formatMoney(profit);
+  applyProfitLevel(row.children[1], profit);
+  row.children[2].textContent = formatStatusDisplay(getItemStatus(item));
+  row.children[3].textContent = item.storageLocation || "-";
+
+  if (warningText) {
+    const warning = document.createElement("span");
+    warning.className = "compact-list-warning";
+    warning.textContent = warningText;
+    row.children[2].append(warning);
+  }
+
   return row;
 }
 
@@ -4477,10 +4512,10 @@ function createStorageItemRow(item) {
     </td>
   `;
   row.children[0].textContent = getListingTitle(item) || "-";
-  row.children[1].textContent = formatMoney(parseMoney(item.plannedPrice));
-  row.children[2].textContent = formatMoney(profit);
-  applyProfitLevel(row.children[2], profit);
-  row.children[3].textContent = getItemStatus(item);
+  row.children[1].textContent = formatMoney(profit);
+  applyProfitLevel(row.children[1], profit);
+  row.children[2].textContent = formatStatusDisplay(getItemStatus(item));
+  row.children[3].textContent = formatMoney(parseMoney(item.plannedPrice));
   row.children[4].textContent = getSortingDestinationForItem(item);
   return row;
 }
@@ -4534,9 +4569,9 @@ function renderStorageLocationView(sourceItems) {
     <thead>
       <tr>
         <th>商品名</th>
+        <th>💴 見込み利益</th>
+        <th>📤 出品状態</th>
         <th>価格</th>
-        <th>見込み利益</th>
-        <th>出品状態</th>
         <th>売却先</th>
         <th>操作</th>
       </tr>
@@ -4553,6 +4588,7 @@ function renderStorageLocationView(sourceItems) {
 
 function createMobileCompactTableCard(item) {
   const card = document.createElement("article");
+  const warningText = getCompactListWarning(item);
 
   card.className = "mobile-compact-table-card";
   card.dataset.id = item.id;
@@ -4561,19 +4597,25 @@ function createMobileCompactTableCard(item) {
   card.setAttribute("aria-label", `${getListingTitle(item) || "商品"}の詳細を開く`);
   card.innerHTML = `
     <div class="mobile-compact-title"></div>
-    <div class="mobile-compact-meta mobile-compact-storage"></div>
     <div class="mobile-compact-meta mobile-compact-profit"></div>
-    <div class="mobile-compact-meta mobile-compact-status"></div>
+    <div class="mobile-compact-meta mobile-compact-status">
+      <span data-field="status"></span>
+      <span class="compact-list-warning hidden" data-field="warning"></span>
+    </div>
+    <div class="mobile-compact-meta mobile-compact-storage"></div>
   `;
 
   card.querySelector(".mobile-compact-title").textContent = getListingTitle(item) || "-";
-  card.querySelector(".mobile-compact-storage").textContent = item.storageLocation || "-";
   const compactProfit = calculateProfit(item);
   const compactProfitField = card.querySelector(".mobile-compact-profit");
   compactProfitField.textContent = formatMoney(compactProfit);
   applyProfitLevel(compactProfitField, compactProfit);
-  card.querySelector(".mobile-compact-status").textContent = getItemStatus(item);
+  card.querySelector('[data-field="status"]').textContent = formatStatusDisplay(getItemStatus(item));
   card.querySelector(".mobile-compact-status").classList.toggle("search-needed-cell", getItemStatus(item) === "要捜索");
+  const warning = card.querySelector('[data-field="warning"]');
+  warning.textContent = warningText;
+  warning.classList.toggle("hidden", !warningText);
+  card.querySelector(".mobile-compact-storage").textContent = item.storageLocation || "-";
 
   return card;
 }
@@ -4584,6 +4626,9 @@ function createInventoryShelfCard(item) {
 
   card.className = "inventory-shelf-card";
   card.dataset.id = item.id;
+  card.tabIndex = 0;
+  card.setAttribute("role", "button");
+  card.setAttribute("aria-label", `${getListingTitle(item) || "商品"}の詳細を開く`);
   card.innerHTML = `
     <div class="shelf-card-top">
       <strong class="shelf-card-title"></strong>
@@ -4602,13 +4647,15 @@ function createInventoryShelfCard(item) {
       </details>
     </div>
     <div class="shelf-card-meta">
-      <span class="shelf-location shelf-priority-storage"></span>
       <span class="profit-cell shelf-profit" data-field="profit"></span>
     </div>
     <div class="shelf-action-state">
       <span class="status-badge"></span>
       <span class="search-needed-label"></span>
       <span class="destination-label"></span>
+    </div>
+    <div class="shelf-card-meta">
+      <span class="shelf-location shelf-priority-storage"></span>
     </div>
     <dl class="shelf-card-money shelf-card-aux shelf-priority-small">
       <div><dt>価格</dt><dd data-field="plannedPrice"></dd></div>
@@ -4617,11 +4664,11 @@ function createInventoryShelfCard(item) {
 
   card.querySelector(".shelf-card-title").textContent = getListingTitle(item) || "-";
   const statusBadge = card.querySelector(".status-badge");
-  statusBadge.textContent = getItemStatus(item);
+  statusBadge.textContent = formatStatusDisplay(getItemStatus(item));
   statusBadge.classList.add(STATUS_CLASS_NAMES[getItemStatus(item)] || "status-unlisted");
   card.querySelector(".shelf-location").textContent = item.storageLocation || "-";
   const searchNeededLabel = card.querySelector(".search-needed-label");
-  searchNeededLabel.textContent = getSearchNeededLabel(item);
+  searchNeededLabel.textContent = getItemStatus(item) === "要捜索" ? "🔍 要捜索" : "-";
   searchNeededLabel.classList.toggle("search-needed-cell", getItemStatus(item) === "要捜索");
   card.querySelector(".destination-label").textContent = `売却先 ${getSortingDestinationForItem(item)}`;
   card.querySelector('[data-field="plannedPrice"]').textContent = formatMoney(parseMoney(item.plannedPrice));
@@ -4695,6 +4742,9 @@ function createMobileCard(item) {
   const card = document.createElement("article");
   card.className = "mobile-item-card";
   card.dataset.id = item.id;
+  card.tabIndex = 0;
+  card.setAttribute("role", "button");
+  card.setAttribute("aria-label", `${getListingTitle(item) || "商品"}の詳細を開く`);
   const profit = calculateProfit(item);
   const storageText = item.storageLocation || "未設定";
   const conditionText = item.condition || "未設定";
@@ -4706,28 +4756,29 @@ function createMobileCard(item) {
         <h3 class="mobile-card-name"></h3>
         <span class="mobile-card-code"></span>
       </div>
-      <span class="status-badge mobile-card-status"></span>
+    </div>
+    <div class="mobile-card-status-row">
+      <div class="mobile-priority-profit mobile-card-profit">
+        <span>💴 見込み利益</span>
+        <strong data-field="profit"></strong>
+      </div>
     </div>
     <dl class="mobile-card-details">
+      <div class="mobile-priority-status">
+        <dt>📤 出品ステータス</dt>
+        <dd><span class="status-badge mobile-card-status"></span></dd>
+      </div>
       <div class="mobile-priority-storage">
-        <dt>保管場所</dt>
+        <dt>📦 保管場所</dt>
         <dd data-field="storageLocation"></dd>
       </div>
-      <div class="mobile-priority-profit">
-        <dt>利益</dt>
-        <dd data-field="profit"></dd>
+      <div class="mobile-priority-small">
+        <dt>販売価格</dt>
+        <dd data-field="plannedPrice"></dd>
       </div>
       <div class="mobile-priority-small">
         <dt>状態</dt>
         <dd data-field="condition"></dd>
-      </div>
-      <div class="mobile-priority-small">
-        <dt>出品ステータス</dt>
-        <dd data-field="status"></dd>
-      </div>
-      <div class="mobile-priority-small">
-        <dt>価格</dt>
-        <dd data-field="plannedPrice"></dd>
       </div>
     </dl>
     <div class="mobile-card-primary-actions">
@@ -4749,21 +4800,18 @@ function createMobileCard(item) {
   card.querySelector(".mobile-card-name").textContent = getListingTitle(item) || "商品名未設定";
   card.querySelector(".mobile-card-code").textContent = item.itemCode || "ID未設定";
   const statusBadge = card.querySelector(".mobile-card-status");
-  statusBadge.textContent = statusText;
+  statusBadge.textContent = formatStatusDisplay(statusText);
   statusBadge.classList.add(STATUS_CLASS_NAMES[getItemStatus(item)] || "status-unlisted");
-  const storageField = card.querySelector('[data-field="storageLocation"]');
-  storageField.textContent = storageText;
-  storageField.classList.toggle("muted-empty", !item.storageLocation);
   const mobileProfit = profit;
   const mobileProfitField = card.querySelector('[data-field="profit"]');
   mobileProfitField.textContent = formatMoney(mobileProfit);
   applyProfitLevel(mobileProfitField, mobileProfit);
+  const storageField = card.querySelector('[data-field="storageLocation"]');
+  storageField.textContent = storageText;
+  storageField.classList.toggle("muted-empty", !item.storageLocation);
   const conditionField = card.querySelector('[data-field="condition"]');
   conditionField.textContent = conditionText;
   conditionField.classList.toggle("muted-empty", !item.condition);
-  card.querySelector('[data-field="status"]').textContent = statusText;
-  const mobileStatusField = card.querySelector('[data-field="status"]');
-  mobileStatusField.classList.toggle("search-needed-cell", getItemStatus(item) === "要捜索");
   card.querySelector('[data-field="plannedPrice"]').textContent = formatMoney(parseMoney(item.plannedPrice));
 
   return card;
@@ -5006,7 +5054,7 @@ function renderGroupedShippingSettings() {
     const summary = document.createElement("summary");
     const list = document.createElement("div");
 
-    group.className = "shipping-settings-group";
+    group.className = "shipping-settings-group app-accordion";
     summary.innerHTML = `<span>${groupName}</span><small>${groupItems.length}件</small>`;
     list.className = "shipping-settings-group-list";
     groupItems.forEach(({ method, index }) => {
@@ -5080,7 +5128,7 @@ function createTemplateSettingsRow(template, index) {
   row.className = "template-setting-row";
   row.dataset.index = String(index);
   row.innerHTML = `
-    <details class="template-row-details">
+    <details class="template-row-details app-accordion">
       <summary>
         <div class="settings-row-main">
           <input type="text" data-field="name" aria-label="テンプレート名">
@@ -5476,6 +5524,14 @@ function setActiveNavigation(view, tab = "form") {
     document.body.classList.add("work-view", `work-tab-${workTab}`);
   }
 
+  if (workTab === "list") {
+    const displaySettings = document.querySelector(".inventory-display-section");
+
+    if (displaySettings) {
+      displaySettings.open = false;
+    }
+  }
+
   sideNavLinks.forEach((link) => {
     link.classList.toggle("active", link.dataset.view === view);
   });
@@ -5667,6 +5723,7 @@ form.addEventListener("submit", (event) => {
 
 function handleItemTableAction(event) {
   const button = event.target.closest("button");
+  const interactiveControl = event.target.closest("button, summary, a, input, select, textarea, label");
   const row = event.target.closest("tr, .inventory-shelf-card, .mobile-item-card, .mobile-compact-table-card, .compact-list-row");
 
   if (!row) {
@@ -5679,7 +5736,19 @@ function handleItemTableAction(event) {
     return;
   }
 
-  if (!button && (row.classList.contains("mobile-compact-table-card") || row.classList.contains("compact-list-row"))) {
+  const isWholeCardTarget = [
+    "inventory-shelf-card",
+    "mobile-item-card",
+    "mobile-compact-table-card",
+    "compact-list-row",
+  ].some((className) => row.classList.contains(className));
+
+  if (!button && !interactiveControl && isWholeCardTarget) {
+    if (suppressedCompactClickId === item.id) {
+      suppressedCompactClickId = "";
+      return;
+    }
+
     openDetailModal(item);
     return;
   }
@@ -5744,7 +5813,11 @@ function handleMobileCompactKeydown(event) {
     return;
   }
 
-  const card = event.target.closest(".mobile-compact-table-card, .compact-list-row");
+  if (event.target.closest("button, summary, a, input, select, textarea")) {
+    return;
+  }
+
+  const card = event.target.closest(".mobile-compact-table-card, .compact-list-row, .inventory-shelf-card, .mobile-item-card");
 
   if (!card) {
     return;
@@ -5760,9 +5833,52 @@ function handleMobileCompactKeydown(event) {
   openDetailModal(item);
 }
 
+let compactLongPressTimer = null;
+let suppressedCompactClickId = "";
+
+function cancelCompactLongPress() {
+  if (compactLongPressTimer) {
+    clearTimeout(compactLongPressTimer);
+    compactLongPressTimer = null;
+  }
+}
+
+function handleCompactLongPressStart(event) {
+  if (event.pointerType === "mouse" || event.target.closest("button, summary, a, input, select")) {
+    return;
+  }
+
+  const row = event.target.closest(".mobile-compact-table-card, .compact-list-row");
+
+  if (!row) {
+    return;
+  }
+
+  cancelCompactLongPress();
+  compactLongPressTimer = window.setTimeout(() => {
+    const item = items.find((currentItem) => currentItem.id === row.dataset.id);
+
+    if (!item) {
+      return;
+    }
+
+    suppressedCompactClickId = item.id;
+    window.setTimeout(() => {
+      if (suppressedCompactClickId === item.id) {
+        suppressedCompactClickId = "";
+      }
+    }, 1000);
+    startEdit(item);
+  }, 650);
+}
+
 itemTableBody.addEventListener("click", handleItemTableAction);
 compactTableGrid.addEventListener("click", handleItemTableAction);
 compactTableGrid.addEventListener("keydown", handleMobileCompactKeydown);
+compactTableGrid.addEventListener("pointerdown", handleCompactLongPressStart);
+compactTableGrid.addEventListener("pointerup", cancelCompactLongPress);
+compactTableGrid.addEventListener("pointercancel", cancelCompactLongPress);
+compactTableGrid.addEventListener("pointerleave", cancelCompactLongPress);
 storageLocationView.addEventListener("click", (event) => {
   const groupButton = event.target.closest("[data-storage-group]");
 
@@ -5775,8 +5891,11 @@ storageLocationView.addEventListener("click", (event) => {
   handleItemTableAction(event);
 });
 inventoryShelfList.addEventListener("click", handleItemTableAction);
+inventoryShelfList.addEventListener("keydown", handleMobileCompactKeydown);
 recentDockTableBody.addEventListener("click", handleItemTableAction);
 recentDockMobileList.addEventListener("click", handleItemTableAction);
+recentDockMobileList.addEventListener("keydown", handleMobileCompactKeydown);
+mobileCardList.addEventListener("keydown", handleMobileCompactKeydown);
 
 openFullListButton.addEventListener("click", () => {
   setActiveNavigation("list");
@@ -5880,15 +5999,25 @@ soldTableBody.addEventListener("click", (event) => {
 
 mobileCardList.addEventListener("click", (event) => {
   const button = event.target.closest("button");
+  const interactiveControl = event.target.closest("button, summary, a, input, select, textarea, label");
   const card = event.target.closest(".mobile-item-card");
 
-  if (!button || !card) {
+  if (!card) {
     return;
   }
 
   const item = items.find((currentItem) => currentItem.id === card.dataset.id);
 
   if (!item) {
+    return;
+  }
+
+  if (!button && !interactiveControl) {
+    openDetailModal(item);
+    return;
+  }
+
+  if (!button) {
     return;
   }
 
@@ -6104,13 +6233,22 @@ sortingTableBody.addEventListener("click", (event) => {
   const button = event.target.closest("button");
   const row = event.target.closest("tr");
 
-  if (!button || !row) {
+  if (!row) {
     return;
   }
 
   const item = sortingItems.find((currentItem) => currentItem.id === row.dataset.id);
 
   if (!item) {
+    return;
+  }
+
+  if (!button && !event.target.closest("summary, a, input, select, textarea, label")) {
+    openSortingDetailModal(item);
+    return;
+  }
+
+  if (!button) {
     return;
   }
 
@@ -6132,6 +6270,25 @@ sortingTableBody.addEventListener("click", (event) => {
   if (button.dataset.action === "delete-sorting") {
     closeSortingActionMenus();
     deleteSortingItem(item);
+  }
+});
+
+sortingTableBody.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter" && event.key !== " ") {
+    return;
+  }
+
+  const row = event.target.closest("tr");
+
+  if (!row || event.target.closest("button, summary, a, input, select, textarea")) {
+    return;
+  }
+
+  const item = sortingItems.find((currentItem) => currentItem.id === row.dataset.id);
+
+  if (item) {
+    event.preventDefault();
+    openSortingDetailModal(item);
   }
 });
 
@@ -6269,7 +6426,7 @@ toggleMonthlyProfitButton?.addEventListener("click", () => {
 });
 toggleInputIssueButton?.addEventListener("click", () => {
   const isHidden = inputIssueList.classList.toggle("hidden");
-  toggleInputIssueButton.textContent = isHidden ? "入力不足商品を見る" : "入力不足商品を閉じる";
+  toggleInputIssueButton.textContent = isHidden ? "⚠️ 入力不足商品を見る" : "⚠️ 入力不足商品を閉じる";
 });
 toggleAnalysisButton?.addEventListener("click", () => {
   const isHidden = analysisPanel.classList.toggle("hidden");
