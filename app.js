@@ -1,4 +1,5 @@
 const STORAGE_KEY = "mercari-listing-helper-items";
+const INVENTORY_OPTIONS_OPEN_KEY = "mercari-listing-helper-inventory-options-open";
 const SETTINGS_KEY = "mercari-listing-helper-settings";
 const TEMPLATES_KEY = "mercari-listing-helper-templates";
 const SORTING_STORAGE_KEY = "mercari-listing-helper-destination-sorting";
@@ -94,6 +95,9 @@ const sortOrderInput = document.querySelector("#sortOrder");
 const listViewButton = document.querySelector("#listViewButton");
 const cardViewButton = document.querySelector("#cardViewButton");
 const viewToggle = document.querySelector(".view-toggle");
+const inventoryDisplaySection = document.querySelector(".inventory-display-section");
+const inventoryOptionSummary = document.querySelector("#inventoryOptionSummary");
+const inventoryFilterSummary = document.querySelector("#inventoryFilterSummary");
 const exportButton = document.querySelector("#exportButton");
 const importButton = document.querySelector("#importButton");
 const exportButtonTop = document.querySelector("#exportButtonTop");
@@ -288,6 +292,7 @@ let isFormDirty = false;
 let itemListViewMode = "list";
 let itemListTargetMode = "inventory";
 let itemListGroupMode = "normal";
+let inventoryOptionsCloseTimer = null;
 let selectedStorageGroup = "";
 let supabaseClient = null;
 let supabaseSession = null;
@@ -300,6 +305,46 @@ let toastTimer = null;
 
 function isMobileViewport() {
   return window.matchMedia("(max-width: 700px)").matches;
+}
+
+function getInventorySortSummary() {
+  const labels = {
+    newest: "新しい順",
+    oldest: "古い順",
+    title: "商品名順",
+    storageLocation: "保管場所順",
+    profit: "利益順",
+    plannedPrice: "価格順",
+  };
+
+  return labels[sortOrderInput?.value] || "新しい順";
+}
+
+function updateInventoryOptionSummary() {
+  if (!inventoryOptionSummary) {
+    return;
+  }
+
+  const groupLabel = itemListGroupMode === "storage" ? "保管場所別" : "通常一覧";
+  const targetLabel = itemListTargetMode === "all" ? "全商品" : "在庫のみ";
+  const viewLabel = itemListViewMode === "card" ? "カード" : "一覧";
+  inventoryOptionSummary.textContent = `${groupLabel}・${targetLabel}・${getInventorySortSummary()}・${viewLabel}`;
+}
+
+function updateInventoryFilterSummary() {
+  if (inventoryFilterSummary) {
+    inventoryFilterSummary.textContent = statusFilter?.value || "すべてのステータス";
+  }
+}
+
+function restoreInventoryOptionsOpenState() {
+  if (!inventoryDisplaySection) {
+    return;
+  }
+
+  inventoryDisplaySection.open = localStorage.getItem(INVENTORY_OPTIONS_OPEN_KEY) === "true";
+  updateInventoryOptionSummary();
+  updateInventoryFilterSummary();
 }
 
 const DEFAULT_STATUS = "未出品";
@@ -2053,7 +2098,7 @@ function renderInputIssueList(issueItems) {
   if (issueItems.length === 0) {
     const emptyMessage = document.createElement("p");
     emptyMessage.className = "muted";
-    emptyMessage.textContent = "⚠️ 入力不足の商品はありません。";
+    emptyMessage.textContent = "入力不足の商品はありません。";
     inputIssueList.append(emptyMessage);
     return;
   }
@@ -2071,7 +2116,7 @@ function renderInputIssueList(issueItems) {
     row.tabIndex = 0;
     title.textContent = getListingTitle(item) || "商品タイトル未入力";
     status.textContent = formatStatusDisplay(getItemStatus(item));
-    issueText.textContent = `⚠️ ${issues.join(" / ")}`;
+    issueText.textContent = issues.join(" / ");
     arrow.className = "input-issue-arrow";
     arrow.textContent = "›";
 
@@ -2173,8 +2218,8 @@ function renderSortingPriority() {
     sortingPriorityList.append(createTodayPriorityRow(
       index + 1,
       item.name || "商品名未入力",
-      `推奨売却先 ${item.destination || "未定"} / 📦 ${item.storageLocation || "保管場所未設定"}`,
-      `💴 推定価値 ${formatMoney(value)}`,
+      `推奨売却先 ${item.destination || "未定"} / ${item.storageLocation || "保管場所未設定"}`,
+      `推定価値 ${formatMoney(value)}`,
       "仕分けする",
     ));
   });
@@ -2195,7 +2240,7 @@ function renderShippingProfitPriority() {
   if (priorityItems.length === 0) {
     const emptyMessage = document.createElement("p");
     emptyMessage.className = "muted";
-    emptyMessage.textContent = "🚚 発送待ちの商品はありません。";
+    emptyMessage.textContent = "発送待ちの商品はありません。";
     shippingProfitPriorityList.append(emptyMessage);
     return;
   }
@@ -2204,8 +2249,8 @@ function renderShippingProfitPriority() {
     shippingProfitPriorityList.append(createTodayPriorityRow(
       index + 1,
       item.name || "商品名未入力",
-      `${item.destination || "未定"} / 📦 ${item.storageLocation || "保管場所未設定"}`,
-      `💴 利益 ${formatMoney(value)}`,
+      `${item.destination || "未定"} / ${item.storageLocation || "保管場所未設定"}`,
+      `利益 ${formatMoney(value)}`,
     ));
   });
 }
@@ -2276,9 +2321,9 @@ function renderTodayCommands(allItems) {
     cards.push(createTodayCommandCard({
       type: "unsorted",
       count: unsortedItems.length,
-      title: "📦 未仕分け",
+      title: "未仕分け",
       detail: top.item.name || "商品名未入力",
-      value: `💴 推定利益 ${formatMoney(top.value)}`,
+      value: `推定利益 ${formatMoney(top.value)}`,
       actionLabel: "仕分けする",
       action: "open-sorting",
     }));
@@ -2289,9 +2334,9 @@ function renderTodayCommands(allItems) {
     cards.push(createTodayCommandCard({
       type: "shipping",
       count: shippingWaitItems.length,
-      title: "🚚 発送待ち",
+      title: "発送待ち",
       detail: `${top.item.name || "商品名未入力"} / ${top.item.destination || "未定"}`,
-      value: `💴 推定利益 ${formatMoney(top.value)}`,
+      value: `推定利益 ${formatMoney(top.value)}`,
       actionLabel: "発送管理へ",
       action: "open-shipping",
     }));
@@ -2302,9 +2347,9 @@ function renderTodayCommands(allItems) {
     cards.push(createTodayCommandCard({
       type: "assessment",
       count: assessmentWaitItems.length,
-      title: "🚚 査定待ち",
+      title: "査定待ち",
       detail: `${top.item.name || "商品名未入力"} / ${top.item.destination || "未定"}`,
-      value: `💴 推定利益 ${formatMoney(top.value)}`,
+      value: `推定利益 ${formatMoney(top.value)}`,
       actionLabel: "確認する",
       action: "open-sorting",
     }));
@@ -2314,7 +2359,7 @@ function renderTodayCommands(allItems) {
     cards.push(createTodayCommandCard({
       type: "input",
       count: inputIssueEntries.length,
-      title: "⚠️ 入力不足",
+      title: "入力不足",
       detail: summarizeInputIssues(inputIssueEntries) || "入力不足あり",
       value: inputIssueEntries[0]?.item ? getListingTitle(inputIssueEntries[0].item) || "商品タイトル未入力" : "",
       actionLabel: "商品登録へ",
@@ -3334,7 +3379,7 @@ function renderShippingPriorityItems(container) {
   if (rankingItems.length === 0) {
     const emptyMessage = document.createElement("p");
     emptyMessage.className = "muted";
-    emptyMessage.textContent = "🚚 発送待ちの商品はありません。";
+    emptyMessage.textContent = "発送待ちの商品はありません。";
     container.append(emptyMessage);
     return;
   }
@@ -4249,6 +4294,8 @@ function render() {
   cardViewButton.classList.toggle("active", itemListViewMode === "card");
   listShowAllButton?.classList.toggle("active", itemListTargetMode === "all");
   listInventoryOnlyButton?.classList.toggle("active", itemListTargetMode === "inventory");
+  updateInventoryOptionSummary();
+  updateInventoryFilterSummary();
   viewToggle.classList.toggle("hidden", shouldRenderFullItemList && (items.length === 0 || itemListGroupMode === "storage"));
   inventoryShelfList.classList.toggle("card-grid", itemListViewMode === "card");
 
@@ -4420,9 +4467,9 @@ function createCompactTableBlock(sourceItems) {
     <thead>
       <tr>
         <th>商品名</th>
-        <th>💴 利益</th>
-        <th>📤 出品ステータス</th>
+        <th>出品状態</th>
         <th>📦 保管場所</th>
+        <th>警告</th>
       </tr>
     </thead>
   `;
@@ -4438,7 +4485,6 @@ function createCompactTableBlock(sourceItems) {
 
 function createCompactListRow(item) {
   const row = document.createElement("tr");
-  const profit = calculateProfit(item);
   const warningText = getCompactListWarning(item);
   row.className = "compact-list-row";
   row.dataset.id = item.id;
@@ -4447,21 +4493,21 @@ function createCompactListRow(item) {
   row.setAttribute("aria-label", `${getListingTitle(item) || "商品"}の詳細を開く`);
   row.innerHTML = `
     <td class="title-cell"></td>
-    <td class="profit-cell"></td>
     <td></td>
     <td></td>
+    <td class="compact-warning-cell"></td>
   `;
   row.children[0].textContent = getListingTitle(item) || "-";
-  row.children[1].textContent = formatMoney(profit);
-  applyProfitLevel(row.children[1], profit);
-  row.children[2].textContent = formatStatusDisplay(getItemStatus(item));
-  row.children[3].textContent = item.storageLocation || "-";
+  row.children[1].textContent = getItemStatus(item);
+  row.children[2].textContent = item.storageLocation || "未設定";
 
   if (warningText) {
     const warning = document.createElement("span");
     warning.className = "compact-list-warning";
     warning.textContent = warningText;
-    row.children[2].append(warning);
+    row.children[3].append(warning);
+  } else {
+    row.children[3].textContent = "-";
   }
 
   return row;
@@ -4597,25 +4643,26 @@ function createMobileCompactTableCard(item) {
   card.setAttribute("aria-label", `${getListingTitle(item) || "商品"}の詳細を開く`);
   card.innerHTML = `
     <div class="mobile-compact-title"></div>
-    <div class="mobile-compact-meta mobile-compact-profit"></div>
     <div class="mobile-compact-meta mobile-compact-status">
       <span data-field="status"></span>
-      <span class="compact-list-warning hidden" data-field="warning"></span>
     </div>
     <div class="mobile-compact-meta mobile-compact-storage"></div>
+    <div class="mobile-compact-meta mobile-compact-warning">
+      <span class="compact-list-warning hidden" data-field="warning"></span>
+    </div>
   `;
 
   card.querySelector(".mobile-compact-title").textContent = getListingTitle(item) || "-";
-  const compactProfit = calculateProfit(item);
-  const compactProfitField = card.querySelector(".mobile-compact-profit");
-  compactProfitField.textContent = formatMoney(compactProfit);
-  applyProfitLevel(compactProfitField, compactProfit);
-  card.querySelector('[data-field="status"]').textContent = formatStatusDisplay(getItemStatus(item));
+  card.querySelector('[data-field="status"]').textContent = getItemStatus(item);
   card.querySelector(".mobile-compact-status").classList.toggle("search-needed-cell", getItemStatus(item) === "要捜索");
   const warning = card.querySelector('[data-field="warning"]');
   warning.textContent = warningText;
   warning.classList.toggle("hidden", !warningText);
-  card.querySelector(".mobile-compact-storage").textContent = item.storageLocation || "-";
+  card.querySelector(".mobile-compact-warning").classList.toggle("muted-empty", !warningText);
+  if (!warningText) {
+    card.querySelector(".mobile-compact-warning").textContent = "-";
+  }
+  card.querySelector(".mobile-compact-storage").textContent = item.storageLocation || "未設定";
 
   return card;
 }
@@ -4623,6 +4670,7 @@ function createMobileCompactTableCard(item) {
 function createInventoryShelfCard(item) {
   const card = document.createElement("article");
   const profit = calculateProfit(item);
+  const warningText = getCompactListWarning(item) || (getItemStatus(item) === "要捜索" ? "要捜索" : "");
 
   card.className = "inventory-shelf-card";
   card.dataset.id = item.id;
@@ -4646,16 +4694,18 @@ function createInventoryShelfCard(item) {
         </div>
       </details>
     </div>
-    <div class="shelf-card-meta">
-      <span class="profit-cell shelf-profit" data-field="profit"></span>
-    </div>
     <div class="shelf-action-state">
       <span class="status-badge"></span>
-      <span class="search-needed-label"></span>
-      <span class="destination-label"></span>
     </div>
     <div class="shelf-card-meta">
       <span class="shelf-location shelf-priority-storage"></span>
+    </div>
+    <div class="shelf-warning-row">
+      <span class="search-needed-label"></span>
+    </div>
+    <div class="shelf-card-meta shelf-secondary-meta">
+      <span class="profit-cell shelf-profit" data-field="profit"></span>
+      <span class="destination-label"></span>
     </div>
     <dl class="shelf-card-money shelf-card-aux shelf-priority-small">
       <div><dt>価格</dt><dd data-field="plannedPrice"></dd></div>
@@ -4668,8 +4718,9 @@ function createInventoryShelfCard(item) {
   statusBadge.classList.add(STATUS_CLASS_NAMES[getItemStatus(item)] || "status-unlisted");
   card.querySelector(".shelf-location").textContent = item.storageLocation || "-";
   const searchNeededLabel = card.querySelector(".search-needed-label");
-  searchNeededLabel.textContent = getItemStatus(item) === "要捜索" ? "🔍 要捜索" : "-";
-  searchNeededLabel.classList.toggle("search-needed-cell", getItemStatus(item) === "要捜索");
+  searchNeededLabel.textContent = warningText;
+  searchNeededLabel.classList.toggle("hidden", !warningText);
+  searchNeededLabel.classList.toggle("search-needed-cell", Boolean(warningText));
   card.querySelector(".destination-label").textContent = `売却先 ${getSortingDestinationForItem(item)}`;
   card.querySelector('[data-field="plannedPrice"]').textContent = formatMoney(parseMoney(item.plannedPrice));
   const profitField = card.querySelector('[data-field="profit"]');
@@ -5519,17 +5570,18 @@ function setActiveNavigation(view, tab = "form") {
     document.body.classList.add("shipping-view");
   } else if (view === "settings") {
     document.body.classList.add("settings-view");
+    document.querySelectorAll(".settings-panel details.settings-accordion").forEach((details) => {
+      details.open = false;
+    });
     renderSettings();
   } else {
     document.body.classList.add("work-view", `work-tab-${workTab}`);
   }
 
   if (workTab === "list") {
-    const displaySettings = document.querySelector(".inventory-display-section");
-
-    if (displaySettings) {
-      displaySettings.open = false;
-    }
+    document.querySelectorAll(".inventory-filter-section, .inventory-work-section").forEach((details) => {
+      details.open = false;
+    });
   }
 
   sideNavLinks.forEach((link) => {
@@ -5639,6 +5691,24 @@ normalListModeButton.addEventListener("click", () => {
 storageListModeButton.addEventListener("click", () => {
   itemListGroupMode = "storage";
   render();
+});
+
+inventoryDisplaySection?.querySelector("summary")?.addEventListener("click", (event) => {
+  event.preventDefault();
+  window.clearTimeout(inventoryOptionsCloseTimer);
+
+  if (inventoryDisplaySection.open) {
+    inventoryDisplaySection.classList.add("is-closing");
+    inventoryOptionsCloseTimer = window.setTimeout(() => {
+      inventoryDisplaySection.open = false;
+      inventoryDisplaySection.classList.remove("is-closing");
+      localStorage.setItem(INVENTORY_OPTIONS_OPEN_KEY, "false");
+    }, 240);
+    return;
+  }
+
+  inventoryDisplaySection.open = true;
+  localStorage.setItem(INVENTORY_OPTIONS_OPEN_KEY, "true");
 });
 
 form.addEventListener("submit", (event) => {
@@ -6173,9 +6243,13 @@ statusFilter.addEventListener("change", () => {
   if (statusFilter.value === "売却済み") {
     itemListTargetMode = "all";
   }
+  updateInventoryFilterSummary();
   render();
 });
-sortOrderInput.addEventListener("change", render);
+sortOrderInput.addEventListener("change", () => {
+  updateInventoryOptionSummary();
+  render();
+});
 soldSortInput.addEventListener("change", render);
 storageReportSortInput.addEventListener("change", render);
 sortingDestinationFilter.addEventListener("change", renderSorting);
@@ -6426,7 +6500,7 @@ toggleMonthlyProfitButton?.addEventListener("click", () => {
 });
 toggleInputIssueButton?.addEventListener("click", () => {
   const isHidden = inputIssueList.classList.toggle("hidden");
-  toggleInputIssueButton.textContent = isHidden ? "⚠️ 入力不足商品を見る" : "⚠️ 入力不足商品を閉じる";
+  toggleInputIssueButton.textContent = isHidden ? "入力不足商品を見る" : "入力不足商品を閉じる";
 });
 toggleAnalysisButton?.addEventListener("click", () => {
   const isHidden = analysisPanel.classList.toggle("hidden");
@@ -6761,6 +6835,7 @@ updateFormSelectPlaceholderStates();
 updateConditionQuickButtons();
 collapseCloudPanelOnMobile();
 collapseSortingExtrasOnMobile();
+restoreInventoryOptionsOpenState();
 setActiveNavigation("form");
 render();
 initializeCloud();

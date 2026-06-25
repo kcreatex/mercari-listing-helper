@@ -46,42 +46,28 @@
 
       <div class="dashboard-hero-grid today-work-grid" aria-live="polite">
         <div class="dashboard-card dashboard-card-large dashboard-card-warning">
+          <span>入力不足</span>
           <em class="work-state-label">要対応</em>
-          <span>⚠️ 入力不足</span>
           <strong id="dashboardHeroTotalProfit">0件</strong>
         </div>
         <div class="dashboard-card dashboard-card-large dashboard-card-unlisted">
-          <em class="work-state-label">作業中</em>
           <span>未仕分け</span>
+          <em class="work-state-label">作業中</em>
           <strong id="dashboardHeroUnlistedCount">0件</strong>
         </div>
         <div class="dashboard-card dashboard-card-large dashboard-card-shipping">
+          <span>発送待ち</span>
           <em class="work-state-label">完了</em>
-          <span>🚚 発送待ち</span>
           <strong id="dashboardHeroShippingWaitCount">0件</strong>
         </div>
         <div class="dashboard-card dashboard-card-large dashboard-card-shipping">
-          <em class="work-state-label">完了</em>
           <span>査定待ち</span>
+          <em class="work-state-label">完了</em>
           <strong id="dashboardHeroBuriedValue">0件</strong>
         </div>
       </div>
 
-      <div class="today-priority-grid">
-        <section class="today-priority-panel" aria-labelledby="sortingPriorityTitle">
-          <h3 id="sortingPriorityTitle">仕分け優先</h3>
-          <p class="ranking-note">未仕分けの商品を推定価値順で表示</p>
-          <div class="today-priority-list" id="sortingPriorityList"></div>
-        </section>
-
-        <section class="today-priority-panel" aria-labelledby="shippingProfitPriorityTitle">
-          <h3 id="shippingProfitPriorityTitle">🚚 発送優先</h3>
-          <p class="ranking-note">発送待ち商品を利益順で表示</p>
-          <div class="today-priority-list" id="shippingProfitPriorityList"></div>
-        </section>
-      </div>
-
-      <section class="today-buried-panel" aria-labelledby="todayBuriedTitle">
+      <section class="today-buried-panel analysis-action-panel" aria-labelledby="todayBuriedTitle">
         <div>
           <h3 id="todayBuriedTitle">利益候補</h3>
           <p id="todayBuriedSummary">未出品の利益候補を確認します</p>
@@ -89,12 +75,26 @@
         <button class="ghost-button" type="button" id="todayBuriedButton">確認する</button>
       </section>
 
+      <div class="today-priority-grid">
+        <section class="today-priority-panel analysis-action-panel" aria-labelledby="sortingPriorityTitle">
+          <h3 id="sortingPriorityTitle">仕分け優先</h3>
+          <p class="ranking-note">未仕分けの商品を推定価値順で表示</p>
+          <div class="today-priority-list" id="sortingPriorityList"></div>
+        </section>
+
+        <section class="today-priority-panel analysis-action-panel" aria-labelledby="shippingProfitPriorityTitle">
+          <h3 id="shippingProfitPriorityTitle">発送優先</h3>
+          <p class="ranking-note">発送待ち商品を利益順で表示</p>
+          <div class="today-priority-list" id="shippingProfitPriorityList"></div>
+        </section>
+      </div>
+
       <div class="input-issue-panel" aria-labelledby="inputIssueTitle">
-        <h3 id="inputIssueTitle">⚠️ 入力不足商品</h3>
+        <h3 id="inputIssueTitle">入力不足商品</h3>
         <p class="ranking-note">対象：未出品・出品中・要捜索</p>
         <div class="input-issue-grid" aria-live="polite">
           <div>
-            <span>📦 保管場所未設定</span>
+            <span>保管場所未設定</span>
             <strong id="missingStorageCount">0件</strong>
           </div>
           <div>
@@ -120,18 +120,24 @@
         </div>
 
         <details class="analysis-accordion app-accordion">
-        <summary>⚠️ 入力不足商品を開く</summary>
+          <summary>
+            <span class="accordion-leading-icon accordion-leading-icon-empty" aria-hidden="true"></span>
+            <span class="accordion-label">入力不足商品を開く</span>
+          </summary>
           <div class="input-issue-list" id="inputIssueList"></div>
         </details>
       </div>
 
       <details class="analysis-accordion app-accordion">
-        <summary>📦 保管場所カルテを開く</summary>
+        <summary>
+          <span class="accordion-leading-icon accordion-leading-icon-empty" aria-hidden="true"></span>
+          <span class="accordion-label">保管場所カルテを開く</span>
+        </summary>
         <div class="analysis-panel" id="analysisPanel">
           <div class="storage-report-panel" aria-labelledby="storageReportTitle">
           <div class="storage-report-heading">
             <div>
-              <h3 id="storageReportTitle">📦 保管場所カルテ</h3>
+              <h3 id="storageReportTitle">保管場所カルテ</h3>
               <p class="ranking-note">利益を生みやすい保管場所を発見するための分析</p>
             </div>
             <select id="storageReportSort" aria-label="保管場所カルテの並び替え">
@@ -148,15 +154,18 @@
       </details>
 
       <details class="analysis-accordion app-accordion">
-        <summary>その他分析を開く</summary>
+        <summary>
+          <span class="accordion-leading-icon accordion-leading-icon-empty" aria-hidden="true"></span>
+          <span class="accordion-label">その他分析を開く</span>
+        </summary>
         <div class="analysis-panel">
         <div class="dashboard-grid" aria-live="polite">
           <div class="dashboard-card dashboard-card-profit">
-            <span>💴 今月利益</span>
+            <span>今月利益</span>
             <strong id="dashboardMonthlyProfit">0円</strong>
           </div>
           <div class="dashboard-card dashboard-card-profit">
-            <span>💴 累計利益</span>
+            <span>累計利益</span>
             <strong id="dashboardTotalProfit">0円</strong>
           </div>
           <div class="dashboard-card dashboard-card-profit">
@@ -188,7 +197,7 @@
             <strong id="dashboardLongInventoryCount">0件</strong>
           </div>
           <div class="dashboard-card dashboard-card-warning">
-            <span>🔍 要捜索件数</span>
+            <span>要捜索件数</span>
             <strong id="dashboardSearchCount">0件</strong>
           </div>
           <div class="dashboard-card dashboard-card-unlisted">
@@ -239,15 +248,21 @@
       </details>
 
       <details class="analysis-accordion app-accordion">
-        <summary>発送履歴・売却済み分析</summary>
+        <summary>
+          <span class="accordion-leading-icon accordion-leading-icon-empty" aria-hidden="true"></span>
+          <span class="accordion-label">発送履歴・売却済み分析</span>
+        </summary>
         <div class="analysis-shipping-panel" aria-labelledby="analysisShippingCompletedTitle">
-          <h3>🚚 発送優先ランキング</h3>
-          <p class="ranking-note">対象：仕分け済・箱詰め済</p>
+          <h3>発送優先ランキング</h3>
+          <p class="ranking-note">対象：仕分け済 / 箱詰め済</p>
           <div class="shipping-priority-list" id="analysisShippingPriorityList"></div>
 
-          <h3 id="analysisShippingCompletedTitle">🚚 発送済み商品一覧</h3>
-          <p class="ranking-note">対象：発送済・査定待ち・入金済</p>
-          <div class="shipping-completed-list" id="analysisShippingCompletedList"></div>
+          <details class="analysis-sub-accordion app-accordion">
+            <summary>発送済み一覧を開く</summary>
+            <h3 id="analysisShippingCompletedTitle">発送済み商品一覧</h3>
+            <p class="ranking-note">対象：発送済 / 査定待ち / 入金済</p>
+            <div class="shipping-completed-list" id="analysisShippingCompletedList"></div>
+          </details>
         </div>
 
         <section class="sold-panel" aria-labelledby="soldTitle">
@@ -284,7 +299,10 @@
           </div>
 
           <details class="analysis-accordion app-accordion">
-            <summary>月別利益推移・カテゴリ分析を開く</summary>
+            <summary>
+              <span class="accordion-leading-icon accordion-leading-icon-empty" aria-hidden="true"></span>
+              <span class="accordion-label">月別利益推移・カテゴリ分析を開く</span>
+            </summary>
             <div class="monthly-profit-panel" id="monthlyProfitPanel">
               <h3>月別利益</h3>
               <div class="monthly-profit-list" id="monthlyProfitList"></div>
@@ -633,16 +651,8 @@
             <p class="muted">このブラウザに保存されます</p>
           </div>
         </div>
-        <div class="inventory-primary-search" aria-label="商品検索とステータス絞り込み">
+        <div class="inventory-primary-search" aria-label="商品検索">
           <input class="search-input" id="searchInput" type="search" placeholder="🔍 商品を検索">
-          <select class="status-filter" id="statusFilter" aria-label="ステータスで絞り込み">
-            <option value="">ステータスで絞る</option>
-            <option>未出品</option>
-            <option>出品中</option>
-            <option>売却済み</option>
-            <option>保留</option>
-            <option>要捜索</option>
-          </select>
         </div>
 
         <div class="empty-state" id="emptyState">
@@ -684,6 +694,29 @@
             </div>
           </details>
 
+          <details class="inventory-toolbar-section inventory-filter-section app-accordion">
+            <summary>
+              <span class="section-icon">絞</span>
+              <span class="inventory-option-summary-copy">
+                <strong>絞り込み</strong>
+                <small id="inventoryFilterSummary">すべてのステータス</small>
+              </span>
+            </summary>
+            <div class="inventory-section-body">
+              <label class="inventory-setting-field">
+                <span class="inventory-setting-label">出品ステータス</span>
+                <select class="status-filter" id="statusFilter" aria-label="ステータスで絞り込み">
+                  <option value="">ステータスで絞る</option>
+                  <option>未出品</option>
+                  <option>出品中</option>
+                  <option>売却済み</option>
+                  <option>保留</option>
+                  <option>要捜索</option>
+                </select>
+              </label>
+            </div>
+          </details>
+
           <details class="inventory-toolbar-section inventory-work-section app-accordion">
             <summary><span class="section-icon">作</span>作業</summary>
             <div class="inventory-control-group quick-actions" aria-label="検索管理">
@@ -693,9 +726,15 @@
           </details>
 
           <details class="inventory-toolbar-section inventory-display-section app-accordion">
-            <summary><span class="section-icon">表</span>表示設定</summary>
+            <summary>
+              <span class="section-icon">表</span>
+              <span class="inventory-option-summary-copy">
+                <strong>表示オプション</strong>
+                <small id="inventoryOptionSummary">通常一覧・在庫のみ・新しい順・一覧</small>
+              </span>
+            </summary>
             <div class="inventory-section-body">
-              <div class="inventory-setting-grid" aria-label="表示設定">
+              <div class="inventory-setting-grid" aria-label="一覧の表示オプション">
                 <div class="inventory-setting-group">
                   <span class="inventory-setting-label">表示対象</span>
                   <div class="inventory-control-group inventory-target-toggle" aria-label="在庫フィルター">
@@ -710,17 +749,6 @@
                     <button class="ghost-button" type="button" id="storageListModeButton">保管場所別</button>
                   </div>
                 </div>
-                <label class="inventory-setting-field">
-                  <span class="inventory-setting-label">並び順</span>
-                  <select class="status-filter" id="sortOrder" aria-label="並び順">
-                    <option value="newest">登録順（新しい順）</option>
-                    <option value="oldest">登録順（古い順）</option>
-                    <option value="title">商品名</option>
-                    <option value="storageLocation">保管場所</option>
-                    <option value="profit">利益</option>
-                    <option value="plannedPrice">販売価格</option>
-                  </select>
-                </label>
                 <div class="inventory-setting-group">
                   <span class="inventory-setting-label">表示形式</span>
                   <div class="inventory-control-group view-toggle" aria-label="表示形式">
@@ -729,6 +757,17 @@
                   </div>
                 </div>
               </div>
+              <label class="inventory-setting-field inventory-sort-group">
+                <span class="inventory-setting-label">並び順</span>
+                <select class="status-filter" id="sortOrder" aria-label="並び順">
+                  <option value="newest">登録順（新しい順）</option>
+                  <option value="oldest">登録順（古い順）</option>
+                  <option value="title">商品名</option>
+                  <option value="storageLocation">保管場所</option>
+                  <option value="profit">利益</option>
+                  <option value="plannedPrice">販売価格</option>
+                </select>
+              </label>
             </div>
           </details>
         </div>
@@ -1029,21 +1068,28 @@
           </details>
         </div>
 
-        <div class="settings-backup-group">
-          <h3>バックアップ</h3>
-          <p class="muted">Supabase化や端末変更の前に、JSONを書き出して保存してください。</p>
-          <div class="backup-controls backup-controls-top" aria-label="バックアップ操作">
-            <strong>localStorageバックアップ</strong>
-            <button class="ghost-button" type="button" id="exportButtonTop">JSONエクスポート</button>
-            <button class="ghost-button" type="button" id="importButtonTop">JSONインポート</button>
+        <details class="settings-backup-group settings-accordion app-accordion">
+          <summary>
+            <span class="settings-summary-label">
+              バックアップ
+              <small>JSONの書き出し・読み込み</small>
+            </span>
+          </summary>
+          <div class="settings-backup-content">
+            <p class="muted">Supabase化や端末変更の前に、JSONを書き出して保存してください。</p>
+            <div class="backup-controls backup-controls-top" aria-label="バックアップ操作">
+              <strong>localStorageバックアップ</strong>
+              <button class="ghost-button" type="button" id="exportButtonTop">JSONエクスポート</button>
+              <button class="ghost-button" type="button" id="importButtonTop">JSONインポート</button>
+            </div>
+            <input class="hidden" id="importFileInput" type="file" accept="application/json,.json">
           </div>
-          <input class="hidden" id="importFileInput" type="file" accept="application/json,.json">
-        </div>
+        </details>
 
         <button class="primary-button hidden" type="button" id="saveSettingsButton">設定を保存</button>
 
-        <details class="cloud-panel settings-accordion app-accordion" aria-labelledby="cloudTitle">
-          <summary class="cloud-summary">
+        <details class="cloud-panel settings-accordion app-accordion" aria-labelledby="cloudSummaryTitle">
+          <summary class="cloud-summary" id="cloudSummaryTitle">
             <span class="settings-summary-label">
               クラウド共有
               <small>バックアップ・同期設定</small>
@@ -1051,7 +1097,7 @@
           </summary>
           <div class="cloud-panel-header">
             <div>
-              <h2 id="cloudTitle">クラウド共有</h2>
+              <h3 id="cloudTitle">同期状態</h3>
               <p class="muted" id="cloudStatus">未ログイン: 商品データはこの端末に保存されます</p>
               <p class="cloud-sync-state" id="cloudSyncState">同期状態 ローカル保存</p>
               <p class="cloud-sync-time" id="cloudLastSync">最終同期 -</p>
