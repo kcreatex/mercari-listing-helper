@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>メルカリ出品補助室</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=settings-ui-20260626">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
   <body class="work-view work-tab-form">
@@ -308,7 +308,7 @@
           <div class="shipping-priority-list" id="analysisShippingPriorityList"></div>
 
           <details class="analysis-sub-accordion app-accordion">
-            <summary>発送済み一覧を開く</summary>
+            <summary>発送済み商品を見る</summary>
             <h3 id="analysisShippingCompletedTitle">発送済み商品一覧</h3>
             <p class="ranking-note">対象：発送済 / 査定待ち / 入金済</p>
             <div class="shipping-completed-list" id="analysisShippingCompletedList"></div>
@@ -859,7 +859,6 @@
             <h2 id="sortingTitle">売却先仕分け</h2>
             <p class="muted">引越し前の大量グッズを、どこへ回すか独立管理します</p>
           </div>
-          <button class="ghost-button compact-export-button" type="button" id="sortingCsvButton">CSV出力</button>
         </div>
 
         <form class="sorting-form" id="sortingForm" autocomplete="off">
@@ -971,6 +970,7 @@
               <h3 id="sortingListTitle">登録済み仕分け</h3>
               <p class="muted">商品を探し、保管場所から取り出して発送準備できます</p>
             </div>
+            <button class="ghost-button compact-export-button sorting-list-export-button" type="button" id="sortingCsvButton">仕分け一覧を書き出し</button>
           </div>
 
         <div class="sorting-work-toolbar">

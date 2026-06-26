@@ -3628,6 +3628,9 @@ function openDetailModal(item) {
 
   detailModalContent.append(createDetailFutureSection());
   copyMercariUrlButton.disabled = !String(item.listingUrl || "").trim();
+  copyDetailTitleButton.disabled = !String(getListingTitle(item) || "").trim();
+  copyDetailDescriptionButton.disabled = !String(item.description || "").trim();
+  copyDetailItemIdButton.disabled = !String(getItemCode(item) || "").trim();
   updateDetailNavigationButtons();
 
   detailModal.classList.remove("hidden");
@@ -5801,6 +5804,8 @@ function createCompactListRow(item) {
           <button class="text-button" type="button" data-action="quick-mark-listed">出品中に変更</button>
           <button class="text-button" type="button" data-action="quick-shipping-ready">発送準備へ</button>
           <button class="text-button" type="button" data-action="mark-sold">売却済み</button>
+          <button class="text-button" type="button" data-action="relist">再出品</button>
+          <button class="danger-button" type="button" data-action="delete">削除</button>
         </div>
       </details>
     </td>
@@ -5965,6 +5970,8 @@ function createMobileCompactTableCard(item) {
         <button class="text-button" type="button" data-action="quick-mark-listed">出品中に変更</button>
         <button class="text-button" type="button" data-action="quick-shipping-ready">発送準備へ</button>
         <button class="text-button" type="button" data-action="mark-sold">売却済み</button>
+        <button class="text-button" type="button" data-action="relist">再出品</button>
+        <button class="danger-button" type="button" data-action="delete">削除</button>
       </div>
     </details>
   `;
@@ -7284,10 +7291,32 @@ form.addEventListener("submit", (event) => {
   }
 });
 
+function closeItemActionMenus(exceptMenu = null) {
+  document.querySelectorAll(
+    "#itemTableBody .row-action-menu[open], #compactTableGrid .row-action-menu[open], #storageLocationView .row-action-menu[open], #inventoryShelfList .row-action-menu[open], #mobileCardList .row-action-menu[open], #recentDockTableBody .row-action-menu[open], #recentDockMobileList .row-action-menu[open]",
+  ).forEach((menu) => {
+    if (menu !== exceptMenu) {
+      menu.removeAttribute("open");
+    }
+  });
+}
+
 async function handleItemTableAction(event) {
   const button = event.target.closest("button");
+  const actionSummary = event.target.closest(".row-action-menu > summary");
+  const actionMenu = event.target.closest(".row-action-menu");
   const interactiveControl = event.target.closest("button, summary, a, input, select, textarea, label");
   const row = event.target.closest("tr, .inventory-shelf-card, .mobile-item-card, .mobile-compact-table-card, .compact-list-row");
+
+  if (actionSummary) {
+    event.stopPropagation();
+    closeItemActionMenus(actionSummary.closest(".row-action-menu"));
+    return;
+  }
+
+  if (actionMenu) {
+    event.stopPropagation();
+  }
 
   if (!row) {
     return;
@@ -7319,6 +7348,8 @@ async function handleItemTableAction(event) {
   if (!button) {
     return;
   }
+
+  closeItemActionMenus();
 
   if (button.dataset.action === "edit") {
     startEdit(item);
@@ -7483,6 +7514,11 @@ recentDockTableBody.addEventListener("click", handleItemTableAction);
 recentDockMobileList.addEventListener("click", handleItemTableAction);
 recentDockMobileList.addEventListener("keydown", handleMobileCompactKeydown);
 mobileCardList.addEventListener("keydown", handleMobileCompactKeydown);
+document.addEventListener("click", (event) => {
+  if (!event.target.closest(".row-action-menu")) {
+    closeItemActionMenus();
+  }
+});
 
 openFullListButton.addEventListener("click", () => {
   setActiveNavigation("list");
@@ -7586,8 +7622,20 @@ soldTableBody.addEventListener("click", async (event) => {
 
 mobileCardList.addEventListener("click", async (event) => {
   const button = event.target.closest("button");
+  const actionSummary = event.target.closest(".row-action-menu > summary");
+  const actionMenu = event.target.closest(".row-action-menu");
   const interactiveControl = event.target.closest("button, summary, a, input, select, textarea, label");
   const card = event.target.closest(".mobile-item-card");
+
+  if (actionSummary) {
+    event.stopPropagation();
+    closeItemActionMenus(actionSummary.closest(".row-action-menu"));
+    return;
+  }
+
+  if (actionMenu) {
+    event.stopPropagation();
+  }
 
   if (!card) {
     return;
@@ -7607,6 +7655,8 @@ mobileCardList.addEventListener("click", async (event) => {
   if (!button) {
     return;
   }
+
+  closeItemActionMenus();
 
   if (button.dataset.action === "edit") {
     startEdit(item);
@@ -7991,6 +8041,7 @@ sortingWorkCardList.addEventListener("click", async (event) => {
 
   const summary = event.target.closest(".row-action-menu summary");
   if (summary) {
+    event.stopPropagation();
     closeSortingActionMenus(summary.closest(".row-action-menu"));
     return;
   }
@@ -8014,6 +8065,10 @@ sortingWorkCardList.addEventListener("click", async (event) => {
   }
 
   const button = event.target.closest("button");
+  if (button?.closest(".row-action-menu")) {
+    event.stopPropagation();
+  }
+
   if (button?.dataset.action === "view-sorting-detail") {
     closeSortingActionMenus();
     openSortingDetailModal(item);
