@@ -695,12 +695,13 @@
         <div class="inventory-primary-search" aria-label="商品検索">
           <input class="search-input" id="searchInput" type="search" placeholder="🔍 商品を検索">
           <select class="status-filter" id="statusFilter" aria-label="ステータスで絞り込み">
-            <option value="">ステータス</option>
+            <option value="">ステータスで絞る</option>
             <option>未出品</option>
             <option>出品中</option>
             <option>売却済み</option>
             <option>保留</option>
             <option>要捜索</option>
+            <option value="highProfit">高利益候補</option>
           </select>
           <select class="status-filter" id="storageFilter" aria-label="保管場所で絞り込み">
             <option value="">保管場所</option>
@@ -746,20 +747,11 @@
         </div>
 
         <div class="inventory-toolbar" aria-label="商品一覧の補助操作">
-          <details class="inventory-toolbar-section inventory-summary-section app-accordion" open>
-            <summary><span class="section-icon">状</span>状況</summary>
-            <div class="inventory-action-summary" aria-label="次にやることの目安">
-              <div><span>未出品</span><strong id="listUnlistedCount">0件</strong></div>
-              <div><span>🔍 要捜索</span><strong id="listSearchNeededCount">0件</strong></div>
-              <div><span>💴 高利益候補</span><strong id="listHighProfitCount">0件</strong></div>
-            </div>
-          </details>
-
-          <details class="inventory-toolbar-section inventory-work-section app-accordion">
-            <summary><span class="section-icon">作</span>作業</summary>
-            <div class="inventory-control-group quick-actions" aria-label="検索管理">
-              <button class="ghost-button" type="button" id="listBoxSearchButton">🔍 箱検索</button>
-              <button class="ghost-button" type="button" id="listShippingManagementButton">🚚 発送管理</button>
+        <details class="inventory-toolbar-section inventory-work-section app-accordion">
+          <summary><span class="section-icon">作</span>作業</summary>
+          <div class="inventory-control-group quick-actions" aria-label="検索管理">
+            <button class="ghost-button" type="button" id="listBoxSearchButton">🔍 箱検索</button>
+            <button class="ghost-button" type="button" id="listShippingManagementButton">🚚 発送管理</button>
             </div>
           </details>
 
@@ -767,7 +759,7 @@
             <summary>
               <span class="section-icon">表</span>
               <span class="inventory-option-summary-copy">
-                <strong>表示オプション</strong>
+                <strong>表示設定</strong>
                 <small id="inventoryOptionSummary">通常一覧・在庫のみ・新しい順・一覧</small>
               </span>
             </summary>
@@ -904,15 +896,7 @@
 
           <details class="sorting-form-card sorting-extra-card sorting-assessment-card app-accordion">
             <summary>査定情報</summary>
-            <div class="sorting-price-grid" aria-label="売却先別の想定価格と査定額">
-              <label>メルカリ<input id="sortingMercariPrice" type="number" min="0" step="1" inputmode="numeric"></label>
-              <label>ヤフオク<input id="sortingYahooPrice" type="number" min="0" step="1" inputmode="numeric"></label>
-              <label>駿河屋<input id="sortingSurugayaPrice" type="number" min="0" step="1" inputmode="numeric"></label>
-              <label>良盤<input id="sortingRyobanPrice" type="number" min="0" step="1" inputmode="numeric"></label>
-              <label>エコリング<input id="sortingEcoRingPrice" type="number" min="0" step="1" inputmode="numeric"></label>
-              <label>服買取<input id="sortingClothesPrice" type="number" min="0" step="1" inputmode="numeric"></label>
-              <label>その他<input id="sortingOtherPrice" type="number" min="0" step="1" inputmode="numeric"></label>
-            </div>
+            <div class="sorting-price-grid" id="sortingPriceGrid" aria-label="売却先別の査定額"></div>
           </details>
 
           <div class="sorting-actions">
@@ -940,26 +924,33 @@
           <button class="ghost-button sorting-shipping-mode-button" type="button" id="sortingShippingModeButton" aria-pressed="false">発送モード（一覧）</button>
         </div>
 
-        <div class="sorting-controls">
-          <select id="sortingDestinationFilter" aria-label="最終売却先で絞り込み">
-            <option value="">すべての売却先</option>
-          </select>
-          <select id="sortingStatusFilter" aria-label="ステータスで絞り込み">
-            <option value="">すべてのステータス</option>
-          </select>
-          <select id="sortingGenreFilter" aria-label="ジャンルで絞り込み">
-            <option value="">すべてのジャンル</option>
-          </select>
-          <input id="sortingBoxSearch" type="search" placeholder="🔍 箱番号で検索" aria-label="箱番号で検索">
-        </div>
+        <details class="sorting-filter-panel app-accordion">
+          <summary>
+            <span class="accordion-label">詳細フィルター・集計</span>
+          </summary>
+          <div class="sorting-filter-panel-body">
+            <div class="sorting-controls">
+              <select id="sortingDestinationFilter" aria-label="最終売却先で絞り込み">
+                <option value="">すべての売却先</option>
+              </select>
+              <select id="sortingStatusFilter" aria-label="ステータスで絞り込み">
+                <option value="">すべてのステータス</option>
+              </select>
+              <select id="sortingGenreFilter" aria-label="ジャンルで絞り込み">
+                <option value="">すべてのジャンル</option>
+              </select>
+              <input id="sortingBoxSearch" type="search" placeholder="🔍 箱番号で検索" aria-label="箱番号で検索">
+            </div>
 
-        <div class="sorting-summary-grid" id="sortingSummaryGrid" aria-live="polite"></div>
+            <div class="sorting-summary-grid" id="sortingSummaryGrid" aria-live="polite"></div>
 
-        <section class="sorting-shipping-recommendation hidden" id="sortingShippingRecommendation" aria-live="polite">
-          <span>おすすめ発送</span>
-          <strong id="sortingRecommendationTitle">-</strong>
-          <small id="sortingRecommendationMeta">-</small>
-        </section>
+            <section class="sorting-shipping-recommendation hidden" id="sortingShippingRecommendation" aria-live="polite">
+              <span>おすすめ発送</span>
+              <strong id="sortingRecommendationTitle">-</strong>
+              <small id="sortingRecommendationMeta">-</small>
+            </section>
+          </div>
+        </details>
 
         <div class="sorting-work-card-list" id="sortingWorkCardList" aria-label="仕分け商品カード一覧"></div>
 
@@ -1106,6 +1097,25 @@
             </div>
           </details>
 
+          <details class="settings-group settings-accordion app-accordion">
+            <summary>
+              <span class="settings-summary-label">
+                査定情報
+                <small>売却先ごとの査定額入力欄を管理</small>
+              </span>
+            </summary>
+            <div class="appraisal-settings-list" id="appraisalSettingsList"></div>
+            <p class="settings-future-note">売却先仕分け画面の査定情報に反映されます</p>
+            <button class="ghost-button settings-add-toggle" type="button" id="toggleAppraisalAddButton">査定先を追加</button>
+            <div class="appraisal-add-row hidden" id="appraisalAddRow">
+              <input id="newAppraisalName" type="text" placeholder="査定先名">
+              <button class="ghost-button" type="button" id="addAppraisalButton">追加</button>
+            </div>
+            <div class="settings-danger-footer">
+              <button class="danger-button" type="button" id="resetAppraisalButton">査定情報を初期化</button>
+            </div>
+          </details>
+
           <details class="settings-group settings-accordion template-settings-group app-accordion">
             <summary>
               <span class="settings-summary-label">
@@ -1150,10 +1160,10 @@
 
         <details class="cloud-panel settings-accordion app-accordion" aria-labelledby="cloudSummaryTitle">
           <summary class="cloud-summary" id="cloudSummaryTitle">
-            <span class="settings-summary-label">
-              クラウド共有
-              <small>バックアップ・同期設定</small>
-            </span>
+              <span class="settings-summary-label">
+                クラウド共有
+                <small>同期設定</small>
+              </span>
           </summary>
           <div class="cloud-panel-header">
             <div>

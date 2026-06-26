@@ -2185,7 +2185,7 @@ body.work-view.work-tab-sorting .sorting-form {
 }
 
 body.work-view.work-tab-sorting .sorting-price-grid {
-  grid-template-columns: repeat(4, minmax(64px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
   gap: 2px;
 }
 
@@ -2204,8 +2204,25 @@ body.work-view.work-tab-sorting .sorting-price-grid {
 .sorting-price-grid {
   grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: repeat(7, minmax(82px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
   gap: 4px;
+}
+
+.sorting-price-grid > label {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 6px 7px;
+  border: 1px solid #e5dfdc;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.sorting-price-grid > label > input {
+  width: 100%;
+  min-width: 0;
 }
 
 .sorting-form > label:has(#sortingName),
@@ -9577,6 +9594,41 @@ body.analysis-view .sold-summary div {
   white-space: nowrap;
 }
 
+.appraisal-settings-list {
+  display: grid;
+  gap: 6px;
+}
+
+.appraisal-setting-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+  padding: 6px 0;
+  border-bottom: 1px solid #f1ece9;
+}
+
+.appraisal-setting-row:last-child {
+  border-bottom: 0;
+}
+
+.appraisal-setting-row input[data-field="name"] {
+  width: 100%;
+  min-width: 0;
+}
+
+.appraisal-add-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.appraisal-add-row input {
+  min-width: 0;
+}
+
 .settings-warning-insight {
   border-color: #fecaca;
   background: #fff7f7;
@@ -9777,7 +9829,8 @@ body.analysis-view .sold-summary div {
   .category-setting-row,
   .storage-setting-row,
   .shipping-setting-row,
-  .template-setting-row {
+  .template-setting-row,
+  .appraisal-setting-row {
     grid-template-columns: minmax(0, 1fr) repeat(3, auto) !important;
   }
 
@@ -9787,6 +9840,10 @@ body.analysis-view .sold-summary div {
 
   .settings-row-main {
     grid-column: 1 / -1;
+  }
+
+  .appraisal-add-row {
+    grid-template-columns: 1fr;
   }
 
   .template-row-details {
@@ -10148,6 +10205,33 @@ select.placeholder-select option {
   align-items: start !important;
 }
 
+.sorting-filter-panel {
+  overflow: hidden;
+  margin-top: 10px;
+  border: 1px solid #e7dfdc;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.sorting-filter-panel > summary {
+  min-height: 40px;
+  padding: 8px 12px 8px 34px;
+  color: #3f3430;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.sorting-filter-panel > summary::before {
+  left: 11px;
+}
+
+.sorting-filter-panel-body {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border-top: 1px solid #eee7e4;
+}
+
 .compact-export-button {
   min-height: 30px !important;
   padding: 5px 9px !important;
@@ -10159,7 +10243,7 @@ select.placeholder-select option {
   display: grid;
   gap: 10px;
   margin-top: 14px;
-  padding: 12px;
+  padding: 10px;
   border: 1px solid var(--line);
   border-radius: 12px;
   background: #fff;
@@ -12858,6 +12942,33 @@ body.settings-view .settings-backup-group:not([open]) > .settings-backup-content
   body.settings-view .settings-backup-group > summary {
     min-height: 44px !important;
   }
+
+  body.settings-view .settings-operations-summary {
+    display: none !important;
+  }
+
+  body.settings-view .settings-summary-metrics,
+  body.settings-view .settings-usage-count {
+    display: none !important;
+  }
+
+  body.settings-view .settings-insight-box {
+    display: none !important;
+  }
+
+  body.settings-view .settings-grid {
+    gap: 8px !important;
+  }
+
+  body.settings-view .settings-accordion > summary {
+    min-height: 44px !important;
+    padding-top: 6px !important;
+    padding-bottom: 6px !important;
+  }
+
+  body.settings-view .settings-accordion > summary .settings-summary-label small {
+    font-size: 10px !important;
+  }
 }
 
 /* Shipping workflow: compact picking cards and fixed progress summary */
@@ -13139,6 +13250,22 @@ body.sorting-shipping-mode-active .sorting-panel {
 }
 
 @media (max-width: 700px) {
+  .sorting-filter-panel {
+    margin-top: 8px;
+    border-radius: 10px;
+  }
+
+  .sorting-filter-panel > summary {
+    min-height: 38px;
+    padding: 7px 10px 7px 32px;
+    font-size: 11px;
+  }
+
+  .sorting-filter-panel-body {
+    gap: 7px;
+    padding: 8px;
+  }
+
   body.work-tab-sorting .sorting-work-toolbar {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 6px;
@@ -13216,6 +13343,53 @@ body.sorting-shipping-mode-active .sorting-panel {
 
   body.sorting-shipping-mode-active .sorting-panel {
     padding-bottom: calc(92px + env(safe-area-inset-bottom));
+  }
+
+  body.work-tab-sorting .sorting-form-card,
+  body.work-tab-sorting .sorting-list-section,
+  body.work-tab-sorting .sorting-filter-panel,
+  body.work-tab-sorting .shipping-management-panel {
+    border-radius: 10px !important;
+  }
+
+  body.work-tab-sorting .sorting-form-card {
+    padding: 8px !important;
+  }
+
+  body.work-tab-sorting .sorting-form-card h3,
+  body.work-tab-sorting .sorting-form-card summary {
+    min-height: 32px !important;
+    font-size: 12px !important;
+  }
+
+  body.work-tab-sorting .sorting-primary-product-grid,
+  body.work-tab-sorting .sorting-primary-sales-grid,
+  body.work-tab-sorting .sorting-card-grid,
+  body.work-tab-sorting .sorting-price-grid {
+    grid-template-columns: 1fr !important;
+    gap: 6px !important;
+  }
+
+  body.work-tab-sorting .sorting-price-grid > label {
+    width: 100% !important;
+  }
+
+  body.work-tab-sorting .sorting-list-section {
+    gap: 8px !important;
+    margin-top: 10px !important;
+    padding: 8px !important;
+  }
+
+  body.work-tab-sorting .sorting-list-heading h3 {
+    font-size: 14px !important;
+  }
+
+  body.work-tab-sorting .sorting-list-heading .muted {
+    font-size: 11px !important;
+  }
+
+  body.work-tab-sorting .sorting-shipping-recommendation {
+    border-left-width: 2px !important;
   }
 }
 
@@ -14231,7 +14405,91 @@ body.work-tab-sorting .sorting-work-destination {
     border-radius: 0;
   }
 
-  body.work-tab-sorting .sorting-work-card:nth-child(even) {
-    background: #fcfbfa;
+body.work-tab-sorting .sorting-work-card:nth-child(even) {
+  background: #fcfbfa;
+}
+
+/* Final inventory-list polish: keep the product list visually ahead of settings on mobile. */
+body.work-tab-list .inventory-summary-section {
+  display: none !important;
+}
+
+body.work-tab-list .inventory-primary-search {
+  gap: 6px !important;
+}
+
+@media (max-width: 700px) {
+  body.work-tab-list .list-panel {
+    padding-top: 6px !important;
   }
+
+  body.work-tab-list .list-panel > .panel-heading {
+    margin-bottom: 4px !important;
+  }
+
+  body.work-tab-list .inventory-primary-search {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;
+    gap: 4px !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    padding: 5px !important;
+  }
+
+  body.work-tab-list .inventory-primary-search::-webkit-scrollbar {
+    display: none;
+  }
+
+  body.work-tab-list .inventory-primary-search > * {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: 92px !important;
+    max-width: none !important;
+  }
+
+  body.work-tab-list .inventory-primary-search #searchInput {
+    flex: 1 0 180px !important;
+    min-width: 160px !important;
+  }
+
+  body.work-tab-list .inventory-primary-search #statusFilter,
+  body.work-tab-list .inventory-primary-search #storageFilter,
+  body.work-tab-list .inventory-primary-search #sortOrder {
+    min-width: 112px !important;
+  }
+
+  body.work-tab-list .inventory-toolbar {
+    margin-top: 2px !important;
+    gap: 4px !important;
+  }
+
+  body.work-tab-list .inventory-work-section > summary,
+  body.work-tab-list .inventory-display-section > summary {
+    min-height: 36px !important;
+    padding-top: 5px !important;
+    padding-bottom: 5px !important;
+  }
+
+  body.work-tab-list .inventory-work-section > .quick-actions,
+  body.work-tab-list .inventory-display-section > .inventory-section-body {
+    padding: 5px !important;
+  }
+
+  body.work-tab-list .inventory-setting-grid {
+    gap: 5px !important;
+  }
+
+  body.work-tab-list .inventory-setting-group {
+    gap: 4px !important;
+  }
+
+  body.work-tab-list .inventory-control-group.view-toggle > button,
+  body.work-tab-list .inventory-control-group.storage-view-toggle > button,
+  body.work-tab-list .inventory-control-group.inventory-target-toggle > button {
+    min-height: 36px !important;
+    height: 36px !important;
+    font-size: 11px !important;
+  }
+}
 }

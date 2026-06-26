@@ -207,6 +207,7 @@ const sortingRyobanPriceInput = document.querySelector("#sortingRyobanPrice");
 const sortingEcoRingPriceInput = document.querySelector("#sortingEcoRingPrice");
 const sortingClothesPriceInput = document.querySelector("#sortingClothesPrice");
 const sortingOtherPriceInput = document.querySelector("#sortingOtherPrice");
+const sortingPriceGrid = document.querySelector("#sortingPriceGrid");
 const sortingMemoInput = document.querySelector("#sortingMemo");
 const sortingSubmitButton = document.querySelector("#sortingSubmitButton");
 const sortingCancelButton = document.querySelector("#sortingCancelButton");
@@ -253,6 +254,12 @@ const shippingAddRow = document.querySelector("#shippingAddRow");
 const newShippingNameInput = document.querySelector("#newShippingName");
 const newShippingCostInput = document.querySelector("#newShippingCost");
 const addShippingMethodButton = document.querySelector("#addShippingMethodButton");
+const appraisalSettingsList = document.querySelector("#appraisalSettingsList");
+const toggleAppraisalAddButton = document.querySelector("#toggleAppraisalAddButton");
+const appraisalAddRow = document.querySelector("#appraisalAddRow");
+const newAppraisalNameInput = document.querySelector("#newAppraisalName");
+const addAppraisalButton = document.querySelector("#addAppraisalButton");
+const resetAppraisalButton = document.querySelector("#resetAppraisalButton");
 const templateSettingsList = document.querySelector("#templateSettingsList");
 const templateSettingsCount = document.querySelector("#templateSettingsCount");
 const templateSettingsUsageCount = document.querySelector("#templateSettingsUsageCount");
@@ -310,6 +317,7 @@ let items = loadItems();
 let sortingItems;
 let settings;
 let descriptionTemplates;
+let appraisalPriceInputMap = new Map();
 let currentDescriptionModalText = "";
 let currentDetailItem = null;
 let currentSortingDetailItem = null;
@@ -365,7 +373,11 @@ function updateInventoryOptionSummary() {
 
 function updateInventoryFilterSummary() {
   if (inventoryFilterSummary) {
-    inventoryFilterSummary.textContent = statusFilter?.value || "すべてのステータス";
+    const labels = {
+      "": "ステータスで絞る",
+      highProfit: "高利益候補",
+    };
+    inventoryFilterSummary.textContent = labels[statusFilter?.value] || statusFilter?.value || "ステータスで絞る";
   }
 }
 
@@ -448,6 +460,15 @@ const DEFAULT_SETTINGS = {
     { name: "その他", cost: 0 },
   ],
   storageLocations: DEFAULT_STORAGE_LOCATIONS,
+  appraisalSources: [
+    { id: "mercari", field: "mercariPrice", name: "メルカリ" },
+    { id: "yahoo", field: "yahooPrice", name: "ヤフオク" },
+    { id: "surugaya", field: "surugayaPrice", name: "駿河屋" },
+    { id: "ryoban", field: "ryobanPrice", name: "良盤" },
+    { id: "ecoRing", field: "ecoRingPrice", name: "エコリング" },
+    { id: "clothes", field: "clothesPrice", name: "服買取" },
+    { id: "other", field: "otherPrice", name: "その他" },
+  ],
 };
 const DEFAULT_TEMPLATES = [
   {
@@ -542,6 +563,7 @@ function loadSortingItems() {
 
 function normalizeSortingItem(item) {
   return {
+    ...item,
     id: String(item.id || createId()),
     name: String(item.name || "").trim(),
     genre: String(item.genre || "").trim(),
@@ -570,7 +592,35 @@ function normalizeSettings(value) {
     categories: normalizeList(value.categories, DEFAULT_SETTINGS.categories),
     shippingMethods: normalizeShippingMethods(value.shippingMethods),
     storageLocations: normalizeList(value.storageLocations, DEFAULT_SETTINGS.storageLocations),
+    appraisalSources: normalizeAppraisalSources(value.appraisalSources),
   };
+}
+
+function normalizeAppraisalSources(value) {
+  if (!Array.isArray(value)) {
+    return DEFAULT_SETTINGS.appraisalSources.map((source) => ({ ...source }));
+  }
+
+  const normalized = value
+    .map((source) => {
+      const fallbackSource = DEFAULT_SETTINGS.appraisalSources.find((defaultSource) => defaultSource.id === source.id) || {};
+      const id = String(source.id || createId()).trim();
+      return {
+        id,
+        field: String(source.field || fallbackSource.field || `appraisal_${id}`).trim(),
+        name: String(source.name || "").trim(),
+      };
+    })
+    .filter((source) => source.name);
+
+  const deduped = [];
+  normalized.forEach((source) => {
+    if (!deduped.some((currentSource) => currentSource.id === source.id || currentSource.field === source.field || currentSource.name === source.name)) {
+      deduped.push(source);
+    }
+  });
+
+  return deduped.length > 0 ? deduped : DEFAULT_SETTINGS.appraisalSources.map((source) => ({ ...source }));
 }
 
 function normalizeTemplates(value, fallback = DEFAULT_TEMPLATES) {
@@ -3337,16 +3387,80 @@ function removeLocalPhoto(item) {
   render();
 }
 
+function getAppraisalFieldName(source) {
+  if (!source) {
+    return "";
+  }
+
+  return String(source.field || `appraisal_${source.id || createId()}`).trim();
+}
+
+function getAppraisalFieldLabel(source) {
+  return String(source?.name || "").trim();
+}
+
+function getAppraisalSources() {
+  return Array.isArray(settings?.appraisalSources) && settings.appraisalSources.length > 0
+    ? settings.appraisalSources
+    : DEFAULT_SETTINGS.appraisalSources;
+}
+
+function createSortingAppraisalInput(source, value = "") {
+  const label = document.createElement("label");
+  const input = document.createElement("input");
+  const fieldName = getAppraisalFieldName(source);
+
+  label.dataset.appraisalSourceId = source.id;
+  label.append(document.createTextNode(getAppraisalFieldLabel(source)));
+
+  input.type = "number";
+  input.min = "0";
+  input.step = "1";
+  input.inputMode = "numeric";
+  input.dataset.appraisalField = fieldName;
+  input.setAttribute("aria-label", `${getAppraisalFieldLabel(source)}査定額`);
+  input.value = value === "" || value === null || value === undefined ? "" : String(value);
+
+  label.append(input);
+  return label;
+}
+
+function renderSortingAppraisalFields(selectedItem = null) {
+  if (!sortingPriceGrid) {
+    return;
+  }
+
+  appraisalPriceInputMap = new Map();
+  sortingPriceGrid.innerHTML = "";
+
+  getAppraisalSources().forEach((source) => {
+    const fieldName = getAppraisalFieldName(source);
+    const inputValue = selectedItem ? selectedItem[fieldName] : "";
+    const field = createSortingAppraisalInput(source, inputValue);
+    const input = field.querySelector("input");
+
+    appraisalPriceInputMap.set(fieldName, input);
+    sortingPriceGrid.append(field);
+  });
+}
+
+function getSortingAppraisalValuesFromInputs() {
+  const values = {};
+
+  getAppraisalSources().forEach((source) => {
+    const fieldName = getAppraisalFieldName(source);
+    const input = appraisalPriceInputMap.get(fieldName);
+    values[fieldName] = input ? input.value : "";
+  });
+
+  return values;
+}
+
 function getSortingPriceEntries(item) {
-  return [
-    { label: "メルカリ", value: parseMoney(item.mercariPrice) },
-    { label: "ヤフオク", value: parseMoney(item.yahooPrice) },
-    { label: "駿河屋", value: parseMoney(item.surugayaPrice) },
-    { label: "良盤ディスク", value: parseMoney(item.ryobanPrice) },
-    { label: "エコリング", value: parseMoney(item.ecoRingPrice) },
-    { label: "服買取", value: parseMoney(item.clothesPrice) },
-    { label: "その他", value: parseMoney(item.otherPrice) },
-  ];
+  return getAppraisalSources().map((source) => ({
+    label: getAppraisalFieldLabel(source),
+    value: parseMoney(item[getAppraisalFieldName(source)]),
+  }));
 }
 
 function getBestSortingOffer(item) {
@@ -3414,6 +3528,10 @@ function getSearchNeededLabel(item) {
 }
 
 function updateListActionSummary(sourceItems) {
+  if (!listUnlistedCount || !listSearchNeededCount || !listHighProfitCount) {
+    return;
+  }
+
   const inventoryItems = sourceItems.filter((item) => getItemStatus(item) !== "売却済み");
   const unlistedCount = inventoryItems.filter((item) => getItemStatus(item) === "未出品").length;
   const searchNeededCount = inventoryItems.filter((item) => getItemStatus(item) === "要捜索").length;
@@ -4048,6 +4166,7 @@ function renderSorting() {
   refreshSortingFilters();
   renderSortingSummary();
   renderShippingManagement();
+  renderSortingAppraisalFields(getSortingAppraisalValuesFromInputs());
   const filteredItems = sortSortingItems(getFilteredSortingItems());
   const displayItems = isSortingShippingMode
     ? filteredItems.filter(isSortingShippingCandidate)
@@ -4091,6 +4210,7 @@ function resetSortingForm() {
   sortingDestinationInput.value = "未定";
   sortingStatusInput.value = "未確認";
   sortingShippingStatusInput.value = "未仕分け";
+  renderSortingAppraisalFields();
   sortingSubmitButton.textContent = "仕分け登録";
   sortingCancelButton.classList.add("hidden");
 }
@@ -4105,13 +4225,7 @@ function startSortingEdit(item) {
   sortingStatusInput.value = item.status || "未確認";
   sortingShippingStatusInput.value = item.shippingStatus || "未仕分け";
   sortingBoxNumberInput.value = item.boxNumber || "";
-  sortingMercariPriceInput.value = parseMoney(item.mercariPrice);
-  sortingYahooPriceInput.value = parseMoney(item.yahooPrice);
-  sortingSurugayaPriceInput.value = parseMoney(item.surugayaPrice);
-  sortingRyobanPriceInput.value = parseMoney(item.ryobanPrice);
-  sortingEcoRingPriceInput.value = parseMoney(item.ecoRingPrice);
-  sortingClothesPriceInput.value = parseMoney(item.clothesPrice);
-  sortingOtherPriceInput.value = parseMoney(item.otherPrice);
+  renderSortingAppraisalFields(item);
   sortingMemoInput.value = item.memo || "";
   sortingSubmitButton.textContent = "仕分け更新";
   sortingCancelButton.classList.remove("hidden");
@@ -4121,6 +4235,7 @@ function startSortingEdit(item) {
 function createSortingFormItem() {
   const id = sortingIdInput.value || createId();
   const existingItem = sortingItems.find((item) => item.id === id) || {};
+  const appraisalValues = getSortingAppraisalValuesFromInputs();
 
   return normalizeSortingItem({
     ...existingItem,
@@ -4129,19 +4244,13 @@ function createSortingFormItem() {
     genre: sortingGenreInput.value,
     quantity: sortingQuantityInput.value,
     storageLocation: sortingStorageLocationInput.value,
-    mercariPrice: sortingMercariPriceInput.value,
-    yahooPrice: sortingYahooPriceInput.value,
-    surugayaPrice: sortingSurugayaPriceInput.value,
-    ryobanPrice: sortingRyobanPriceInput.value,
-    ecoRingPrice: sortingEcoRingPriceInput.value,
-    clothesPrice: sortingClothesPriceInput.value,
-    otherPrice: sortingOtherPriceInput.value,
     destination: sortingDestinationInput.value,
     status: sortingStatusInput.value,
     shippingStatus: sortingShippingStatusInput.value,
     boxNumber: sortingBoxNumberInput.value,
     sourceItemId: existingItem.sourceItemId || "",
     memo: sortingMemoInput.value,
+    ...appraisalValues,
     createdAt: existingItem.createdAt || new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   });
@@ -4198,19 +4307,14 @@ function returnToSourceItem(sortingItem) {
 }
 
 function exportSortingCsv() {
-  const headers = ["商品名", "ジャンル", "数量", "保管場所", "メルカリ想定価格", "ヤフオク想定価格", "駿河屋査定額", "良盤ディスク査定額", "エコリング査定額", "服買取査定額", "その他査定額", "最終売却先", "ステータス", "発送ステータス", "箱番号", "元商品ID", "メモ"];
+  const appraisalSources = getAppraisalSources();
+  const headers = ["商品名", "ジャンル", "数量", "保管場所", ...appraisalSources.map((source) => `${getAppraisalFieldLabel(source)}査定額`), "最終売却先", "ステータス", "発送ステータス", "箱番号", "元商品ID", "メモ"];
   const rows = sortingItems.map((item) => [
     item.name,
     item.genre,
     item.quantity,
     item.storageLocation,
-    parseMoney(item.mercariPrice),
-    parseMoney(item.yahooPrice),
-    parseMoney(item.surugayaPrice),
-    parseMoney(item.ryobanPrice),
-    parseMoney(item.ecoRingPrice),
-    parseMoney(item.clothesPrice),
-    parseMoney(item.otherPrice),
+    ...appraisalSources.map((source) => parseMoney(item[getAppraisalFieldName(source)])),
     item.destination,
     item.status,
     item.shippingStatus,
@@ -4355,7 +4459,13 @@ function getFilteredItems() {
       .join(" ")
       .toLowerCase()
       .includes(keyword);
-    const matchesStatus = !selectedStatus || getItemStatus(item) === selectedStatus;
+    const matchesStatus = !selectedStatus
+      || (selectedStatus === "highProfit"
+        ? (() => {
+            const profit = calculateProfit(item);
+            return profit !== "" && profit >= 1000;
+          })()
+        : getItemStatus(item) === selectedStatus);
     const matchesStorage = !selectedStorage || (item.storageLocation || "") === selectedStorage;
 
     return matchesKeyword && matchesStatus && matchesStorage;
@@ -5374,6 +5484,7 @@ function renderSettings() {
   categorySettingsList.innerHTML = "";
   storageSettingsList.innerHTML = "";
   shippingSettingsList.innerHTML = "";
+  appraisalSettingsList.innerHTML = "";
   templateSettingsList.innerHTML = "";
   renderSettingsOperationalSummary();
   categorySettingsCount.textContent = `${settings.categories.length}件`;
@@ -5390,6 +5501,10 @@ function renderSettings() {
   });
 
   renderGroupedShippingSettings();
+
+  getAppraisalSources().forEach((source, index) => {
+    appraisalSettingsList.append(createAppraisalSettingsRow(source, index));
+  });
 
   descriptionTemplates.forEach((template, index) => {
     templateSettingsList.append(createTemplateSettingsRow(template, index));
@@ -5539,6 +5654,24 @@ function createShippingSettingsRow(method, index) {
   return row;
 }
 
+function createAppraisalSettingsRow(source, index) {
+  const row = document.createElement("div");
+  row.className = "appraisal-setting-row";
+  row.dataset.index = String(index);
+  row.dataset.id = source.id;
+  row.dataset.field = source.field || `appraisal_${source.id}`;
+  row.innerHTML = `
+    <div class="settings-row-main">
+      <input type="text" data-field="name" aria-label="査定先名">
+    </div>
+    <button class="ghost-button compact-row-button" type="button" data-action="move-up" aria-label="上へ">↑</button>
+    <button class="ghost-button compact-row-button" type="button" data-action="move-down" aria-label="下へ">↓</button>
+    <button class="danger-button" type="button" data-action="remove-appraisal">削除</button>
+  `;
+  row.querySelector('[data-field="name"]').value = source.name;
+  return row;
+}
+
 function createTemplateSettingsRow(template, index) {
   const row = document.createElement("div");
   const usageCount = countTemplateUsage(template);
@@ -5579,11 +5712,22 @@ function collectSettingsFromForm() {
       cost: parseMoney(row.querySelector('[data-field="cost"]').value) || 0,
     }))
     .filter((method) => method.name);
+  const appraisalSources = [...appraisalSettingsList.querySelectorAll(".appraisal-setting-row")]
+    .map((row) => {
+      const fallbackId = row.dataset.id || createId();
+      return {
+        id: fallbackId,
+        field: row.dataset.field || `appraisal_${fallbackId}`,
+        name: row.querySelector('[data-field="name"]').value.trim(),
+      };
+    })
+    .filter((source) => source.name);
 
   return normalizeSettings({
     categories,
     storageLocations,
     shippingMethods,
+    appraisalSources,
   });
 }
 
@@ -5670,6 +5814,26 @@ function addShippingMethodFromForm() {
   newShippingCostInput.value = "";
   shippingAddRow.classList.add("hidden");
   toggleShippingAddButton.textContent = "配送方法を追加";
+  markSettingsDirty();
+}
+
+function addAppraisalSourceFromForm() {
+  const name = newAppraisalNameInput.value.trim();
+
+  if (!name) {
+    alert("査定先名を入力してください。");
+    return;
+  }
+
+  const id = createId();
+  appraisalSettingsList.append(createAppraisalSettingsRow({
+    id,
+    name,
+    field: `appraisal_${id}`,
+  }, appraisalSettingsList.children.length));
+  newAppraisalNameInput.value = "";
+  appraisalAddRow.classList.add("hidden");
+  toggleAppraisalAddButton.textContent = "査定先を追加";
   markSettingsDirty();
 }
 
@@ -5764,6 +5928,25 @@ function resetShippingToDefault(event) {
   refreshShippingMethodOptions(shippingMethodInput.value);
   renderSettings();
   alert("配送方法と送料を初期設定に戻しました。");
+}
+
+function resetAppraisalToDefault(event) {
+  event?.preventDefault();
+  event?.stopPropagation();
+  const shouldReset = confirm("査定情報だけを初期設定に戻しますか？\n商品データとクラウド共有設定は変更しません。");
+
+  if (!shouldReset) {
+    return;
+  }
+
+  settings = normalizeSettings({
+    ...settings,
+    appraisalSources: DEFAULT_SETTINGS.appraisalSources,
+  });
+  saveSettings();
+  renderSettings();
+  render();
+  alert("査定情報を初期設定に戻しました。");
 }
 
 function resetTemplatesToDefault(event) {
@@ -7242,6 +7425,7 @@ saveSettingsButton.addEventListener("click", saveSettingsFromForm);
 addCategoryButton.addEventListener("click", addCategoryFromForm);
 addStorageButton.addEventListener("click", addStorageFromForm);
 addShippingMethodButton.addEventListener("click", addShippingMethodFromForm);
+addAppraisalButton.addEventListener("click", addAppraisalSourceFromForm);
 addTemplateButton.addEventListener("click", addTemplateFromForm);
 toggleCategoryAddButton.addEventListener("click", () => {
   toggleSettingsAddRow(categoryAddRow, toggleCategoryAddButton, "追加フォームを閉じる", "カテゴリを追加");
@@ -7252,14 +7436,18 @@ toggleStorageAddButton.addEventListener("click", () => {
 toggleShippingAddButton.addEventListener("click", () => {
   toggleSettingsAddRow(shippingAddRow, toggleShippingAddButton, "追加フォームを閉じる", "配送方法を追加");
 });
+toggleAppraisalAddButton.addEventListener("click", () => {
+  toggleSettingsAddRow(appraisalAddRow, toggleAppraisalAddButton, "追加フォームを閉じる", "査定先を追加");
+});
 toggleTemplateAddButton.addEventListener("click", () => {
   toggleSettingsAddRow(templateAddRow, toggleTemplateAddButton, "追加フォームを閉じる", "テンプレートを追加");
 });
 resetCategoriesButton.addEventListener("click", resetCategoriesToDefault);
 resetStorageButton.addEventListener("click", resetStorageToDefault);
 resetShippingButton.addEventListener("click", resetShippingToDefault);
+resetAppraisalButton.addEventListener("click", resetAppraisalToDefault);
 resetTemplatesButton.addEventListener("click", resetTemplatesToDefault);
-[categorySettingsList, storageSettingsList, shippingSettingsList, templateSettingsList].forEach((list) => {
+[categorySettingsList, storageSettingsList, shippingSettingsList, appraisalSettingsList, templateSettingsList].forEach((list) => {
   list.addEventListener("input", markSettingsDirty);
 });
 categorySettingsList.addEventListener("click", (event) => {
@@ -7315,6 +7503,28 @@ shippingSettingsList.addEventListener("click", (event) => {
   }
 
   if (button.dataset.action === "remove-shipping") {
+    row.remove();
+  }
+
+  if (button.dataset.action === "move-up") {
+    moveSettingsRow(row, "up");
+  }
+
+  if (button.dataset.action === "move-down") {
+    moveSettingsRow(row, "down");
+  }
+
+  markSettingsDirty();
+});
+appraisalSettingsList.addEventListener("click", (event) => {
+  const button = event.target.closest("button");
+  const row = event.target.closest(".appraisal-setting-row");
+
+  if (!button || !row) {
+    return;
+  }
+
+  if (button.dataset.action === "remove-appraisal") {
     row.remove();
   }
 
