@@ -3653,8 +3653,8 @@ function createSortingWorkCard(item) {
       <strong class="sorting-work-title"></strong>
       <b class="sorting-work-offer"></b>
       <span class="sorting-work-storage"></span>
-      <span class="sorting-work-destination"></span>
     </div>
+    <div class="sorting-work-destination"></div>
     <details class="row-action-menu sorting-action-menu">
       <summary aria-label="操作メニュー">⋯</summary>
       <div class="actions sorting-row-actions sorting-action-panel">
@@ -4122,11 +4122,11 @@ function createSortingRow(item) {
   row.setAttribute("role", "button");
   row.setAttribute("aria-label", `${item.name || "商品"}の仕分け詳細を開く`);
   row.innerHTML = `
-    <td class="title-cell"></td>
-    <td></td>
-    <td><span class="status-badge"></span></td>
-    <td></td>
-    <td class="money-cell"></td>
+    <td class="title-cell"><span class="sorting-row-title"></span></td>
+    <td><span class="sorting-row-storage"></span></td>
+    <td><span class="sorting-row-destination"></span></td>
+    <td><span class="sorting-row-shipping"></span></td>
+    <td class="money-cell"><span class="sorting-row-offer"></span></td>
     <td class="sorting-action-cell">
       <details class="row-action-menu sorting-action-menu">
         <summary aria-label="操作メニュー">⋯</summary>
@@ -4140,11 +4140,11 @@ function createSortingRow(item) {
   `;
 
   const cells = row.querySelectorAll("td");
-  cells[0].textContent = item.name || "-";
-  cells[1].textContent = item.storageLocation || "-";
-  cells[2].querySelector("span").textContent = item.destination || "未定";
-  cells[3].textContent = item.shippingStatus || "未仕分け";
-  cells[4].textContent = bestOffer ? `${bestOffer.label} ${formatMoney(bestOffer.value)}` : "-";
+  cells[0].querySelector(".sorting-row-title").textContent = item.name || "-";
+  cells[1].querySelector(".sorting-row-storage").textContent = item.storageLocation || "-";
+  cells[2].querySelector(".sorting-row-destination").textContent = item.destination || "未定";
+  cells[3].querySelector(".sorting-row-shipping").textContent = item.shippingStatus || "未仕分け";
+  cells[4].querySelector(".sorting-row-offer").textContent = bestOffer ? `${bestOffer.label} ${formatMoney(bestOffer.value)}` : "-";
   cells[1].dataset.value = item.storageLocation || "-";
   cells[2].dataset.value = item.destination || "未定";
   cells[4].dataset.value = bestOffer ? `${bestOffer.label} ${formatMoney(bestOffer.value)}` : "-";
