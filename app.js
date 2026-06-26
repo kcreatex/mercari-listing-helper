@@ -63,11 +63,20 @@ const imageInput = document.querySelector("#imageInput");
 const imagePreview = document.querySelector("#imagePreview");
 const removeImageButton = document.querySelector("#removeImageButton");
 const formCopyItemCodeButton = document.querySelector("#formCopyItemCodeButton");
+const imageProviderInput = document.querySelector("#imageProvider");
+const googlePhotoImageIdInput = document.querySelector("#googlePhotoImageId");
+const localImageIdInput = document.querySelector("#localImageId");
+const cloudImageIdInput = document.querySelector("#cloudImageId");
 const submitButton = document.querySelector("#submitButton");
 const cancelEditButton = document.querySelector("#cancelEditButton");
 const formTitle = document.querySelector("#formTitle");
 const itemCount = document.querySelector("#itemCount");
 const sideNavLinks = document.querySelectorAll(".side-nav a[data-view]");
+const appDialog = document.querySelector("#appDialog");
+const appDialogTitle = document.querySelector("#appDialogTitle");
+const appDialogMessage = document.querySelector("#appDialogMessage");
+const appDialogCancel = document.querySelector("#appDialogCancel");
+const appDialogConfirm = document.querySelector("#appDialogConfirm");
 const cloudPanel = document.querySelector(".cloud-panel");
 const cloudStatus = document.querySelector("#cloudStatus");
 const cloudLoginForm = document.querySelector("#cloudLoginForm");
@@ -104,6 +113,7 @@ const exportButton = document.querySelector("#exportButton");
 const importButton = document.querySelector("#importButton");
 const exportButtonTop = document.querySelector("#exportButtonTop");
 const importButtonTop = document.querySelector("#importButtonTop");
+const itemCsvExportButton = document.querySelector("#itemCsvExportButton");
 const backupControlsTop = document.querySelector(".backup-controls-top");
 const importFileInput = document.querySelector("#importFileInput");
 const tableWrap = document.querySelector("#tableWrap");
@@ -233,6 +243,8 @@ const shippingPriorityList = document.querySelector("#shippingPriorityList");
 const analysisShippingPriorityList = document.querySelector("#analysisShippingPriorityList");
 const shippingCompletedList = document.querySelector("#shippingCompletedList");
 const analysisShippingCompletedList = document.querySelector("#analysisShippingCompletedList");
+const shippingManagementStatusFilter = document.querySelector("#shippingManagementStatusFilter");
+const shippingManagementList = document.querySelector("#shippingManagementList");
 const boxSearchList = document.querySelector("#boxSearchList");
 const togglePackingListButton = document.querySelector("#togglePackingListButton");
 const packingListCsvButton = document.querySelector("#packingListCsvButton");
@@ -307,6 +319,8 @@ const copyMercariUrlButton = document.querySelector("#copyMercariUrlButton");
 const prepareRelistButton = document.querySelector("#prepareRelistButton");
 const editDetailItemButton = document.querySelector("#editDetailItemButton");
 const closeDetailModalButton = document.querySelector("#closeDetailModalButton");
+const previousDetailItemButton = document.querySelector("#previousDetailItemButton");
+const nextDetailItemButton = document.querySelector("#nextDetailItemButton");
 const sortingDetailModal = document.querySelector("#sortingDetailModal");
 const sortingDetailContent = document.querySelector("#sortingDetailContent");
 const closeSortingDetailModalButton = document.querySelector("#closeSortingDetailModalButton");
@@ -320,6 +334,7 @@ let descriptionTemplates;
 let appraisalPriceInputMap = new Map();
 let currentDescriptionModalText = "";
 let currentDetailItem = null;
+let returnToDetailAfterEditId = "";
 let currentSortingDetailItem = null;
 let openMonthlyProfitKey = "";
 let currentImageData = "";
@@ -397,7 +412,7 @@ const MERCARI_FEE_RATE = 0.1;
 const MIN_PROFIT_RATE_COST = 1;
 const MIN_PROFIT_RATE_PROFIT = 500;
 const BACKUP_VERSION = 1;
-const SORTING_DESTINATIONS = ["未定", "メルカリ", "ヤフオク", "駿河屋", "良盤ディスク", "エコリング", "服買取", "まんだらけ", "処分", "その他"];
+const SORTING_UNDECIDED_DESTINATION = "未定";
 const SORTING_STATUSES = ["未確認", "査定中", "出品予定", "送付待ち", "発送済み", "完了", "保留"];
 const SHIPPING_STATUSES = ["未仕分け", "仕分け済", "箱詰め済", "発送済", "査定待ち", "入金済", "完了"];
 const SHIPPING_WAITING_STATUSES = ["仕分け済", "箱詰め済"];
@@ -464,9 +479,11 @@ const DEFAULT_SETTINGS = {
     { id: "mercari", field: "mercariPrice", name: "メルカリ" },
     { id: "yahoo", field: "yahooPrice", name: "ヤフオク" },
     { id: "surugaya", field: "surugayaPrice", name: "駿河屋" },
-    { id: "ryoban", field: "ryobanPrice", name: "良盤" },
+    { id: "ryoban", field: "ryobanPrice", name: "良盤ディスク" },
     { id: "ecoRing", field: "ecoRingPrice", name: "エコリング" },
     { id: "clothes", field: "clothesPrice", name: "服買取" },
+    { id: "mandarake", field: "mandarakePrice", name: "まんだらけ" },
+    { id: "disposal", field: "disposalPrice", name: "処分" },
     { id: "other", field: "otherPrice", name: "その他" },
   ],
 };
@@ -518,6 +535,40 @@ const STATUS_CLASS_NAMES = {
   "保留": "status-hold",
   "要捜索": "status-searching",
 };
+const MASTER_SETTINGS_DEFINITIONS = {
+  categories: {
+    rowClass: "category-setting-row",
+    removeAction: "remove-category",
+    fields: [{ name: "name", type: "text", label: "カテゴリ名" }],
+  },
+  storageLocations: {
+    rowClass: "storage-setting-row",
+    removeAction: "remove-storage",
+    fields: [{ name: "name", type: "text", label: "保管場所名" }],
+  },
+  shippingMethods: {
+    rowClass: "shipping-setting-row",
+    removeAction: "remove-shipping",
+    fields: [
+      { name: "name", type: "text", label: "配送方法名" },
+      { name: "cost", type: "number", label: "送料", inputMode: "numeric" },
+    ],
+  },
+  appraisalSources: {
+    rowClass: "appraisal-setting-row",
+    removeAction: "remove-appraisal",
+    fields: [{ name: "name", type: "text", label: "査定先名" }],
+  },
+  templates: {
+    rowClass: "template-setting-row",
+    removeAction: "remove-template",
+    contentClass: "template-edit-fields",
+    fields: [
+      { name: "name", type: "text", label: "テンプレート名" },
+      { name: "content", type: "textarea", label: "テンプレート内容", rows: 4 },
+    ],
+  },
+};
 
 settings = loadSettings();
 descriptionTemplates = loadTemplates();
@@ -525,10 +576,48 @@ descriptionTemplates = loadTemplates();
 function loadItems() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? JSON.parse(saved) : [];
+    const parsed = saved ? JSON.parse(saved) : [];
+    return Array.isArray(parsed) ? parsed.map(normalizeItem) : [];
   } catch {
     return [];
   }
+}
+
+function normalizeEditHistory(value) {
+  return Array.isArray(value)
+    ? value
+      .map((entry) => {
+        const historyEntry = entry && typeof entry === "object" ? entry : {};
+        return {
+          updatedAt: String(historyEntry.updatedAt || "").trim(),
+          changes: Array.isArray(historyEntry.changes)
+            ? historyEntry.changes.map((change) => String(change || "").trim()).filter(Boolean)
+            : [String(historyEntry.changes || historyEntry.change || "").trim()].filter(Boolean),
+        };
+      })
+      .filter((entry) => entry.updatedAt && entry.changes.length > 0)
+    : [];
+}
+
+function normalizeImageRefs(value) {
+  const refs = value && typeof value === "object" ? value : {};
+
+  return {
+    provider: String(refs.provider || "").trim(),
+    googlePhotoId: String(refs.googlePhotoId || refs.googlePhotosId || "").trim(),
+    localImageId: String(refs.localImageId || "").trim(),
+    cloudImageId: String(refs.cloudImageId || "").trim(),
+  };
+}
+
+function normalizeItem(item = {}) {
+  return {
+    ...item,
+    id: String(item.id || createId()),
+    imageRefs: normalizeImageRefs(item.imageRefs),
+    editHistory: normalizeEditHistory(item.editHistory),
+    updatedAt: item.updatedAt || new Date().toISOString(),
+  };
 }
 
 function loadSettings() {
@@ -575,10 +664,14 @@ function normalizeSortingItem(item) {
     ryobanPrice: parseMoney(item.ryobanPrice),
     ecoRingPrice: parseMoney(item.ecoRingPrice),
     clothesPrice: parseMoney(item.clothesPrice),
+    mandarakePrice: parseMoney(item.mandarakePrice),
+    disposalPrice: parseMoney(item.disposalPrice),
     otherPrice: parseMoney(item.otherPrice),
-    destination: SORTING_DESTINATIONS.includes(item.destination) ? item.destination : "未定",
+    destination: String(item.destination || SORTING_UNDECIDED_DESTINATION).trim() || SORTING_UNDECIDED_DESTINATION,
     status: SORTING_STATUSES.includes(item.status) ? item.status : "未確認",
     shippingStatus: SHIPPING_STATUSES.includes(item.shippingStatus) ? item.shippingStatus : "未仕分け",
+    shippingDate: String(item.shippingDate || "").trim(),
+    trackingNumber: String(item.trackingNumber || "").trim(),
     boxNumber: String(item.boxNumber || "").trim(),
     sourceItemId: String(item.sourceItemId || "").trim(),
     memo: String(item.memo || "").trim(),
@@ -608,7 +701,9 @@ function normalizeAppraisalSources(value) {
       return {
         id,
         field: String(source.field || fallbackSource.field || `appraisal_${id}`).trim(),
-        name: String(source.name || "").trim(),
+        name: source.id === "ryoban" && String(source.name || "").trim() === "良盤"
+          ? "良盤ディスク"
+          : String(source.name || "").trim(),
       };
     })
     .filter((source) => source.name);
@@ -619,6 +714,18 @@ function normalizeAppraisalSources(value) {
       deduped.push(source);
     }
   });
+
+  const legacyDefaultIds = ["mercari", "yahoo", "surugaya", "ryoban", "ecoRing", "clothes", "other"];
+  const isLegacyDefaultSet = deduped.length === legacyDefaultIds.length
+    && legacyDefaultIds.every((id) => deduped.some((source) => source.id === id));
+
+  if (isLegacyDefaultSet) {
+    DEFAULT_SETTINGS.appraisalSources.forEach((defaultSource) => {
+      if (!deduped.some((source) => source.id === defaultSource.id)) {
+        deduped.push({ ...defaultSource });
+      }
+    });
+  }
 
   return deduped.length > 0 ? deduped : DEFAULT_SETTINGS.appraisalSources.map((source) => ({ ...source }));
 }
@@ -681,6 +788,77 @@ function normalizeShippingMethodName(value) {
   return name === "定形外" ? "定形外郵便" : name;
 }
 
+function formatHistoryValue(value) {
+  if (value === "" || value === null || value === undefined) {
+    return "未設定";
+  }
+
+  return String(value);
+}
+
+function buildEditHistoryEntry(changes, updatedAt = new Date().toISOString()) {
+  const normalizedChanges = Array.isArray(changes)
+    ? changes.map((change) => String(change || "").trim()).filter(Boolean)
+    : [String(changes || "").trim()].filter(Boolean);
+
+  if (normalizedChanges.length === 0) {
+    return null;
+  }
+
+  return {
+    updatedAt,
+    changes: normalizedChanges,
+  };
+}
+
+function appendEditHistory(item, changes, updatedAt = new Date().toISOString()) {
+  const entry = buildEditHistoryEntry(changes, updatedAt);
+
+  if (!entry) {
+    return normalizeEditHistory(item.editHistory);
+  }
+
+  return [entry, ...normalizeEditHistory(item.editHistory)].slice(0, 100);
+}
+
+function getItemChangeDescriptions(beforeItem = {}, afterItem = {}) {
+  const fields = [
+    ["listingTitle", "商品名", (item) => getListingTitle(item)],
+    ["category", "カテゴリ"],
+    ["condition", "状態"],
+    ["status", "出品状態", (item) => getItemStatus(item)],
+    ["storageLocation", "保管場所"],
+    ["plannedPrice", "販売価格", (item) => parseMoney(item.plannedPrice)],
+    ["shippingMethod", "配送方法"],
+    ["shippingCost", "送料", (item) => parseMoney(item.shippingCost)],
+    ["purchaseCost", "原価", (item) => parseMoney(item.purchaseCost)],
+    ["description", "商品説明"],
+    ["memo", "メモ"],
+    ["listingUrl", "出品URL"],
+    ["imageProvider", "画像管理方式", (item) => normalizeImageRefs(item.imageRefs).provider],
+    ["googlePhotoId", "GoogleフォトID", (item) => normalizeImageRefs(item.imageRefs).googlePhotoId],
+    ["localImageId", "ローカル画像ID", (item) => normalizeImageRefs(item.imageRefs).localImageId],
+    ["cloudImageId", "クラウド画像ID", (item) => normalizeImageRefs(item.imageRefs).cloudImageId],
+    ["soldDate", "売却日"],
+    ["actualSalePrice", "実売価格", (item) => parseMoney(item.actualSalePrice)],
+    ["actualShippingCost", "実送料", (item) => parseMoney(item.actualShippingCost)],
+  ];
+
+  return fields
+    .map(([fieldName, label, getter]) => {
+      const getValue = getter || ((item) => item[fieldName]);
+      const beforeValue = getValue(beforeItem);
+      const afterValue = getValue(afterItem);
+
+      if (String(beforeValue ?? "") === String(afterValue ?? "")) {
+        return "";
+      }
+
+      return `${label}: ${formatHistoryValue(beforeValue)} → ${formatHistoryValue(afterValue)}`;
+    })
+    .filter(Boolean);
+}
+
 function saveSettings() {
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
 }
@@ -699,7 +877,7 @@ function saveItemsToLocalStorage() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
     return true;
   } catch {
-    alert("画像または商品数が多く、ブラウザに保存できませんでした。小さめの画像を選び直してください。");
+    showErrorMessage("画像または商品数が多く、ブラウザに保存できませんでした。小さめの画像を選び直してください。");
     return false;
   }
 }
@@ -786,6 +964,80 @@ function showToast(message, type = "success") {
   }, 2600);
 }
 
+function showSuccessMessage(message) {
+  showToast(message, "success");
+}
+
+function showErrorMessage(message) {
+  showToast(message, "error");
+}
+
+function showAppDialog({
+  title = "確認",
+  message = "",
+  confirmText = "OK",
+  cancelText = "キャンセル",
+  danger = false,
+} = {}) {
+  if (!appDialog || !appDialogTitle || !appDialogMessage || !appDialogCancel || !appDialogConfirm) {
+    showErrorMessage("確認ダイアログを表示できませんでした");
+    return Promise.resolve(false);
+  }
+
+  return new Promise((resolve) => {
+    const close = (result) => {
+      appDialog.classList.add("hidden");
+      appDialogConfirm.removeEventListener("click", onConfirm);
+      appDialogCancel.removeEventListener("click", onCancel);
+      appDialog.removeEventListener("click", onBackdrop);
+      document.removeEventListener("keydown", onKeydown);
+      resolve(result);
+    };
+    const onConfirm = () => close(true);
+    const onCancel = () => close(false);
+    const onBackdrop = (event) => {
+      if (event.target === appDialog) {
+        close(false);
+      }
+    };
+    const onKeydown = (event) => {
+      if (event.key === "Escape") {
+        close(false);
+      }
+    };
+
+    appDialogTitle.textContent = title;
+    appDialogMessage.textContent = message;
+    appDialogCancel.textContent = cancelText;
+    appDialogConfirm.textContent = confirmText;
+    appDialogConfirm.classList.toggle("danger-button", danger);
+    appDialogConfirm.classList.toggle("primary-button", !danger);
+    appDialog.classList.remove("hidden");
+    appDialogConfirm.addEventListener("click", onConfirm);
+    appDialogCancel.addEventListener("click", onCancel);
+    appDialog.addEventListener("click", onBackdrop);
+    document.addEventListener("keydown", onKeydown);
+    appDialogConfirm.focus();
+  });
+}
+
+function confirmDelete(message) {
+  return showAppDialog({
+    title: "削除確認",
+    message,
+    confirmText: "削除",
+    danger: true,
+  });
+}
+
+function confirmCancel(message) {
+  return showAppDialog({
+    title: "キャンセル確認",
+    message,
+    confirmText: "続ける",
+  });
+}
+
 function markCloudSynced() {
   localStorage.setItem(CLOUD_LAST_SYNC_KEY, new Date().toISOString());
   updateCloudLastSyncDisplay();
@@ -812,11 +1064,11 @@ function renderCloudAuthState() {
   }
 
   if (cloudUser && !cloudHouseholdId) {
-    setCloudStatus("ログイン済みですが、共有グループが見つかりません。Supabase側の household_members を確認してください。", "warning");
+    setCloudStatus("共有グループ未設定", "warning");
     return;
   }
 
-  setCloudStatus("未ログイン: 商品データはこの端末に保存されます");
+  setCloudStatus("未ログイン");
   updateCloudLastSyncDisplay();
 }
 
@@ -1034,23 +1286,27 @@ function handleCloudSaveError(error) {
 
   hasCloudSaveWarning = true;
   setCloudStatus(`クラウド保存に失敗しました。端末内には保存済みです: ${error.message}`, "warning");
-  alert("クラウド保存に失敗しました。端末内には保存済みなので、作業は継続できます。");
+  showErrorMessage("クラウド保存に失敗しました。端末内には保存済みです");
 }
 
 async function migrateLocalItemsToSupabase() {
   if (!isCloudReady) {
-    alert("先にSupabaseへログインしてください。");
+    showErrorMessage("先にSupabaseへログインしてください");
     return;
   }
 
   const localItems = loadItems();
 
   if (localItems.length === 0) {
-    alert("この端末に移行できる商品データがありません。");
+    showErrorMessage("この端末に移行できる商品データがありません");
     return;
   }
 
-  const shouldMigrate = confirm(`${localItems.length}件の商品データをSupabaseへアップロードしますか？`);
+  const shouldMigrate = await showAppDialog({
+    title: "クラウド移行確認",
+    message: `${localItems.length}件の商品データをSupabaseへアップロードしますか？`,
+    confirmText: "アップロード",
+  });
 
   if (!shouldMigrate) {
     return;
@@ -1072,10 +1328,10 @@ async function migrateLocalItemsToSupabase() {
     markCloudSynced();
     render();
     renderCloudAuthState();
-    alert("Supabaseへの移行が完了しました。");
+    showSuccessMessage("Supabaseへの移行が完了しました");
   } catch (error) {
     setCloudStatus(`Supabaseへの移行に失敗しました。ローカルデータは残っています: ${error.message}`, "warning");
-    alert("Supabaseへの移行に失敗しました。ローカルデータは消えていません。");
+    showErrorMessage("Supabaseへの移行に失敗しました。ローカルデータは消えていません");
   }
 }
 
@@ -1123,6 +1379,17 @@ function getItemCode(item) {
 
 function getLocalItemImage(item) {
   return String(item?.imageData || "");
+}
+
+function getImageRefsFromForm(existingRefs = {}) {
+  const fallbackRefs = normalizeImageRefs(existingRefs);
+
+  return normalizeImageRefs({
+    provider: imageProviderInput ? imageProviderInput.value : fallbackRefs.provider,
+    googlePhotoId: googlePhotoImageIdInput?.value || "",
+    localImageId: localImageIdInput?.value || "",
+    cloudImageId: cloudImageIdInput?.value || "",
+  });
 }
 
 function saveLocalItemImage(item, imageData) {
@@ -1189,6 +1456,21 @@ function formatDateInputValue(date = new Date()) {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+function formatDateTime(value) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "-";
+  }
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hour = String(date.getHours()).padStart(2, "0");
+  const minute = String(date.getMinutes()).padStart(2, "0");
+  return `${year}/${month}/${day} ${hour}:${minute}`;
 }
 
 function normalizeText(value) {
@@ -1385,14 +1667,18 @@ function refreshTemplateOptions(selectedValue = "") {
   descriptionTemplateInput.value = selectedValue;
 }
 
-function applyDescriptionTemplate() {
+async function applyDescriptionTemplate() {
   const template = descriptionTemplates.find((currentTemplate) => currentTemplate.id === descriptionTemplateInput.value);
 
   if (!template) {
     return;
   }
 
-  const shouldReplace = !descriptionInput.value.trim() || confirm("現在の説明文を置き換えますか？");
+  const shouldReplace = !descriptionInput.value.trim() || await showAppDialog({
+    title: "置き換え確認",
+    message: "現在の説明文を置き換えますか？",
+    confirmText: "置き換える",
+  });
 
   if (shouldReplace) {
     descriptionInput.value = template.content;
@@ -2386,7 +2672,7 @@ function renderSortingPriority() {
     sortingPriorityList.append(createTodayPriorityRow(
       index + 1,
       item.name || "商品名未入力",
-      `推奨売却先 ${item.destination || "未定"} / ${item.storageLocation || "保管場所未設定"}`,
+      `推奨売却先 ${getSortingDestinationLabel(item.destination)} / ${item.storageLocation || "保管場所未設定"}`,
       `推定価値 ${formatMoney(value)}`,
       "仕分けする",
     ));
@@ -2417,7 +2703,7 @@ function renderShippingProfitPriority() {
     shippingProfitPriorityList.append(createTodayPriorityRow(
       index + 1,
       item.name || "商品名未入力",
-      `${item.destination || "未定"} / ${item.storageLocation || "保管場所未設定"}`,
+      `${getSortingDestinationLabel(item.destination)} / ${item.storageLocation || "保管場所未設定"}`,
       `利益 ${formatMoney(value)}`,
     ));
   });
@@ -2503,7 +2789,7 @@ function renderTodayCommands(allItems) {
       type: "shipping",
       count: shippingWaitItems.length,
       title: "発送待ち",
-      detail: `${top.item.name || "商品名未入力"} / ${top.item.destination || "未定"}`,
+      detail: `${top.item.name || "商品名未入力"} / ${getSortingDestinationLabel(top.item.destination)}`,
       value: `推定利益 ${formatMoney(top.value)}`,
       actionLabel: "発送管理へ",
       action: "open-shipping",
@@ -2516,7 +2802,7 @@ function renderTodayCommands(allItems) {
       type: "assessment",
       count: assessmentWaitItems.length,
       title: "査定待ち",
-      detail: `${top.item.name || "商品名未入力"} / ${top.item.destination || "未定"}`,
+      detail: `${top.item.name || "商品名未入力"} / ${getSortingDestinationLabel(top.item.destination)}`,
       value: `推定利益 ${formatMoney(top.value)}`,
       actionLabel: "査定状況を見る",
       action: "open-sorting",
@@ -2580,7 +2866,7 @@ function updateDestinationProfitCandidate() {
   const groups = new Map();
 
   sortingItems.forEach((item) => {
-    const destination = item.destination || "未定";
+    const destination = getSortingDestinationLabel(item.destination);
 
     if (destination === "未定" || ["発送済", "入金済", "完了"].includes(item.shippingStatus || "")) {
       return;
@@ -2736,7 +3022,7 @@ async function copyText(text, successMessage) {
   const value = text.trim();
 
   if (!value) {
-    alert("コピーする内容がありません。");
+    showErrorMessage("コピーする内容がありません");
     return;
   }
 
@@ -2753,7 +3039,7 @@ async function copyText(text, successMessage) {
       copyTextWithTextarea(value);
       showToast(successMessage || "コピーしました", "success");
     } catch {
-      alert("コピーできませんでした。ブラウザの設定を確認してください。");
+      showErrorMessage("コピーできませんでした。ブラウザの設定を確認してください");
     }
   }
 }
@@ -2786,7 +3072,146 @@ function exportBackup() {
   link.click();
   link.remove();
   URL.revokeObjectURL(url);
-  alert(`バックアップを書き出しました。\nファイル名: ${fileName}\nダウンロードフォルダを確認してください。`);
+  showSuccessMessage("バックアップを書き出しました");
+}
+
+function escapeCsvValue(value) {
+  return `"${String(value ?? "").replaceAll('"', '""')}"`;
+}
+
+function downloadCsvFile(fileName, headers, rows) {
+  const csv = [headers, ...rows]
+    .map((row) => row.map(escapeCsvValue).join(","))
+    .join("\n");
+  const blob = new Blob([`\uFEFF${csv}`], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = fileName;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function getLinkedSortingItem(item) {
+  return sortingItems.find((sortingItem) => sortingItem.sourceItemId === item.id) || null;
+}
+
+function getCsvTargetItems(target) {
+  if (target === "inventory") {
+    return items.filter((item) => getItemStatus(item) !== "売却済み");
+  }
+
+  if (target === "sold") {
+    return items.filter((item) => getItemStatus(item) === "売却済み");
+  }
+
+  if (target === "surugaya") {
+    return items.filter((item) => getSortingDestinationForItem(item) === "駿河屋");
+  }
+
+  if (target === "mercari") {
+    return items.filter((item) => getSortingDestinationForItem(item) === "メルカリ");
+  }
+
+  if (target === "storage") {
+    return [...items].sort((a, b) => (
+      compareText(a.storageLocation || "未設定", b.storageLocation || "未設定")
+      || compareText(getListingTitle(a), getListingTitle(b))
+    ));
+  }
+
+  return [...items];
+}
+
+function getCsvTargetLabel(target) {
+  const labels = {
+    all: "全商品",
+    inventory: "在庫のみ",
+    sold: "売却済み",
+    surugaya: "駿河屋予定",
+    mercari: "メルカリ予定",
+    storage: "保管場所別",
+  };
+
+  return labels[target] || "商品一覧";
+}
+
+function getItemCsvHeaders(target) {
+  const baseHeaders = [
+    "商品ID",
+    "商品名",
+    "カテゴリ",
+    "状態",
+    "出品状態",
+    "保管場所",
+    "販売価格",
+    "見込み利益",
+    "最低出品価格",
+    "最終売却先",
+    "最高額",
+    "メモ",
+    "更新日時",
+  ];
+
+  return target === "storage" ? ["保管場所グループ", ...baseHeaders] : baseHeaders;
+}
+
+function createItemCsvRow(item, target) {
+  const linkedSortingItem = getLinkedSortingItem(item);
+  const bestOffer = linkedSortingItem ? getBestSortingOffer(linkedSortingItem) : null;
+  const row = [
+    getItemCode(item),
+    getListingTitle(item),
+    item.category || "",
+    item.condition || "",
+    getItemStatus(item),
+    item.storageLocation || "未設定",
+    parseMoney(item.plannedPrice),
+    calculateProfit(item),
+    calculateMinimumPrice(item),
+    getSortingDestinationForItem(item),
+    bestOffer ? `${bestOffer.label} ${bestOffer.value}` : getHighestOfferForItem(item),
+    item.memo || "",
+    formatDateTime(item.updatedAt),
+  ];
+
+  return target === "storage" ? [item.storageLocation || "未設定", ...row] : row;
+}
+
+function exportSelectedItemCsv() {
+  const selectedTargets = [...document.querySelectorAll('input[name="itemCsvTarget"]:checked')]
+    .map((input) => input.value);
+
+  if (selectedTargets.length === 0) {
+    showToast("CSV出力対象を選択してください", "error");
+    return;
+  }
+
+  let exportedCount = 0;
+
+  selectedTargets.forEach((target) => {
+    const targetItems = getCsvTargetItems(target);
+
+    if (targetItems.length === 0) {
+      return;
+    }
+
+    const label = getCsvTargetLabel(target);
+    const headers = getItemCsvHeaders(target);
+    const rows = targetItems.map((item) => createItemCsvRow(item, target));
+    downloadCsvFile(`商品一覧_${label}_${formatDateInputValue()}.csv`, headers, rows);
+    exportedCount += 1;
+  });
+
+  if (exportedCount === 0) {
+    showToast("出力できる商品がありません", "error");
+    return;
+  }
+
+  showToast(`✓ CSVファイルを${exportedCount}個書き出しました`, "success");
 }
 
 function readBackupFile(file) {
@@ -2825,7 +3250,11 @@ async function importBackup(file) {
     return;
   }
 
-  const shouldImport = confirm("バックアップを読み込むと、現在このブラウザに保存されている商品・設定・テンプレート・売却先仕分けデータは上書きされます。続けますか？");
+  const shouldImport = await showAppDialog({
+    title: "読み込み確認",
+    message: "バックアップを読み込むと、現在このブラウザに保存されている商品・設定・テンプレート・売却先仕分けデータは上書きされます。続けますか？",
+    confirmText: "読み込む",
+  });
 
   if (!shouldImport) {
     importFileInput.value = "";
@@ -2874,9 +3303,9 @@ async function importBackup(file) {
     resetSortingForm();
     render();
     renderSorting();
-    alert(`バックアップを読み込みました。画面を更新してください。\n商品: ${items.length}件\n売却先仕分け: ${sortingItems.length}件`);
+    showSuccessMessage("バックアップを読み込みました。画面を更新してください");
   } catch (error) {
-    alert(`バックアップを読み込めませんでした。${error.message}`);
+    showErrorMessage(`バックアップを読み込めませんでした。${error.message}`);
   } finally {
     importFileInput.value = "";
   }
@@ -2990,6 +3419,44 @@ function createDetailFutureSection() {
   return section;
 }
 
+function createEditHistorySection(item) {
+  const section = document.createElement("details");
+  const summary = document.createElement("summary");
+  const history = normalizeEditHistory(item.editHistory);
+
+  section.className = "detail-section detail-section-collapsible detail-section-history app-accordion";
+  summary.textContent = "編集履歴";
+  section.append(summary);
+
+  if (history.length === 0) {
+    const empty = document.createElement("p");
+    empty.className = "detail-empty-text";
+    empty.textContent = "編集履歴はありません";
+    section.append(empty);
+    return section;
+  }
+
+  const list = document.createElement("ol");
+  list.className = "detail-history-list";
+  history.forEach((entry) => {
+    const itemElement = document.createElement("li");
+    const time = document.createElement("time");
+    const changes = document.createElement("ul");
+
+    time.dateTime = entry.updatedAt;
+    time.textContent = formatDateTime(entry.updatedAt);
+    entry.changes.forEach((change) => {
+      const changeItem = document.createElement("li");
+      changeItem.textContent = change;
+      changes.append(changeItem);
+    });
+    itemElement.append(time, changes);
+    list.append(itemElement);
+  });
+  section.append(list);
+  return section;
+}
+
 function createDetailHero(item) {
   const hero = document.createElement("section");
   hero.className = "detail-hero";
@@ -3042,6 +3509,53 @@ function createDetailSummary(item) {
   return summary;
 }
 
+function getDetailNavigationItems() {
+  const filteredItems = getFilteredItems();
+  const shouldIgnoreInventoryFilter = statusFilter.value === "売却済み";
+  const activeItems = itemListTargetMode === "inventory" && !shouldIgnoreInventoryFilter
+    ? filteredItems.filter((item) => getItemStatus(item) !== "売却済み")
+    : filteredItems;
+  const sortedItems = sortActiveItems(activeItems);
+
+  if (currentDetailItem && !sortedItems.some((item) => item.id === currentDetailItem.id)) {
+    return sortActiveItems(items);
+  }
+
+  return sortedItems;
+}
+
+function getAdjacentDetailItem(direction) {
+  if (!currentDetailItem) {
+    return null;
+  }
+
+  const detailItems = getDetailNavigationItems();
+  const currentIndex = detailItems.findIndex((item) => item.id === currentDetailItem.id);
+
+  if (currentIndex < 0) {
+    return null;
+  }
+
+  return detailItems[currentIndex + direction] || null;
+}
+
+function updateDetailNavigationButtons() {
+  if (!previousDetailItemButton || !nextDetailItemButton) {
+    return;
+  }
+
+  previousDetailItemButton.disabled = !getAdjacentDetailItem(-1);
+  nextDetailItemButton.disabled = !getAdjacentDetailItem(1);
+}
+
+function openAdjacentDetailItem(direction) {
+  const item = getAdjacentDetailItem(direction);
+
+  if (item) {
+    openDetailModal(item);
+  }
+}
+
 function openDetailModal(item) {
   currentDetailItem = item;
   detailModalContent.innerHTML = "";
@@ -3063,6 +3577,14 @@ function openDetailModal(item) {
     imageWrap.append(placeholder);
   }
   detailModalContent.append(imageWrap);
+
+  const imageRefs = normalizeImageRefs(item.imageRefs);
+  detailModalContent.append(createDetailCollapsibleSection("画像管理", [
+    ["管理方式", imageRefs.provider],
+    ["GoogleフォトID", imageRefs.googlePhotoId],
+    ["ローカル画像ID", imageRefs.localImageId],
+    ["クラウド画像ID", imageRefs.cloudImageId],
+  ], "画像IDは未設定です"));
 
   detailModalContent.append(createDetailSection("基本情報", [
     ["商品ID", getItemCode(item)],
@@ -3091,6 +3613,8 @@ function openDetailModal(item) {
     ["メモ", item.memo],
   ], "商品情報未登録"));
 
+  detailModalContent.append(createEditHistorySection(item));
+
   if (getItemStatus(item) === "売却済み") {
     detailModalContent.append(createDetailSection("売却情報", [
       ["実売価格", formatMoney(parseMoney(item.actualSalePrice))],
@@ -3104,6 +3628,7 @@ function openDetailModal(item) {
 
   detailModalContent.append(createDetailFutureSection());
   copyMercariUrlButton.disabled = !String(item.listingUrl || "").trim();
+  updateDetailNavigationButtons();
 
   detailModal.classList.remove("hidden");
   closeDetailModalButton.focus();
@@ -3112,6 +3637,7 @@ function openDetailModal(item) {
 function closeDetailModal() {
   detailModal.classList.add("hidden");
   currentDetailItem = null;
+  updateDetailNavigationButtons();
 }
 
 function openListingUrl(item) {
@@ -3157,8 +3683,12 @@ function setSoldOnlyFormMode(isSold) {
   }
 }
 
-function markItemAsSold(item) {
-  const shouldMarkSold = confirm("この商品を売却済みにしますか？");
+async function markItemAsSold(item) {
+  const shouldMarkSold = await showAppDialog({
+    title: "売却済みに変更",
+    message: "この商品を売却済みにしますか？",
+    confirmText: "変更する",
+  });
 
   if (!shouldMarkSold) {
     return;
@@ -3181,8 +3711,12 @@ function markItemAsSold(item) {
   }
 }
 
-function relistItem(item) {
-  const shouldRelist = confirm("この商品を再出品しますか？\n出品日を今日に更新し、ステータスを出品中にします。");
+async function relistItem(item) {
+  const shouldRelist = await showAppDialog({
+    title: "再出品確認",
+    message: "この商品を再出品しますか？\n出品日を今日に更新し、ステータスを出品中にします。",
+    confirmText: "再出品する",
+  });
 
   if (!shouldRelist) {
     return;
@@ -3201,6 +3735,89 @@ function relistItem(item) {
     render();
     startEdit(updatedItem);
   }
+}
+
+function updateItemDirectly(item, updates, successMessage, historyChanges = []) {
+  const updatedAt = new Date().toISOString();
+  const updatedItem = {
+    ...item,
+    ...updates,
+    updatedAt,
+  };
+  const changes = historyChanges.length > 0 ? historyChanges : getItemChangeDescriptions(item, updatedItem);
+  updatedItem.editHistory = appendEditHistory(item, changes, updatedAt);
+
+  items = items.map((currentItem) => (currentItem.id === item.id ? updatedItem : currentItem));
+
+  if (saveItems()) {
+    render();
+    showToast(successMessage, "success");
+  }
+
+  return updatedItem;
+}
+
+function changeItemStorageFromList(item) {
+  const storageOptions = getStorageLocationOptions(item.storageLocation || "")
+    .filter((value) => value !== "未設定")
+    .join(" / ");
+  const nextStorage = prompt(`保管場所を入力してください。\n候補: ${storageOptions || "設定ページで追加できます"}`, item.storageLocation || "");
+
+  if (nextStorage === null) {
+    return;
+  }
+
+  const storageLocation = normalizeText(nextStorage);
+
+  if (!storageLocation) {
+    showToast("保管場所を入力してください", "error");
+    return;
+  }
+
+  updateItemDirectly(item, { storageLocation }, "✓ 保管場所を変更しました", [
+    `保管場所: ${formatHistoryValue(item.storageLocation)} → ${storageLocation}`,
+  ]);
+  const linkedSortingItem = sortingItems.find((sortingItem) => sortingItem.sourceItemId === item.id);
+
+  if (linkedSortingItem) {
+    linkedSortingItem.storageLocation = storageLocation;
+    linkedSortingItem.updatedAt = new Date().toISOString();
+    saveSortingItems();
+    renderSorting();
+  }
+}
+
+function markItemAsListedFromList(item) {
+  updateItemDirectly(item, {
+    status: "出品中",
+    listingDate: item.listingDate || formatDateInputValue(),
+  }, "✓ 出品中に変更しました", [
+    `出品状態: ${formatHistoryValue(getItemStatus(item))} → 出品中`,
+  ]);
+}
+
+async function markItemAsSoldFromList(item) {
+  const shouldMarkSold = await showAppDialog({
+    title: "売却済みに変更",
+    message: "この商品を売却済みにしますか？",
+    confirmText: "変更する",
+  });
+
+  if (!shouldMarkSold) {
+    return;
+  }
+
+  const updatedItem = {
+    ...item,
+    status: "売却済み",
+    soldDate: item.soldDate || formatDateInputValue(),
+    actualSalePrice: parseMoney(item.actualSalePrice) === "" ? parseMoney(item.plannedPrice) : parseMoney(item.actualSalePrice),
+    actualShippingCost: parseMoney(item.actualShippingCost) === "" ? parseMoney(item.shippingCost) : parseMoney(item.actualShippingCost),
+  };
+  updatedItem.actualFee = calculateActualFee(updatedItem);
+  updateItemDirectly(item, updatedItem, "✓ 売却済みに変更しました", [
+    `出品状態: ${formatHistoryValue(getItemStatus(item))} → 売却済み`,
+  ]);
 }
 
 function updateProfitPreview() {
@@ -3368,13 +3985,13 @@ function requestLocalPhoto(itemId) {
   listPhotoInput.click();
 }
 
-function removeLocalPhoto(item) {
+async function removeLocalPhoto(item) {
   if (!item || !getLocalItemImage(item)) {
     showToast("削除する写真がありません", "error");
     return;
   }
 
-  if (!confirm(`「${getListingTitle(item)}」のこの端末の写真を削除しますか？`)) {
+  if (!await confirmDelete(`「${getListingTitle(item)}」のこの端末の写真を削除しますか？`)) {
     return;
   }
 
@@ -3403,6 +4020,46 @@ function getAppraisalSources() {
   return Array.isArray(settings?.appraisalSources) && settings.appraisalSources.length > 0
     ? settings.appraisalSources
     : DEFAULT_SETTINGS.appraisalSources;
+}
+
+function getSortingDestinationOptions() {
+  const destinations = [SORTING_UNDECIDED_DESTINATION];
+
+  getAppraisalSources().forEach((source) => {
+    const name = getAppraisalFieldLabel(source);
+
+    if (name && !destinations.includes(name)) {
+      destinations.push(name);
+    }
+  });
+
+  return destinations;
+}
+
+function isActiveSortingDestination(value) {
+  return getSortingDestinationOptions().includes(value || SORTING_UNDECIDED_DESTINATION);
+}
+
+function getSortingDestinationLabel(value) {
+  const destination = String(value || SORTING_UNDECIDED_DESTINATION).trim() || SORTING_UNDECIDED_DESTINATION;
+  return isActiveSortingDestination(destination) ? destination : SORTING_UNDECIDED_DESTINATION;
+}
+
+function refreshSortingDestinationOptions(selectedValue = sortingDestinationInput?.value || SORTING_UNDECIDED_DESTINATION) {
+  if (!sortingDestinationInput) {
+    return;
+  }
+
+  const destinations = getSortingDestinationOptions();
+
+  sortingDestinationInput.innerHTML = "";
+  destinations.forEach((destination) => {
+    const option = document.createElement("option");
+    option.value = destination;
+    option.textContent = destination;
+    sortingDestinationInput.append(option);
+  });
+  sortingDestinationInput.value = destinations.includes(selectedValue) ? selectedValue : SORTING_UNDECIDED_DESTINATION;
 }
 
 function createSortingAppraisalInput(source, value = "") {
@@ -3467,6 +4124,62 @@ function getBestSortingOffer(item) {
   return getSortingPriceEntries(item)
     .filter((entry) => entry.value !== "")
     .sort((first, second) => second.value - first.value)[0] || null;
+}
+
+function getLinkedSortingItemsForItem(item) {
+  return sortingItems.filter((sortingItem) => sortingItem.sourceItemId === item.id);
+}
+
+function getSortingSearchValues(item) {
+  const priceEntries = getSortingPriceEntries(item);
+
+  return [
+    item.name,
+    item.memo,
+    item.genre,
+    item.storageLocation,
+    item.boxNumber,
+    getSortingDestinationLabel(item.destination),
+    item.status,
+    item.shippingStatus,
+    ...priceEntries.map((entry) => entry.label),
+    ...priceEntries.map((entry) => entry.value === "" ? "" : String(entry.value)),
+  ];
+}
+
+function getItemSearchValues(item) {
+  const linkedSortingItems = getLinkedSortingItemsForItem(item);
+
+  return [
+    getListingTitle(item),
+    item.name,
+    item.memo,
+    item.soldMemo,
+    item.description,
+    item.measurements,
+    item.category,
+    item.storageLocation,
+    getItemCode(item),
+    getItemStatus(item),
+    item.shippingMethod,
+    item.listingDate,
+    item.listingUrl,
+    item.priceLimitMemo,
+    ...linkedSortingItems.flatMap(getSortingSearchValues),
+  ];
+}
+
+function valuesMatchKeyword(values, keyword) {
+  const normalizedKeyword = String(keyword || "").trim().toLowerCase();
+
+  if (!normalizedKeyword) {
+    return true;
+  }
+
+  return values
+    .join(" ")
+    .toLowerCase()
+    .includes(normalizedKeyword);
 }
 
 function getSortingRecommendation(item) {
@@ -3549,6 +4262,7 @@ function refreshSortingFilters() {
   const selectedDestination = sortingDestinationFilter.value;
   const selectedStatus = sortingStatusFilter.value;
   const selectedGenre = sortingGenreFilter.value;
+  const destinations = getSortingDestinationOptions();
   const genres = [
     ...new Set([
       ...settings.categories,
@@ -3557,13 +4271,13 @@ function refreshSortingFilters() {
   ];
 
   sortingDestinationFilter.innerHTML = '<option value="">すべての売却先</option>';
-  SORTING_DESTINATIONS.forEach((destination) => {
+  destinations.forEach((destination) => {
     const option = document.createElement("option");
     option.value = destination;
     option.textContent = destination;
     sortingDestinationFilter.append(option);
   });
-  sortingDestinationFilter.value = SORTING_DESTINATIONS.includes(selectedDestination) ? selectedDestination : "";
+  sortingDestinationFilter.value = destinations.includes(selectedDestination) ? selectedDestination : "";
 
   sortingStatusFilter.innerHTML = '<option value="">すべてのステータス</option>';
   SORTING_STATUSES.forEach((status) => {
@@ -3588,17 +4302,12 @@ function getFilteredSortingItems() {
   return sortingItems.filter((item) => {
     const keyword = String(sortingItemSearchInput?.value || "").trim().toLowerCase();
     const boxKeyword = String(sortingBoxSearchInput?.value || "").trim().toLowerCase();
-    const matchesDestination = !sortingDestinationFilter.value || item.destination === sortingDestinationFilter.value;
+    const destinationLabel = getSortingDestinationLabel(item.destination);
+    const matchesDestination = !sortingDestinationFilter.value || destinationLabel === sortingDestinationFilter.value;
     const matchesStatus = !sortingStatusFilter.value || item.status === sortingStatusFilter.value;
     const matchesGenre = !sortingGenreFilter.value || item.genre === sortingGenreFilter.value;
     const matchesBox = !boxKeyword || String(item.boxNumber || "").toLowerCase().includes(boxKeyword);
-    const matchesKeyword = !keyword || [
-      item.name,
-      item.storageLocation,
-      item.destination,
-      item.boxNumber,
-      item.memo,
-    ].join(" ").toLowerCase().includes(keyword);
+    const matchesKeyword = valuesMatchKeyword(getSortingSearchValues(item), keyword);
     return matchesDestination && matchesStatus && matchesGenre && matchesBox && matchesKeyword;
   });
 }
@@ -3613,7 +4322,7 @@ function sortSortingItems(sourceItems) {
     }
 
     if (order === "destination") {
-      return compareText(first.destination || "未定", second.destination || "未定")
+      return compareText(getSortingDestinationLabel(first.destination), getSortingDestinationLabel(second.destination))
         || compareText(first.storageLocation || "未設定", second.storageLocation || "未設定");
     }
 
@@ -3675,7 +4384,7 @@ function createSortingWorkCard(item) {
   card.querySelector(".sorting-work-title").textContent = item.name || "商品名未設定";
   card.querySelector(".sorting-work-offer").textContent = bestOffer ? formatMoney(bestOffer.value) : "査定額未設定";
   card.querySelector(".sorting-work-storage").textContent = `📦 ${item.storageLocation || "保管場所未設定"}`;
-  card.querySelector(".sorting-work-destination").textContent = `🏪 ${item.destination || "未定"}`;
+  card.querySelector(".sorting-work-destination").textContent = `🏪 ${getSortingDestinationLabel(item.destination)}`;
   if (sourceItem) {
     card.dataset.sourceId = sourceItem.id;
     card.querySelectorAll(".sorting-source-action").forEach((button) => button.classList.remove("hidden"));
@@ -3696,7 +4405,7 @@ function renderSortingShippingSummary(sourceItems) {
 
   const groups = new Map();
   candidates.forEach((item) => {
-    const destination = item.destination || "未定";
+    const destination = getSortingDestinationLabel(item.destination);
     const storageLocation = item.storageLocation || "未設定";
     const key = `${destination}__${storageLocation}`;
     const group = groups.get(key) || { destination, storageLocation, items: [], total: 0 };
@@ -3722,9 +4431,10 @@ function renderSortingShippingSummary(sourceItems) {
 
 function renderSortingSummary() {
   const groups = new Map();
+  const destinations = getSortingDestinationOptions();
 
   sortingItems.forEach((item) => {
-    const destination = item.destination || "未定";
+    const destination = getSortingDestinationLabel(item.destination);
     const current = groups.get(destination) || { count: 0, quantity: 0 };
     const quantity = parseMoney(item.quantity);
 
@@ -3734,7 +4444,7 @@ function renderSortingSummary() {
   });
 
   sortingSummaryGrid.innerHTML = "";
-  SORTING_DESTINATIONS.forEach((destination) => {
+  destinations.forEach((destination) => {
     const group = groups.get(destination) || { count: 0, quantity: 0 };
     const card = document.createElement("div");
     card.className = "sorting-summary-chip";
@@ -3758,7 +4468,7 @@ function renderShippingDashboard() {
       return;
     }
 
-    const destination = item.destination || "未定";
+    const destination = getSortingDestinationLabel(item.destination);
     const key = `${destination}__${actionLabel}`;
     const current = actionGroups.get(key) || {
       destination,
@@ -3801,6 +4511,112 @@ function renderShippingDashboard() {
   }
 }
 
+function getShippingManagementFilterGroup(item) {
+  const status = item.shippingStatus || "未仕分け";
+
+  if (["発送済", "査定待ち", "入金済", "完了"].includes(status)) {
+    return "completed";
+  }
+
+  if (["箱詰め済"].includes(status)) {
+    return "waiting";
+  }
+
+  return "preparing";
+}
+
+function getShippingManagementStatusLabel(item) {
+  const group = getShippingManagementFilterGroup(item);
+
+  if (group === "completed") {
+    return "発送済み";
+  }
+
+  if (group === "waiting") {
+    return "発送待ち";
+  }
+
+  return "発送準備中";
+}
+
+function createShippingManagementCard(item) {
+  const card = document.createElement("article");
+  const destination = getSortingDestinationLabel(item.destination);
+
+  card.className = "shipping-management-card";
+  card.dataset.id = item.id;
+  card.tabIndex = 0;
+  card.setAttribute("role", "button");
+  card.setAttribute("aria-label", `${item.name || "商品"}の詳細を開く`);
+  card.innerHTML = `
+    <div class="shipping-management-main">
+      <strong class="shipping-management-title"></strong>
+      <span class="shipping-management-storage"></span>
+    </div>
+    <div class="shipping-management-meta">
+      <span class="shipping-management-destination"></span>
+      <span class="shipping-management-status"></span>
+    </div>
+    <div class="shipping-management-sub">
+      <span class="shipping-management-date"></span>
+      <span class="shipping-management-tracking"></span>
+    </div>
+  `;
+
+  card.querySelector(".shipping-management-title").textContent = item.name || "-";
+  card.querySelector(".shipping-management-storage").textContent = `📦 ${item.storageLocation || "保管場所未設定"}`;
+  card.querySelector(".shipping-management-destination").textContent = `発送先：${destination}`;
+  card.querySelector(".shipping-management-status").textContent = getShippingManagementStatusLabel(item);
+  card.querySelector(".shipping-management-date").textContent = `発送日：${item.shippingDate || "-"}`;
+  card.querySelector(".shipping-management-tracking").textContent = `追跡番号：${item.trackingNumber || "-"}`;
+
+  return card;
+}
+
+function renderShippingManagementList() {
+  if (!shippingManagementList) {
+    return;
+  }
+
+  const selectedGroup = shippingManagementStatusFilter?.value || "";
+  const targetItems = sortingItems
+    .filter((item) => !selectedGroup || getShippingManagementFilterGroup(item) === selectedGroup)
+    .sort((first, second) => {
+      const groupOrder = { waiting: 0, preparing: 1, completed: 2 };
+      return (groupOrder[getShippingManagementFilterGroup(first)] ?? 9) - (groupOrder[getShippingManagementFilterGroup(second)] ?? 9)
+        || compareText(getSortingDestinationLabel(first.destination), getSortingDestinationLabel(second.destination))
+        || compareText(first.storageLocation, second.storageLocation)
+        || compareText(first.name, second.name);
+    });
+
+  shippingManagementList.innerHTML = "";
+
+  if (targetItems.length === 0) {
+    const emptyMessage = document.createElement("p");
+    emptyMessage.className = "muted shipping-management-empty";
+    emptyMessage.textContent = "該当する発送商品はありません。";
+    shippingManagementList.append(emptyMessage);
+    return;
+  }
+
+  targetItems.forEach((item) => {
+    shippingManagementList.append(createShippingManagementCard(item));
+  });
+}
+
+function openShippingManagementItemDetail(sortingItem) {
+  const linkedItem = sortingItem.sourceItemId
+    ? items.find((item) => item.id === sortingItem.sourceItemId)
+    : null;
+
+  if (linkedItem) {
+    openDetailModal(linkedItem);
+    return;
+  }
+
+  openSortingDetailModal(sortingItem);
+}
+
 function renderShippingPriorityItems(container) {
   const groups = new Map();
 
@@ -3808,7 +4624,7 @@ function renderShippingPriorityItems(container) {
     .filter((item) => SHIPPING_WAITING_STATUSES.includes(item.shippingStatus))
     .forEach((item) => {
       const storageLocation = item.storageLocation || "未設定";
-      const destination = item.destination || "未定";
+      const destination = getSortingDestinationLabel(item.destination);
       const key = `${storageLocation}__${destination}`;
       const current = groups.get(key) || { storageLocation, destination, count: 0 };
       current.count += 1;
@@ -3860,7 +4676,7 @@ function createShippingItemRow(item) {
   const strong = row.querySelector("strong");
   const spans = row.querySelectorAll("span");
   strong.textContent = item.name || "-";
-  spans[0].textContent = item.destination || "未定";
+  spans[0].textContent = getSortingDestinationLabel(item.destination);
   spans[1].textContent = item.shippingStatus || "未仕分け";
   spans[2].textContent = item.boxNumber || "箱番号未入力";
   spans[3].textContent = item.memo || "-";
@@ -3930,7 +4746,7 @@ function getPackingListGroups(packingItems) {
   const destinationGroups = new Map();
 
   packingItems.forEach((item) => {
-    const destination = item.destination || "未定";
+    const destination = getSortingDestinationLabel(item.destination);
     const boxNumber = item.boxNumber || "箱番号未入力";
     const destinationGroup = destinationGroups.get(destination) || {
       destination,
@@ -4006,7 +4822,7 @@ function renderPackingList() {
 function exportPackingListCsv() {
   const headers = ["売却先", "箱番号", "商品名", "数量", "発送ステータス"];
   const rows = getPackingListItems().map((item) => [
-    item.destination || "未定",
+    getSortingDestinationLabel(item.destination),
     item.boxNumber || "箱番号未入力",
     item.name || "",
     item.quantity || 1,
@@ -4028,6 +4844,7 @@ function exportPackingListCsv() {
 }
 
 function renderShippingManagement() {
+  renderShippingManagementList();
   renderShippingDashboard();
   renderShippingPriorityRanking();
   renderShippingCompletedList();
@@ -4035,8 +4852,8 @@ function renderShippingManagement() {
   renderPackingList();
 }
 
-function deleteSortingItem(item) {
-  const shouldDelete = confirm(`「${item.name || "この商品"}」を削除しますか？`);
+async function deleteSortingItem(item) {
+  const shouldDelete = await confirmDelete(`「${item.name || "この商品"}」を削除しますか？`);
 
   if (!shouldDelete) {
     return false;
@@ -4088,7 +4905,7 @@ function openSortingDetailModal(item) {
   summary.innerHTML = `<h3>${item.name || "-"}</h3>`;
   summaryList.append(
     createSortingDetailMeta("📦 保管場所", item.storageLocation || "-"),
-    createSortingDetailMeta("売却先", item.destination || "未定"),
+    createSortingDetailMeta("売却先", getSortingDestinationLabel(item.destination)),
     createSortingDetailMeta("🚚 発送状態", item.shippingStatus || "未仕分け"),
     createSortingDetailMeta("ステータス", item.status || "未確認"),
     createSortingDetailMeta("箱番号", item.boxNumber || "-"),
@@ -4142,11 +4959,11 @@ function createSortingRow(item) {
   const cells = row.querySelectorAll("td");
   cells[0].querySelector(".sorting-row-title").textContent = item.name || "-";
   cells[1].querySelector(".sorting-row-storage").textContent = item.storageLocation || "-";
-  cells[2].querySelector(".sorting-row-destination").textContent = item.destination || "未定";
+  cells[2].querySelector(".sorting-row-destination").textContent = getSortingDestinationLabel(item.destination);
   cells[3].querySelector(".sorting-row-shipping").textContent = item.shippingStatus || "未仕分け";
   cells[4].querySelector(".sorting-row-offer").textContent = bestOffer ? `${bestOffer.label} ${formatMoney(bestOffer.value)}` : "-";
   cells[1].dataset.value = item.storageLocation || "-";
-  cells[2].dataset.value = item.destination || "未定";
+  cells[2].dataset.value = getSortingDestinationLabel(item.destination);
   cells[4].dataset.value = bestOffer ? `${bestOffer.label} ${formatMoney(bestOffer.value)}` : "-";
   const actions = cells[5].querySelector(".sorting-row-actions");
 
@@ -4163,6 +4980,7 @@ function createSortingRow(item) {
 }
 
 function renderSorting() {
+  refreshSortingDestinationOptions(sortingDestinationInput.value);
   refreshSortingFilters();
   renderSortingSummary();
   renderShippingManagement();
@@ -4207,7 +5025,7 @@ function renderSorting() {
 function resetSortingForm() {
   sortingForm.reset();
   sortingIdInput.value = "";
-  sortingDestinationInput.value = "未定";
+  refreshSortingDestinationOptions(SORTING_UNDECIDED_DESTINATION);
   sortingStatusInput.value = "未確認";
   sortingShippingStatusInput.value = "未仕分け";
   renderSortingAppraisalFields();
@@ -4221,7 +5039,7 @@ function startSortingEdit(item) {
   sortingGenreInput.value = item.genre || "";
   sortingQuantityInput.value = item.quantity || 1;
   sortingStorageLocationInput.value = item.storageLocation || "";
-  sortingDestinationInput.value = item.destination || "未定";
+  refreshSortingDestinationOptions(getSortingDestinationLabel(item.destination));
   sortingStatusInput.value = item.status || "未確認";
   sortingShippingStatusInput.value = item.shippingStatus || "未仕分け";
   sortingBoxNumberInput.value = item.boxNumber || "";
@@ -4256,10 +5074,8 @@ function createSortingFormItem() {
   });
 }
 
-function sendItemToSorting(item) {
-  const existingIndex = sortingItems.findIndex((sortingItem) => sortingItem.sourceItemId === item.id);
-  const existingItem = existingIndex >= 0 ? sortingItems[existingIndex] : {};
-  const sortingItem = normalizeSortingItem({
+function createSortingItemFromSourceItem(item, existingItem = {}, overrides = {}) {
+  return normalizeSortingItem({
     ...existingItem,
     id: existingItem.id || createId(),
     sourceItemId: item.id,
@@ -4273,15 +5089,24 @@ function sendItemToSorting(item) {
     ryobanPrice: existingItem.ryobanPrice,
     ecoRingPrice: existingItem.ecoRingPrice,
     clothesPrice: existingItem.clothesPrice,
+    mandarakePrice: existingItem.mandarakePrice,
+    disposalPrice: existingItem.disposalPrice,
     otherPrice: existingItem.otherPrice,
-    destination: "メルカリ",
+    destination: existingItem.destination || "メルカリ",
     status: existingItem.status || "未確認",
     shippingStatus: existingItem.shippingStatus || "未仕分け",
     boxNumber: existingItem.boxNumber || "",
     memo: existingItem.memo || "",
     createdAt: existingItem.createdAt || new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+    ...overrides,
   });
+}
+
+function upsertSortingItemFromSourceItem(item, overrides = {}) {
+  const existingIndex = sortingItems.findIndex((sortingItem) => sortingItem.sourceItemId === item.id);
+  const existingItem = existingIndex >= 0 ? sortingItems[existingIndex] : {};
+  const sortingItem = createSortingItemFromSourceItem(item, existingItem, overrides);
 
   if (existingIndex >= 0) {
     sortingItems[existingIndex] = sortingItem;
@@ -4291,14 +5116,35 @@ function sendItemToSorting(item) {
 
   saveSortingItems();
   renderSorting();
-  alert("売却先仕分けへ送りました。");
+  return sortingItem;
+}
+
+function sendItemToSorting(item) {
+  upsertSortingItemFromSourceItem(item);
+  showSuccessMessage("売却先仕分けへ送りました");
+}
+
+function markItemAsShippingReadyFromList(item) {
+  upsertSortingItemFromSourceItem(item, {
+    shippingStatus: "仕分け済",
+  });
+  const updatedAt = new Date().toISOString();
+  items = items.map((currentItem) => currentItem.id === item.id
+    ? {
+      ...currentItem,
+      editHistory: appendEditHistory(currentItem, ["発送ステータス: 発送準備へ"], updatedAt),
+      updatedAt,
+    }
+    : currentItem);
+  saveItems();
+  showToast("✓ 発送準備へ変更しました", "success");
 }
 
 function returnToSourceItem(sortingItem) {
   const sourceItem = items.find((item) => item.id === sortingItem.sourceItemId);
 
   if (!sourceItem) {
-    alert("元の商品登録データが見つかりません。");
+    showErrorMessage("元の商品登録データが見つかりません");
     return;
   }
 
@@ -4315,7 +5161,7 @@ function exportSortingCsv() {
     item.quantity,
     item.storageLocation,
     ...appraisalSources.map((source) => parseMoney(item[getAppraisalFieldName(source)])),
-    item.destination,
+    getSortingDestinationLabel(item.destination),
     item.status,
     item.shippingStatus,
     item.boxNumber,
@@ -4345,13 +5191,7 @@ function getQuickSearchMatches(keyword) {
   }
 
   const itemMatches = items
-    .filter((item) => [
-      getListingTitle(item),
-      item.name,
-      item.memo,
-      item.soldMemo,
-      item.storageLocation,
-    ].some((value) => String(value || "").toLowerCase().includes(normalizedKeyword)))
+    .filter((item) => valuesMatchKeyword(getItemSearchValues(item), normalizedKeyword))
     .map((item) => ({
       type: "item",
       id: item.id,
@@ -4364,18 +5204,13 @@ function getQuickSearchMatches(keyword) {
     }));
 
   const sortingMatches = sortingItems
-    .filter((item) => [
-      item.name,
-      item.memo,
-      item.storageLocation,
-      item.boxNumber,
-    ].some((value) => String(value || "").toLowerCase().includes(normalizedKeyword)))
+    .filter((item) => valuesMatchKeyword(getSortingSearchValues(item), normalizedKeyword))
     .map((item) => ({
       type: "sorting",
       id: item.id,
       title: item.name || "仕分け商品名未入力",
       meta: [
-        item.destination || "未定",
+        getSortingDestinationLabel(item.destination),
         item.storageLocation ? `保管場所: ${item.storageLocation}` : "",
         item.boxNumber ? `箱番号: ${item.boxNumber}` : "箱番号未入力",
       ].filter(Boolean).join(" / "),
@@ -4442,23 +5277,7 @@ function getFilteredItems() {
   const selectedStorage = storageFilter?.value || "";
 
   return items.filter((item) => {
-    const matchesKeyword = !keyword || [
-      getListingTitle(item),
-      item.description,
-      item.measurements,
-      item.storageLocation,
-      getItemStatus(item),
-      item.category,
-      item.shippingMethod,
-      item.listingDate,
-      item.listingUrl,
-      item.priceLimitMemo,
-      item.soldMemo,
-      item.memo,
-    ]
-      .join(" ")
-      .toLowerCase()
-      .includes(keyword);
+    const matchesKeyword = valuesMatchKeyword(getItemSearchValues(item), keyword);
     const matchesStatus = !selectedStatus
       || (selectedStatus === "highProfit"
         ? (() => {
@@ -4584,6 +5403,9 @@ function createRecentDockRow(item) {
           <div class="actions">
             <button class="text-button" type="button" data-action="edit">編集</button>
             <button class="text-button" type="button" data-action="view-detail">詳細</button>
+            <button class="text-button" type="button" data-action="quick-change-storage">保管場所変更</button>
+            <button class="text-button" type="button" data-action="quick-mark-listed">出品中に変更</button>
+            <button class="text-button" type="button" data-action="quick-shipping-ready">発送準備へ</button>
             <button class="text-button" type="button" data-action="copy-title">タイトルコピー</button>
             <button class="text-button" type="button" data-action="copy-description">説明文コピー</button>
             <button class="text-button" type="button" data-action="relist">再出品</button>
@@ -4654,6 +5476,10 @@ function createRecentDockMobileCard(item) {
     <details class="mobile-more-actions">
       <summary aria-label="その他の操作">その他</summary>
       <div class="mobile-more-actions-panel">
+        <button class="text-button" type="button" data-action="quick-change-storage">保管場所変更</button>
+        <button class="text-button" type="button" data-action="quick-mark-listed">出品中に変更</button>
+        <button class="text-button" type="button" data-action="quick-shipping-ready">発送準備へ</button>
+        <button class="text-button" type="button" data-action="mark-sold">売却済み</button>
         <button class="text-button" type="button" data-action="copy-title">タイトルコピー</button>
         <button class="text-button" type="button" data-action="copy-description">説明コピー</button>
         <button class="text-button" type="button" data-action="relist">再出品</button>
@@ -4840,6 +5666,9 @@ function createActiveRow(item) {
           <div class="actions">
             <button class="text-button" type="button" data-action="edit">編集</button>
             <button class="text-button" type="button" data-action="view-detail">詳細</button>
+            <button class="text-button" type="button" data-action="quick-change-storage">保管場所変更</button>
+            <button class="text-button" type="button" data-action="quick-mark-listed">出品中に変更</button>
+            <button class="text-button" type="button" data-action="quick-shipping-ready">発送準備へ</button>
             <button class="text-button" type="button" data-action="copy-title">タイトルコピー</button>
             <button class="text-button" type="button" data-action="copy-description">説明文コピー</button>
             <button class="text-button" type="button" data-action="relist">再出品</button>
@@ -4968,6 +5797,10 @@ function createCompactListRow(item) {
           <button class="text-button" type="button" data-action="remove-photo">写真削除</button>
           <button class="text-button" type="button" data-action="view-detail">詳細</button>
           <button class="text-button" type="button" data-action="edit">編集</button>
+          <button class="text-button" type="button" data-action="quick-change-storage">保管場所変更</button>
+          <button class="text-button" type="button" data-action="quick-mark-listed">出品中に変更</button>
+          <button class="text-button" type="button" data-action="quick-shipping-ready">発送準備へ</button>
+          <button class="text-button" type="button" data-action="mark-sold">売却済み</button>
         </div>
       </details>
     </td>
@@ -5017,6 +5850,9 @@ function createStorageItemRow(item) {
         <div class="actions">
           <button class="text-button" type="button" data-action="view-detail">詳細</button>
           <button class="text-button" type="button" data-action="edit">編集</button>
+          <button class="text-button" type="button" data-action="quick-change-storage">保管場所変更</button>
+          <button class="text-button" type="button" data-action="quick-mark-listed">出品中に変更</button>
+          <button class="text-button" type="button" data-action="quick-shipping-ready">発送準備へ</button>
           <button class="text-button" type="button" data-action="copy-title">タイトルコピー</button>
           <button class="text-button" type="button" data-action="copy-description">説明コピー</button>
           <button class="text-button" type="button" data-action="relist">再出品</button>
@@ -5125,6 +5961,10 @@ function createMobileCompactTableCard(item) {
         <button class="text-button" type="button" data-action="remove-photo">写真削除</button>
         <button class="text-button" type="button" data-action="view-detail">詳細</button>
         <button class="text-button" type="button" data-action="edit">編集</button>
+        <button class="text-button" type="button" data-action="quick-change-storage">保管場所変更</button>
+        <button class="text-button" type="button" data-action="quick-mark-listed">出品中に変更</button>
+        <button class="text-button" type="button" data-action="quick-shipping-ready">発送準備へ</button>
+        <button class="text-button" type="button" data-action="mark-sold">売却済み</button>
       </div>
     </details>
   `;
@@ -5156,6 +5996,9 @@ function createInventoryShelfCard(item) {
         <div class="actions">
           <button class="text-button" type="button" data-action="edit">編集</button>
           <button class="text-button" type="button" data-action="view-detail">詳細</button>
+          <button class="text-button" type="button" data-action="quick-change-storage">保管場所変更</button>
+          <button class="text-button" type="button" data-action="quick-mark-listed">出品中に変更</button>
+          <button class="text-button" type="button" data-action="quick-shipping-ready">発送準備へ</button>
           <button class="text-button" type="button" data-action="copy-title">タイトルコピー</button>
           <button class="text-button" type="button" data-action="copy-description">説明文コピー</button>
           <button class="text-button" type="button" data-action="copy-item-code">商品IDコピー</button>
@@ -5313,6 +6156,10 @@ function createMobileCard(item) {
     <details class="mobile-more-actions">
       <summary aria-label="その他の操作">…</summary>
       <div class="mobile-more-actions-panel">
+        <button class="text-button" type="button" data-action="quick-change-storage">保管場所変更</button>
+        <button class="text-button" type="button" data-action="quick-mark-listed">出品中に変更</button>
+        <button class="text-button" type="button" data-action="quick-shipping-ready">発送準備へ</button>
+        <button class="text-button" type="button" data-action="mark-sold">売却済み</button>
         <button class="text-button" type="button" data-action="copy-title">タイトルコピー</button>
         <button class="text-button" type="button" data-action="copy-description">説明コピー</button>
         <button class="text-button" type="button" data-action="copy-item-code">商品IDコピー</button>
@@ -5598,105 +6445,102 @@ function renderGroupedShippingSettings() {
   });
 }
 
-function createCategorySettingsRow(category, index) {
+function createMasterFieldControl(field) {
+  const attributes = [
+    `data-field="${field.name}"`,
+    `aria-label="${field.label}"`,
+  ];
+
+  if (field.inputMode) {
+    attributes.push(`inputmode="${field.inputMode}"`);
+  }
+
+  if (field.type === "number") {
+    return `<input type="number" min="0" step="1" ${attributes.join(" ")}>`;
+  }
+
+  if (field.type === "textarea") {
+    return `<textarea rows="${field.rows || 4}" ${attributes.join(" ")}></textarea>`;
+  }
+
+  return `<input type="text" ${attributes.join(" ")}>`;
+}
+
+function createMasterSettingsRow(masterKey, values, index, options = {}) {
+  const definition = MASTER_SETTINGS_DEFINITIONS[masterKey];
   const row = document.createElement("div");
-  const count = countItemsByField("category", category);
-  row.className = "category-setting-row";
+  const fields = definition.fields || [];
+  const primaryField = fields[0];
+  const secondaryFields = fields.slice(1);
+  const contentClass = definition.contentClass || "";
+  const usageText = options.usageText || "";
+
+  row.className = `master-setting-row ${definition.rowClass}`;
   row.dataset.index = String(index);
+  row.dataset.master = masterKey;
+
+  Object.entries(options.dataset || {}).forEach(([key, value]) => {
+    row.dataset[key] = value;
+  });
+
   row.innerHTML = `
-    <div class="settings-row-main">
-      <input type="text" data-field="name" aria-label="カテゴリ名">
-      <span class="settings-usage-count">${count}件</span>
+    <div class="master-setting-fields ${contentClass}">
+      <div class="settings-row-main">
+        ${primaryField ? createMasterFieldControl(primaryField) : ""}
+        ${usageText ? `<span class="settings-usage-count">${usageText}</span>` : ""}
+      </div>
+      ${secondaryFields.map((field) => createMasterFieldControl(field)).join("")}
     </div>
     <button class="ghost-button compact-row-button" type="button" data-action="move-up" aria-label="上へ">↑</button>
     <button class="ghost-button compact-row-button" type="button" data-action="move-down" aria-label="下へ">↓</button>
-    <button class="danger-button" type="button" data-action="remove-category">削除</button>
+    <button class="danger-button" type="button" data-action="${definition.removeAction}">削除</button>
   `;
-  row.querySelector('[data-field="name"]').value = category;
+
+  Object.entries(values || {}).forEach(([fieldName, value]) => {
+    const field = row.querySelector(`[data-field="${fieldName}"]`);
+    if (field) {
+      field.value = value;
+    }
+  });
+
   return row;
+}
+
+function createCategorySettingsRow(category, index) {
+  return createMasterSettingsRow("categories", { name: category }, index, {
+    usageText: `${countItemsByField("category", category)}件`,
+  });
 }
 
 function createStorageSettingsRow(location, index) {
-  const row = document.createElement("div");
-  const count = countItemsByField("storageLocation", location);
-  row.className = "storage-setting-row";
-  row.dataset.index = String(index);
-  row.innerHTML = `
-    <div class="settings-row-main">
-      <input type="text" data-field="name" aria-label="保管場所名">
-      <span class="settings-usage-count">${count}件</span>
-    </div>
-    <button class="ghost-button compact-row-button" type="button" data-action="move-up" aria-label="上へ">↑</button>
-    <button class="ghost-button compact-row-button" type="button" data-action="move-down" aria-label="下へ">↓</button>
-    <button class="danger-button" type="button" data-action="remove-storage">削除</button>
-  `;
-  row.querySelector('[data-field="name"]').value = location;
-  return row;
+  return createMasterSettingsRow("storageLocations", { name: location }, index, {
+    usageText: `${countItemsByField("storageLocation", location)}件`,
+  });
 }
 
 function createShippingSettingsRow(method, index) {
-  const row = document.createElement("div");
-  const usageCount = countItemsByField("shippingMethod", method.name);
-  row.className = "shipping-setting-row";
-  row.dataset.index = String(index);
-  row.innerHTML = `
-    <div class="settings-row-main">
-      <input type="text" data-field="name" aria-label="配送方法名">
-      <span class="settings-usage-count">利用回数 ${usageCount}回</span>
-    </div>
-    <input type="number" min="0" step="1" inputmode="numeric" data-field="cost" aria-label="送料">
-    <button class="ghost-button compact-row-button" type="button" data-action="move-up" aria-label="上へ">↑</button>
-    <button class="ghost-button compact-row-button" type="button" data-action="move-down" aria-label="下へ">↓</button>
-    <button class="danger-button" type="button" data-action="remove-shipping">削除</button>
-  `;
-  row.querySelector('[data-field="name"]').value = method.name;
-  row.querySelector('[data-field="cost"]').value = method.cost;
-  return row;
+  return createMasterSettingsRow("shippingMethods", { name: method.name, cost: method.cost }, index, {
+    usageText: `利用回数 ${countItemsByField("shippingMethod", method.name)}回`,
+  });
 }
 
 function createAppraisalSettingsRow(source, index) {
-  const row = document.createElement("div");
-  row.className = "appraisal-setting-row";
-  row.dataset.index = String(index);
-  row.dataset.id = source.id;
-  row.dataset.field = source.field || `appraisal_${source.id}`;
-  row.innerHTML = `
-    <div class="settings-row-main">
-      <input type="text" data-field="name" aria-label="査定先名">
-    </div>
-    <button class="ghost-button compact-row-button" type="button" data-action="move-up" aria-label="上へ">↑</button>
-    <button class="ghost-button compact-row-button" type="button" data-action="move-down" aria-label="下へ">↓</button>
-    <button class="danger-button" type="button" data-action="remove-appraisal">削除</button>
-  `;
-  row.querySelector('[data-field="name"]').value = source.name;
-  return row;
+  return createMasterSettingsRow("appraisalSources", { name: source.name }, index, {
+    dataset: {
+      id: source.id,
+      field: source.field || `appraisal_${source.id}`,
+    },
+  });
 }
 
 function createTemplateSettingsRow(template, index) {
-  const row = document.createElement("div");
-  const usageCount = countTemplateUsage(template);
-  const lastUsedLabel = getTemplateLastUsedLabel(template);
-  row.className = "template-setting-row";
-  row.dataset.index = String(index);
-  row.innerHTML = `
-    <details class="template-row-details app-accordion">
-      <summary>
-        <div class="settings-row-main">
-          <input type="text" data-field="name" aria-label="テンプレート名">
-          <span class="settings-usage-count">利用 ${usageCount}回 / ${lastUsedLabel}</span>
-        </div>
-      </summary>
-      <textarea rows="4" data-field="content" aria-label="テンプレート内容"></textarea>
-    </details>
-    <button class="ghost-button compact-row-button" type="button" data-action="move-up" aria-label="上へ">↑</button>
-    <button class="ghost-button compact-row-button" type="button" data-action="move-down" aria-label="下へ">↓</button>
-    <button class="danger-button" type="button" data-action="remove-template">削除</button>
-  `;
-  row.querySelector('[data-field="name"]').value = template.name;
-  row.querySelector('[data-field="content"]').value = template.content;
-  row.dataset.id = template.id;
-  row.dataset.categoryHint = template.categoryHint || "";
-  return row;
+  return createMasterSettingsRow("templates", { name: template.name, content: template.content }, index, {
+    usageText: `利用 ${countTemplateUsage(template)}回 / ${getTemplateLastUsedLabel(template)}`,
+    dataset: {
+      id: template.id,
+      categoryHint: template.categoryHint || "",
+    },
+  });
 }
 
 function collectSettingsFromForm() {
@@ -5733,12 +6577,18 @@ function collectSettingsFromForm() {
 
 function collectTemplatesFromForm() {
   return normalizeTemplates(
-    [...templateSettingsList.querySelectorAll(".template-setting-row")].map((row) => ({
-      id: row.dataset.id || createId(),
-      name: row.querySelector('[data-field="name"]').value,
-      content: row.querySelector('[data-field="content"]').value,
-      categoryHint: row.dataset.categoryHint || "",
-    })),
+    [...templateSettingsList.querySelectorAll(".template-setting-row")].map((row) => {
+      const id = row.dataset.id || createId();
+      const existingTemplate = descriptionTemplates.find((template) => template.id === id);
+      const contentInput = row.querySelector('[data-field="content"]');
+
+      return {
+        id,
+        name: row.querySelector('[data-field="name"]').value,
+        content: contentInput ? contentInput.value : existingTemplate?.content || "",
+        categoryHint: row.dataset.categoryHint || "",
+      };
+    }),
     [],
   );
 }
@@ -5752,8 +6602,11 @@ function saveSettingsFromForm() {
   refreshStorageLocationOptions(storageLocationInput.value);
   refreshShippingMethodOptions(shippingMethodInput.value);
   refreshTemplateOptions();
+  refreshSortingDestinationOptions(sortingDestinationInput.value);
+  renderSortingAppraisalFields(getSortingAppraisalValuesFromInputs());
   renderSettings();
-  alert("設定を保存しました。");
+  renderSorting();
+  showSuccessMessage("設定を保存しました");
 }
 
 function hasSettingsFormChanges() {
@@ -5774,7 +6627,7 @@ function addCategoryFromForm() {
   const name = newCategoryNameInput.value.trim();
 
   if (!name) {
-    alert("カテゴリ名を入力してください。");
+    showErrorMessage("カテゴリ名を入力してください");
     return;
   }
 
@@ -5789,7 +6642,7 @@ function addStorageFromForm() {
   const name = newStorageNameInput.value.trim();
 
   if (!name) {
-    alert("保管場所名を入力してください。");
+    showErrorMessage("保管場所名を入力してください");
     return;
   }
 
@@ -5805,7 +6658,7 @@ function addShippingMethodFromForm() {
   const cost = parseMoney(newShippingCostInput.value) || 0;
 
   if (!name) {
-    alert("配送方法名を入力してください。");
+    showErrorMessage("配送方法名を入力してください");
     return;
   }
 
@@ -5821,7 +6674,7 @@ function addAppraisalSourceFromForm() {
   const name = newAppraisalNameInput.value.trim();
 
   if (!name) {
-    alert("査定先名を入力してください。");
+    showErrorMessage("査定先名を入力してください");
     return;
   }
 
@@ -5842,12 +6695,12 @@ function addTemplateFromForm() {
   const content = newTemplateContentInput.value.trim();
 
   if (!name) {
-    alert("テンプレート名を入力してください。");
+    showErrorMessage("テンプレート名を入力してください");
     return;
   }
 
   if (!content) {
-    alert("テンプレート内容を入力してください。");
+    showErrorMessage("テンプレート内容を入力してください");
     return;
   }
 
@@ -5873,10 +6726,15 @@ function toggleSettingsAddRow(row, button, openText, closedText) {
   }
 }
 
-function resetCategoriesToDefault(event) {
+async function resetCategoriesToDefault(event) {
   event?.preventDefault();
   event?.stopPropagation();
-  const shouldReset = confirm("カテゴリだけを初期設定に戻しますか？\n商品データとクラウド共有設定は変更しません。");
+  const shouldReset = await showAppDialog({
+    title: "初期化確認",
+    message: "カテゴリだけを初期設定に戻しますか？\n商品データとクラウド共有設定は変更しません。",
+    confirmText: "初期化する",
+    danger: true,
+  });
 
   if (!shouldReset) {
     return;
@@ -5889,13 +6747,18 @@ function resetCategoriesToDefault(event) {
   saveSettings();
   refreshCategoryOptions(categoryInput.value);
   renderSettings();
-  alert("カテゴリを初期設定に戻しました。");
+  showSuccessMessage("カテゴリを初期設定に戻しました");
 }
 
-function resetStorageToDefault(event) {
+async function resetStorageToDefault(event) {
   event?.preventDefault();
   event?.stopPropagation();
-  const shouldReset = confirm("保管場所だけを初期設定に戻しますか？\n商品データとクラウド共有設定は変更しません。");
+  const shouldReset = await showAppDialog({
+    title: "初期化確認",
+    message: "保管場所だけを初期設定に戻しますか？\n商品データとクラウド共有設定は変更しません。",
+    confirmText: "初期化する",
+    danger: true,
+  });
 
   if (!shouldReset) {
     return;
@@ -5908,13 +6771,18 @@ function resetStorageToDefault(event) {
   saveSettings();
   refreshStorageLocationOptions(storageLocationInput.value);
   renderSettings();
-  alert("保管場所を初期設定に戻しました。");
+  showSuccessMessage("保管場所を初期設定に戻しました");
 }
 
-function resetShippingToDefault(event) {
+async function resetShippingToDefault(event) {
   event?.preventDefault();
   event?.stopPropagation();
-  const shouldReset = confirm("配送方法と送料だけを初期設定に戻しますか？\n商品データとクラウド共有設定は変更しません。");
+  const shouldReset = await showAppDialog({
+    title: "初期化確認",
+    message: "配送方法と送料だけを初期設定に戻しますか？\n商品データとクラウド共有設定は変更しません。",
+    confirmText: "初期化する",
+    danger: true,
+  });
 
   if (!shouldReset) {
     return;
@@ -5927,13 +6795,18 @@ function resetShippingToDefault(event) {
   saveSettings();
   refreshShippingMethodOptions(shippingMethodInput.value);
   renderSettings();
-  alert("配送方法と送料を初期設定に戻しました。");
+  showSuccessMessage("配送方法と送料を初期設定に戻しました");
 }
 
-function resetAppraisalToDefault(event) {
+async function resetAppraisalToDefault(event) {
   event?.preventDefault();
   event?.stopPropagation();
-  const shouldReset = confirm("査定情報だけを初期設定に戻しますか？\n商品データとクラウド共有設定は変更しません。");
+  const shouldReset = await showAppDialog({
+    title: "初期化確認",
+    message: "査定情報だけを初期設定に戻しますか？\n商品データとクラウド共有設定は変更しません。",
+    confirmText: "初期化する",
+    danger: true,
+  });
 
   if (!shouldReset) {
     return;
@@ -5946,13 +6819,18 @@ function resetAppraisalToDefault(event) {
   saveSettings();
   renderSettings();
   render();
-  alert("査定情報を初期設定に戻しました。");
+  showSuccessMessage("査定情報を初期設定に戻しました");
 }
 
-function resetTemplatesToDefault(event) {
+async function resetTemplatesToDefault(event) {
   event?.preventDefault();
   event?.stopPropagation();
-  const shouldReset = confirm("商品説明テンプレートだけを初期設定に戻しますか？\n商品データとクラウド共有設定は変更しません。");
+  const shouldReset = await showAppDialog({
+    title: "初期化確認",
+    message: "商品説明テンプレートだけを初期設定に戻しますか？\n商品データとクラウド共有設定は変更しません。",
+    confirmText: "初期化する",
+    danger: true,
+  });
 
   if (!shouldReset) {
     return;
@@ -5962,7 +6840,7 @@ function resetTemplatesToDefault(event) {
   saveTemplates();
   refreshTemplateOptions();
   renderSettings();
-  alert("商品説明テンプレートを初期設定に戻しました。");
+  showSuccessMessage("商品説明テンプレートを初期設定に戻しました");
 }
 
 function moveSettingsRow(row, direction) {
@@ -5977,6 +6855,43 @@ function moveSettingsRow(row, direction) {
   } else {
     row.parentElement.insertBefore(sibling, row);
   }
+}
+
+async function handleMasterSettingsListClick(event) {
+  const button = event.target.closest("button");
+  const row = event.target.closest(".master-setting-row");
+
+  if (!button || !row) {
+    return;
+  }
+
+  if (button.dataset.action?.startsWith("remove-")) {
+    if (button.dataset.action === "remove-template") {
+      const templateName = row.querySelector('[data-field="name"]')?.value.trim() || "このテンプレート";
+      const shouldRemove = await confirmDelete(`「${templateName}」を削除しますか？`);
+
+      if (!shouldRemove) {
+        return;
+      }
+    }
+
+    row.remove();
+  }
+
+  if (button.dataset.action === "move-up") {
+    moveSettingsRow(row, "up");
+  }
+
+  if (button.dataset.action === "move-down") {
+    moveSettingsRow(row, "down");
+  }
+
+  markSettingsDirty();
+}
+
+function bindMasterSettingsList(list) {
+  list.addEventListener("input", markSettingsDirty);
+  list.addEventListener("click", handleMasterSettingsListClick);
 }
 
 function applyShippingMethodCost() {
@@ -6025,6 +6940,10 @@ function resetForm() {
   nameInput.value = "";
   currentImageData = "";
   updateImagePreview("");
+  imageProviderInput.value = "";
+  googlePhotoImageIdInput.value = "";
+  localImageIdInput.value = "";
+  cloudImageIdInput.value = "";
   refreshCategoryOptions();
   refreshShippingMethodOptions();
   refreshShippingSizeOptions();
@@ -6051,7 +6970,8 @@ function resetForm() {
   isFormDirty = false;
 }
 
-function startEdit(item) {
+function startEdit(item, options = {}) {
+  returnToDetailAfterEditId = options.returnToDetail ? item.id : "";
   setActiveNavigation("form");
   hideCompletionPanel();
   itemIdInput.value = item.id;
@@ -6084,6 +7004,11 @@ function startEdit(item) {
   imageInput.value = "";
   currentImageData = item.imageData || "";
   updateImagePreview(currentImageData);
+  const imageRefs = normalizeImageRefs(item.imageRefs);
+  imageProviderInput.value = imageRefs.provider;
+  googlePhotoImageIdInput.value = imageRefs.googlePhotoId;
+  localImageIdInput.value = imageRefs.localImageId;
+  cloudImageIdInput.value = imageRefs.cloudImageId;
   updateProfitPreview();
   updateSoldFieldsVisibility();
   updateFormSelectPlaceholderStates();
@@ -6311,8 +7236,14 @@ form.addEventListener("submit", (event) => {
     description: isSold ? (existingItem.description || normalizeText(descriptionInput.value)) : normalizeText(descriptionInput.value),
     priceLimitMemo: editingIndex >= 0 ? items[editingIndex].priceLimitMemo : "",
     imageData: isSold ? (existingItem.imageData || currentImageData) : currentImageData,
+    imageRefs: getImageRefsFromForm(existingItem.imageRefs),
+    editHistory: normalizeEditHistory(existingItem.editHistory),
     updatedAt: new Date().toISOString(),
   };
+
+  if (editingIndex >= 0) {
+    formItem.editHistory = appendEditHistory(existingItem, getItemChangeDescriptions(existingItem, formItem), formItem.updatedAt);
+  }
 
   if ((!isSold || editingIndex < 0) && (!formItem.listingTitle || !formItem.category || !formItem.condition || !formItem.storageLocation)) {
     return;
@@ -6338,13 +7269,22 @@ form.addEventListener("submit", (event) => {
 
   if (isNewItem) {
     showCompletionPanel(formItem);
+  } else if (returnToDetailAfterEditId === formItem.id) {
+    returnToDetailAfterEditId = "";
+    setActiveNavigation("list");
+    render();
+    const updatedItem = items.find((item) => item.id === formItem.id);
+    if (updatedItem) {
+      openDetailModal(updatedItem);
+    }
   } else {
+    returnToDetailAfterEditId = "";
     setActiveNavigation("list");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 });
 
-function handleItemTableAction(event) {
+async function handleItemTableAction(event) {
   const button = event.target.closest("button");
   const interactiveControl = event.target.closest("button, summary, a, input, select, textarea, label");
   const row = event.target.closest("tr, .inventory-shelf-card, .mobile-item-card, .mobile-compact-table-card, .compact-list-row");
@@ -6388,6 +7328,18 @@ function handleItemTableAction(event) {
     openDetailModal(item);
   }
 
+  if (button.dataset.action === "quick-change-storage") {
+    changeItemStorageFromList(item);
+  }
+
+  if (button.dataset.action === "quick-mark-listed") {
+    markItemAsListedFromList(item);
+  }
+
+  if (button.dataset.action === "quick-shipping-ready") {
+    markItemAsShippingReadyFromList(item);
+  }
+
   if (button.dataset.action === "view-description") {
     openDescriptionModal(item);
   }
@@ -6425,11 +7377,11 @@ function handleItemTableAction(event) {
   }
 
   if (button.dataset.action === "mark-sold") {
-    markItemAsSold(item);
+    markItemAsSoldFromList(item);
   }
 
   if (button.dataset.action === "delete") {
-    const shouldDelete = confirm(`「${getListingTitle(item)}」を削除しますか？`);
+    const shouldDelete = await confirmDelete(`「${getListingTitle(item)}」を削除しますか？`);
 
     if (shouldDelete) {
       items = items.filter((currentItem) => currentItem.id !== item.id);
@@ -6583,7 +7535,7 @@ emptyRegisterButton?.addEventListener("click", () => {
   document.querySelector("#formTitle")?.scrollIntoView({ behavior: "smooth", block: "start" });
 });
 
-soldTableBody.addEventListener("click", (event) => {
+soldTableBody.addEventListener("click", async (event) => {
   const button = event.target.closest("button");
   const row = event.target.closest("tr");
 
@@ -6618,7 +7570,7 @@ soldTableBody.addEventListener("click", (event) => {
   }
 
   if (button.dataset.action === "delete") {
-    const shouldDelete = confirm(`「${getListingTitle(item)}」を削除しますか？`);
+    const shouldDelete = await confirmDelete(`「${getListingTitle(item)}」を削除しますか？`);
 
     if (shouldDelete) {
       items = items.filter((currentItem) => currentItem.id !== item.id);
@@ -6632,7 +7584,7 @@ soldTableBody.addEventListener("click", (event) => {
   }
 });
 
-mobileCardList.addEventListener("click", (event) => {
+mobileCardList.addEventListener("click", async (event) => {
   const button = event.target.closest("button");
   const interactiveControl = event.target.closest("button, summary, a, input, select, textarea, label");
   const card = event.target.closest(".mobile-item-card");
@@ -6693,7 +7645,7 @@ mobileCardList.addEventListener("click", (event) => {
   }
 
   if (button.dataset.action === "delete") {
-    const shouldDelete = confirm(`「${getListingTitle(item)}」を削除しますか？`);
+    const shouldDelete = await confirmDelete(`「${getListingTitle(item)}」を削除しますか？`);
 
     if (shouldDelete) {
       items = items.filter((currentItem) => currentItem.id !== item.id);
@@ -6711,7 +7663,7 @@ cloudLoginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   if (!supabaseClient && !initializeSupabaseClient()) {
-    alert("Supabase接続情報がコード側に未設定です。app.js の SUPABASE_URL と SUPABASE_PUBLISHABLE_KEY を設定してください。");
+    showErrorMessage("Supabase接続情報がコード側に未設定です");
     return;
   }
 
@@ -6719,7 +7671,7 @@ cloudLoginForm.addEventListener("submit", async (event) => {
   const password = cloudPasswordInput.value;
 
   if (!email || !password) {
-    alert("メールとパスワードを入力してください。");
+    showErrorMessage("メールとパスワードを入力してください");
     return;
   }
 
@@ -6742,7 +7694,7 @@ cloudLoginForm.addEventListener("submit", async (event) => {
   } catch (error) {
     isCloudReady = false;
     setCloudStatus(`ログインまたは読み込みに失敗しました。ローカル保存で継続します: ${error.message}`, "warning");
-    alert("ログインまたはクラウド読み込みに失敗しました。ローカル保存で継続します。");
+    showErrorMessage("ログインまたはクラウド読み込みに失敗しました。ローカル保存で継続します");
   } finally {
     cloudLoginButton.disabled = false;
   }
@@ -6762,7 +7714,7 @@ cloudLogoutButton.addEventListener("click", async () => {
   cloudPasswordInput.disabled = false;
   cloudPasswordInput.value = "";
   renderCloudAuthState();
-  alert("ログアウトしました。商品データはこの端末のlocalStorageで継続します。");
+  showSuccessMessage("ログアウトしました");
 });
 
 migrateToSupabaseButton.addEventListener("click", migrateLocalItemsToSupabase);
@@ -6808,7 +7760,7 @@ imageInput.addEventListener("change", async () => {
   }
 
   if (!file.type.startsWith("image/")) {
-    alert("画像ファイルを選択してください。");
+    showErrorMessage("画像ファイルを選択してください");
     imageInput.value = "";
     return;
   }
@@ -6820,7 +7772,7 @@ imageInput.addEventListener("change", async () => {
     currentImageData = await readImageFile(file);
     updateImagePreview(currentImageData);
   } catch (error) {
-    alert(error.message);
+    showErrorMessage(error.message);
     imageInput.value = "";
     currentImageData = "";
     updateImagePreview("");
@@ -6847,7 +7799,17 @@ formCopyItemCodeButton.addEventListener("click", () => {
   copyText(currentItem.itemCode, "商品IDをコピーしました。");
 });
 
-cancelEditButton?.addEventListener("click", resetForm);
+cancelEditButton?.addEventListener("click", async () => {
+  if (isFormDirty) {
+    const shouldCancel = await confirmCancel("編集中の内容を破棄しますか？");
+
+    if (!shouldCancel) {
+      return;
+    }
+  }
+
+  resetForm();
+});
 searchInput.addEventListener("input", render);
 statusFilter.addEventListener("change", () => {
   if (statusFilter.value === "売却済み") {
@@ -6870,6 +7832,35 @@ sortingBoxSearchInput.addEventListener("input", () => {
   renderSorting();
   renderBoxSearchList();
   renderPackingList();
+});
+shippingManagementStatusFilter?.addEventListener("change", renderShippingManagementList);
+shippingManagementList?.addEventListener("click", (event) => {
+  const card = event.target.closest(".shipping-management-card");
+
+  if (!card) {
+    return;
+  }
+
+  const item = sortingItems.find((currentItem) => currentItem.id === card.dataset.id);
+  if (item) {
+    openShippingManagementItemDetail(item);
+  }
+});
+shippingManagementList?.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter" && event.key !== " ") {
+    return;
+  }
+
+  const card = event.target.closest(".shipping-management-card");
+  if (!card) {
+    return;
+  }
+
+  event.preventDefault();
+  const item = sortingItems.find((currentItem) => currentItem.id === card.dataset.id);
+  if (item) {
+    openShippingManagementItemDetail(item);
+  }
 });
 sortingCsvButton.addEventListener("click", exportSortingCsv);
 packingListCsvButton.addEventListener("click", exportPackingListCsv);
@@ -6910,7 +7901,7 @@ function closeSortingActionMenus(exceptMenu = null) {
   });
 }
 
-sortingTableBody.addEventListener("click", (event) => {
+sortingTableBody.addEventListener("click", async (event) => {
   const summary = event.target.closest(".row-action-menu summary");
 
   if (summary) {
@@ -6957,7 +7948,7 @@ sortingTableBody.addEventListener("click", (event) => {
 
   if (button.dataset.action === "delete-sorting") {
     closeSortingActionMenus();
-    deleteSortingItem(item);
+    await deleteSortingItem(item);
   }
 });
 
@@ -6991,7 +7982,7 @@ sortingShippingModeButton.addEventListener("click", () => {
 sortingItemSearchInput.addEventListener("input", renderSorting);
 sortingOrderInput.addEventListener("change", renderSorting);
 
-sortingWorkCardList.addEventListener("click", (event) => {
+sortingWorkCardList.addEventListener("click", async (event) => {
   const card = event.target.closest(".sorting-work-card");
 
   if (!card) {
@@ -7035,7 +8026,7 @@ sortingWorkCardList.addEventListener("click", (event) => {
   }
   if (button?.dataset.action === "delete-sorting") {
     closeSortingActionMenus();
-    deleteSortingItem(item);
+    await deleteSortingItem(item);
     return;
   }
   if (button?.dataset.action === "copy-source-item-code") {
@@ -7264,6 +8255,7 @@ monthlyProfitList.addEventListener("keydown", (event) => {
 });
 exportButton?.addEventListener("click", exportBackup);
 exportButtonTop?.addEventListener("click", exportBackup);
+itemCsvExportButton?.addEventListener("click", exportSelectedItemCsv);
 importButton?.addEventListener("click", () => {
   importFileInput.click();
 });
@@ -7355,8 +8347,14 @@ editDetailItemButton.addEventListener("click", () => {
   if (currentDetailItem) {
     const itemToEdit = currentDetailItem;
     closeDetailModal();
-    startEdit(itemToEdit);
+    startEdit(itemToEdit, { returnToDetail: true });
   }
+});
+previousDetailItemButton?.addEventListener("click", () => {
+  openAdjacentDetailItem(-1);
+});
+nextDetailItemButton?.addEventListener("click", () => {
+  openAdjacentDetailItem(1);
 });
 closeDetailModalButton.addEventListener("click", closeDetailModal);
 detailModal.addEventListener("click", (event) => {
@@ -7377,8 +8375,8 @@ editSortingDetailButton.addEventListener("click", () => {
     startSortingEdit(itemToEdit);
   }
 });
-deleteSortingDetailButton.addEventListener("click", () => {
-  if (currentSortingDetailItem && deleteSortingItem(currentSortingDetailItem)) {
+deleteSortingDetailButton.addEventListener("click", async () => {
+  if (currentSortingDetailItem && await deleteSortingItem(currentSortingDetailItem)) {
     closeSortingDetailModal();
   }
 });
@@ -7447,119 +8445,7 @@ resetStorageButton.addEventListener("click", resetStorageToDefault);
 resetShippingButton.addEventListener("click", resetShippingToDefault);
 resetAppraisalButton.addEventListener("click", resetAppraisalToDefault);
 resetTemplatesButton.addEventListener("click", resetTemplatesToDefault);
-[categorySettingsList, storageSettingsList, shippingSettingsList, appraisalSettingsList, templateSettingsList].forEach((list) => {
-  list.addEventListener("input", markSettingsDirty);
-});
-categorySettingsList.addEventListener("click", (event) => {
-  const button = event.target.closest("button");
-  const row = event.target.closest(".category-setting-row");
-
-  if (!button || !row) {
-    return;
-  }
-
-  if (button.dataset.action === "remove-category") {
-    row.remove();
-  }
-
-  if (button.dataset.action === "move-up") {
-    moveSettingsRow(row, "up");
-  }
-
-  if (button.dataset.action === "move-down") {
-    moveSettingsRow(row, "down");
-  }
-
-  markSettingsDirty();
-});
-storageSettingsList.addEventListener("click", (event) => {
-  const button = event.target.closest("button");
-  const row = event.target.closest(".storage-setting-row");
-
-  if (!button || !row) {
-    return;
-  }
-
-  if (button.dataset.action === "remove-storage") {
-    row.remove();
-  }
-
-  if (button.dataset.action === "move-up") {
-    moveSettingsRow(row, "up");
-  }
-
-  if (button.dataset.action === "move-down") {
-    moveSettingsRow(row, "down");
-  }
-
-  markSettingsDirty();
-});
-shippingSettingsList.addEventListener("click", (event) => {
-  const button = event.target.closest("button");
-  const row = event.target.closest(".shipping-setting-row");
-
-  if (!button || !row) {
-    return;
-  }
-
-  if (button.dataset.action === "remove-shipping") {
-    row.remove();
-  }
-
-  if (button.dataset.action === "move-up") {
-    moveSettingsRow(row, "up");
-  }
-
-  if (button.dataset.action === "move-down") {
-    moveSettingsRow(row, "down");
-  }
-
-  markSettingsDirty();
-});
-appraisalSettingsList.addEventListener("click", (event) => {
-  const button = event.target.closest("button");
-  const row = event.target.closest(".appraisal-setting-row");
-
-  if (!button || !row) {
-    return;
-  }
-
-  if (button.dataset.action === "remove-appraisal") {
-    row.remove();
-  }
-
-  if (button.dataset.action === "move-up") {
-    moveSettingsRow(row, "up");
-  }
-
-  if (button.dataset.action === "move-down") {
-    moveSettingsRow(row, "down");
-  }
-
-  markSettingsDirty();
-});
-templateSettingsList.addEventListener("click", (event) => {
-  const button = event.target.closest("button");
-  const row = event.target.closest(".template-setting-row");
-
-  if (!button || !row) {
-    return;
-  }
-
-  if (button.dataset.action === "remove-template") {
-    row.remove();
-  }
-
-  if (button.dataset.action === "move-up") {
-    moveSettingsRow(row, "up");
-  }
-
-  if (button.dataset.action === "move-down") {
-    moveSettingsRow(row, "down");
-  }
-
-  markSettingsDirty();
-});
+[categorySettingsList, storageSettingsList, shippingSettingsList, appraisalSettingsList, templateSettingsList].forEach(bindMasterSettingsList);
 [plannedPriceInput, shippingCostInput, purchaseCostInput].forEach((input) => {
   input.addEventListener("input", updateProfitPreview);
 });

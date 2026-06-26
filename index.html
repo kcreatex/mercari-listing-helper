@@ -23,6 +23,16 @@
     </nav>
 
     <div class="toast-notification hidden" id="toastNotification" role="status" aria-live="polite"></div>
+    <div class="app-dialog-backdrop hidden" id="appDialog" role="dialog" aria-modal="true" aria-labelledby="appDialogTitle">
+      <div class="app-dialog-panel">
+        <h2 id="appDialogTitle">確認</h2>
+        <p id="appDialogMessage"></p>
+        <div class="app-dialog-actions">
+          <button class="ghost-button" type="button" id="appDialogCancel">キャンセル</button>
+          <button class="primary-button" type="button" id="appDialogConfirm">OK</button>
+        </div>
+      </div>
+    </div>
 
     <section class="dashboard-panel" aria-labelledby="analysisTitle">
       <div class="panel-heading">
@@ -480,6 +490,29 @@
               </div>
               <button class="ghost-button hidden" type="button" id="removeImageButton">画像を削除</button>
             </div>
+            <div class="image-reference-grid" aria-label="将来用画像ID">
+              <label>
+                管理方式
+                <select id="imageProvider">
+                  <option value="">未設定</option>
+                  <option value="google_photos">Googleフォト</option>
+                  <option value="local">ローカル画像</option>
+                  <option value="cloud">クラウド画像</option>
+                </select>
+              </label>
+              <label>
+                GoogleフォトID
+                <input id="googlePhotoImageId" type="text" maxlength="120" placeholder="例：Googleフォト検索用ID">
+              </label>
+              <label>
+                ローカル画像ID
+                <input id="localImageId" type="text" maxlength="120" placeholder="例：端末内画像ID">
+              </label>
+              <label>
+                クラウド画像ID
+                <input id="cloudImageId" type="text" maxlength="120" placeholder="将来用">
+              </label>
+            </div>
           </details>
 
           <details class="form-details form-details-listing app-accordion">
@@ -703,17 +736,6 @@
             <option>要捜索</option>
             <option value="highProfit">高利益候補</option>
           </select>
-          <select class="status-filter" id="storageFilter" aria-label="保管場所で絞り込み">
-            <option value="">保管場所</option>
-          </select>
-          <select class="status-filter" id="sortOrder" aria-label="並び順">
-            <option value="newest">新しい順</option>
-            <option value="oldest">古い順</option>
-            <option value="title">商品名</option>
-            <option value="storageLocation">保管場所</option>
-            <option value="profit">利益</option>
-            <option value="plannedPrice">販売価格</option>
-          </select>
         </div>
         <input class="hidden" id="listPhotoInput" type="file" accept="image/*">
 
@@ -765,6 +787,23 @@
             </summary>
             <div class="inventory-section-body">
               <div class="inventory-setting-grid" aria-label="一覧の表示オプション">
+                <div class="inventory-setting-group inventory-setting-wide">
+                  <span class="inventory-setting-label">絞り込み</span>
+                  <select class="status-filter" id="storageFilter" aria-label="保管場所で絞り込み">
+                    <option value="">保管場所</option>
+                  </select>
+                </div>
+                <div class="inventory-setting-group inventory-setting-wide">
+                  <span class="inventory-setting-label">並び順</span>
+                  <select class="status-filter" id="sortOrder" aria-label="並び順">
+                    <option value="newest">新しい順</option>
+                    <option value="oldest">古い順</option>
+                    <option value="title">商品名</option>
+                    <option value="storageLocation">保管場所</option>
+                    <option value="profit">利益</option>
+                    <option value="plannedPrice">販売価格</option>
+                  </select>
+                </div>
                 <div class="inventory-setting-group">
                   <span class="inventory-setting-label">表示対象</span>
                   <div class="inventory-control-group inventory-target-toggle" aria-label="在庫フィルター">
@@ -787,6 +826,27 @@
                   </div>
                 </div>
               </div>
+            </div>
+          </details>
+
+          <details class="inventory-toolbar-section inventory-csv-section app-accordion">
+            <summary>
+              <span class="section-icon">CSV</span>
+              <span class="inventory-option-summary-copy">
+                <strong>CSV出力</strong>
+                <small>対象を選んで書き出し</small>
+              </span>
+            </summary>
+            <div class="inventory-section-body">
+              <div class="csv-target-grid" aria-label="CSV出力対象">
+                <label><input type="checkbox" name="itemCsvTarget" value="all" checked>全商品</label>
+                <label><input type="checkbox" name="itemCsvTarget" value="inventory">在庫のみ</label>
+                <label><input type="checkbox" name="itemCsvTarget" value="sold">売却済み</label>
+                <label><input type="checkbox" name="itemCsvTarget" value="surugaya">駿河屋予定</label>
+                <label><input type="checkbox" name="itemCsvTarget" value="mercari">メルカリ予定</label>
+                <label><input type="checkbox" name="itemCsvTarget" value="storage">保管場所別</label>
+              </div>
+              <button class="ghost-button csv-export-action" type="button" id="itemCsvExportButton">CSVを書き出す</button>
             </div>
           </details>
         </div>
@@ -986,6 +1046,17 @@
           <h3 id="shippingManagementTitle">🚚 発送管理</h3>
           <p class="ranking-note">どの箱に何を入れて、どこへ送ったかを確認します</p>
 
+          <div class="shipping-management-toolbar">
+            <select id="shippingManagementStatusFilter" aria-label="発送ステータスで絞り込み">
+              <option value="">すべての発送</option>
+              <option value="waiting">発送待ち</option>
+              <option value="preparing">発送準備中</option>
+              <option value="completed">発送済み</option>
+            </select>
+          </div>
+
+          <div class="shipping-management-list" id="shippingManagementList" aria-label="発送管理一覧"></div>
+
           <h4>🚚 発送管理ダッシュボード</h4>
           <div class="shipping-dashboard-grid" id="shippingDashboardGrid"></div>
 
@@ -1016,7 +1087,7 @@
         <div class="panel-heading">
           <div>
             <h2 id="settingsTitle">設定</h2>
-          <p class="muted">カテゴリ、配送、テンプレート、バックアップを運用管理します</p>
+          <p class="muted">カテゴリ、配送、テンプレート、同期設定を管理します</p>
           </div>
         </div>
 
@@ -1168,7 +1239,7 @@
           <div class="cloud-panel-header">
             <div>
               <h3 id="cloudTitle">同期状態</h3>
-              <p class="muted" id="cloudStatus">未ログイン: 商品データはこの端末に保存されます</p>
+              <p class="muted" id="cloudStatus">未ログイン</p>
               <p class="cloud-sync-state" id="cloudSyncState">同期状態 ローカル保存</p>
               <p class="cloud-sync-time" id="cloudLastSync">最終同期 -</p>
               <p class="cloud-backup-warning">Supabaseへ移行する前に、PC版の設定ページからJSONバックアップを書き出して保存してください。</p>
@@ -1193,7 +1264,7 @@
         <details class="settings-maintenance settings-accordion app-accordion">
           <summary>
             <span class="settings-summary-label">
-              ⚠ メンテナンス
+              メンテナンス
               <small>初期化など危険操作をまとめています</small>
             </span>
           </summary>
@@ -1228,6 +1299,10 @@
             <h2 id="detailModalTitle">商品詳細</h2>
             <button class="ghost-button" type="button" id="closeDetailModalButton">閉じる</button>
           </div>
+        <div class="detail-navigation" aria-label="商品詳細の前後移動">
+          <button class="ghost-button" type="button" id="previousDetailItemButton">前の商品</button>
+          <button class="ghost-button" type="button" id="nextDetailItemButton">次の商品</button>
+        </div>
         <div class="detail-modal-content" id="detailModalContent"></div>
         <div class="modal-actions">
           <button class="primary-button" type="button" id="editDetailItemButton">編集</button>

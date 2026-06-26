@@ -1584,6 +1584,43 @@ input[readonly] {
   min-width: 124px;
 }
 
+.csv-target-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+}
+
+.csv-target-grid label {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  min-width: 0;
+  min-height: 38px;
+  padding: 7px 9px;
+  border: 1px solid #e6e0dc;
+  border-radius: 10px;
+  background: #fff;
+  color: #3b3430;
+  font-size: 12px;
+  font-weight: 800;
+  box-sizing: border-box;
+}
+
+.csv-target-grid input {
+  width: 16px;
+  min-width: 16px;
+  height: 16px;
+  min-height: 16px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.csv-export-action {
+  width: 100%;
+  margin-top: 10px;
+}
+
 .backup-controls {
   display: flex;
   flex-wrap: wrap;
@@ -2012,14 +2049,22 @@ input[readonly] {
 }
 
 .template-setting-row {
-  grid-template-columns: minmax(92px, 0.7fr) minmax(160px, 1fr) auto auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
   align-items: start;
+}
+
+.template-edit-fields {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
 }
 
 .template-setting-row textarea,
 .template-add-row textarea {
-  min-height: 42px;
-  max-height: 74px;
+  width: 100%;
+  min-height: 86px;
+  max-height: 180px;
+  box-sizing: border-box;
 }
 
 .template-add-row {
@@ -3281,6 +3326,39 @@ tbody tr:last-child td {
   color: var(--muted);
   font-size: 12px;
   font-weight: 800;
+}
+
+.detail-history-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.detail-history-list > li {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fffaf8;
+}
+
+.detail-history-list time {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.detail-history-list ul {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 1.1em;
+  color: #302b29;
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .description-modal-content {
@@ -4862,10 +4940,14 @@ button:disabled {
     grid-template-columns: minmax(0, 1fr) repeat(3, minmax(38px, auto));
   }
 
+  .template-edit-fields {
+    grid-column: 1 / -1;
+  }
+
   .template-setting-row textarea {
     grid-column: 1 / -1;
-    min-height: 56px;
-    max-height: 90px;
+    min-height: 112px;
+    max-height: 220px;
   }
 
   .category-setting-row button,
@@ -9690,6 +9772,19 @@ body.analysis-view .sold-summary div {
   align-items: start !important;
 }
 
+.template-edit-fields {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.template-edit-fields textarea {
+  width: 100%;
+  min-height: 96px !important;
+  max-height: 220px;
+  box-sizing: border-box;
+}
+
 .template-row-details {
   min-width: 0;
 }
@@ -9842,6 +9937,14 @@ body.analysis-view .sold-summary div {
     grid-column: 1 / -1;
   }
 
+  .template-edit-fields {
+    grid-column: 1 / -1;
+  }
+
+  .template-edit-fields textarea {
+    min-height: 120px !important;
+  }
+
   .appraisal-add-row {
     grid-template-columns: 1fr;
   }
@@ -9920,6 +10023,36 @@ body.analysis-view .sold-summary div {
   min-height: 34px !important;
   padding: 6px 10px !important;
   font-size: 12px !important;
+}
+
+.image-reference-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  width: 100%;
+}
+
+.image-reference-grid label {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  color: #514844;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.image-reference-grid input,
+.image-reference-grid select {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+@media (max-width: 700px) {
+  .image-reference-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
 }
 
 .detail-item-code {
@@ -10023,6 +10156,59 @@ select.placeholder-select option {
   border-color: #991b1b;
 }
 
+.app-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(31, 24, 21, 0.34);
+}
+
+.app-dialog-backdrop.hidden {
+  display: none;
+}
+
+.app-dialog-panel {
+  display: grid;
+  gap: 12px;
+  width: min(420px, 100%);
+  padding: 18px;
+  border: 1px solid #e6ded9;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 22px 60px rgba(45, 35, 31, 0.22);
+}
+
+.app-dialog-panel h2 {
+  margin: 0;
+  color: #302b29;
+  font-size: 17px;
+  line-height: 1.35;
+}
+
+.app-dialog-panel p {
+  margin: 0;
+  color: #5f5651;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.55;
+  white-space: pre-line;
+}
+
+.app-dialog-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.app-dialog-actions button {
+  width: 100%;
+  min-height: var(--ui-control-height, 44px);
+}
+
 @media (max-width: 700px) {
   .quick-form-section {
     padding: 12px !important;
@@ -10052,6 +10238,16 @@ select.placeholder-select option {
     max-width: calc(100vw - 28px);
     padding: 11px 14px;
     font-size: 13px;
+  }
+
+  .app-dialog-backdrop {
+    align-items: end;
+    padding: 14px 12px calc(18px + env(safe-area-inset-bottom));
+  }
+
+  .app-dialog-panel {
+    padding: 16px;
+    border-radius: 16px;
   }
 }
 
@@ -11327,6 +11523,97 @@ body.work-tab-list .inventory-primary-search {
   width: 100% !important;
   max-width: none !important;
   margin: 0 0 10px !important;
+}
+
+/* Shared master settings rows: categories, storage, shipping, templates, and appraisal sources use one layout. */
+body.settings-view .master-setting-row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 36px 36px 58px !important;
+  gap: 8px !important;
+  align-items: start !important;
+  width: 100% !important;
+  padding: 8px !important;
+  border: 1px solid #ece5e1 !important;
+  border-radius: 10px !important;
+  background: #fff !important;
+  box-sizing: border-box !important;
+}
+
+body.settings-view .master-setting-fields {
+  display: grid !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+}
+
+body.settings-view .master-setting-row .settings-row-main {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  gap: 8px !important;
+  align-items: center !important;
+  min-width: 0 !important;
+}
+
+body.settings-view .master-setting-row input,
+body.settings-view .master-setting-row textarea {
+  width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+body.settings-view .master-setting-row input {
+  min-height: 38px !important;
+  height: 38px !important;
+}
+
+body.settings-view .master-setting-row textarea {
+  min-height: 96px !important;
+  resize: vertical;
+}
+
+body.settings-view .master-setting-row .compact-row-button,
+body.settings-view .master-setting-row .danger-button {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 38px !important;
+  height: 38px !important;
+  padding: 0 6px !important;
+  font-size: 11px !important;
+}
+
+@media (max-width: 700px) {
+  body.settings-view .master-setting-row {
+    grid-template-columns: minmax(0, 1fr) 34px 34px 52px !important;
+    gap: 6px !important;
+    padding: 7px !important;
+    border-radius: 9px !important;
+  }
+
+  body.settings-view .master-setting-row .settings-row-main {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 4px !important;
+  }
+
+  body.settings-view .master-setting-row .settings-usage-count {
+    display: none !important;
+  }
+
+  body.settings-view .master-setting-row input {
+    min-height: 36px !important;
+    height: 36px !important;
+    font-size: 12px !important;
+  }
+
+  body.settings-view .master-setting-row textarea {
+    min-height: 112px !important;
+    font-size: 12px !important;
+  }
+
+  body.settings-view .master-setting-row .compact-row-button,
+  body.settings-view .master-setting-row .danger-button {
+    min-height: 36px !important;
+    height: 36px !important;
+    font-size: 10.5px !important;
+  }
 }
 
 body.work-tab-list .inventory-primary-search > * {
@@ -14874,4 +15161,697 @@ body.work-tab-sorting #sortingTableWrap .sorting-action-panel {
     width: 4% !important;
   }
 }
+}
+
+/* Mobile settings: keep this page as a light list of settings, not an operations dashboard. */
+@media (max-width: 700px) {
+  body.settings-view .settings-panel {
+    padding: 8px !important;
+  }
+
+  body.settings-view .settings-panel > .panel-heading {
+    margin-bottom: 8px !important;
+  }
+
+  body.settings-view .settings-panel > .panel-heading .muted {
+    font-size: 11px !important;
+    line-height: 1.35 !important;
+  }
+
+  body.settings-view .settings-operations-summary,
+  body.settings-view .settings-backup-group {
+    display: none !important;
+  }
+
+  body.settings-view .settings-grid {
+    display: grid !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  body.settings-view details.settings-accordion,
+  body.settings-view .cloud-panel.settings-accordion,
+  body.settings-view .settings-maintenance.settings-accordion {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    border: 1px solid #e6dfdc !important;
+    border-radius: 10px !important;
+    background: #fff !important;
+    box-sizing: border-box !important;
+  }
+
+  body.settings-view .settings-grid + .settings-backup-group + #saveSettingsButton + .cloud-panel,
+  body.settings-view .cloud-panel.settings-accordion,
+  body.settings-view .settings-maintenance.settings-accordion {
+    margin-top: 8px !important;
+  }
+
+  body.settings-view details.settings-accordion > summary,
+  body.settings-view .cloud-panel.settings-accordion > summary,
+  body.settings-view .settings-maintenance.settings-accordion > summary {
+    position: relative !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 0 !important;
+    align-items: center !important;
+    width: 100% !important;
+    min-height: 54px !important;
+    padding: 8px 10px 8px 36px !important;
+    box-sizing: border-box !important;
+  }
+
+  body.settings-view details.settings-accordion > summary::before,
+  body.settings-view .cloud-panel.settings-accordion > summary::before,
+  body.settings-view .settings-maintenance.settings-accordion > summary::before {
+    position: absolute !important;
+    top: 50% !important;
+    left: 12px !important;
+    display: grid !important;
+    width: 14px !important;
+    height: 18px !important;
+    place-items: center !important;
+    color: #6f6662 !important;
+    font-size: 11px !important;
+    line-height: 1 !important;
+    transform: translateY(-50%) !important;
+  }
+
+  body.settings-view details.settings-accordion > summary .settings-summary-label,
+  body.settings-view .cloud-panel.settings-accordion > summary .settings-summary-label,
+  body.settings-view .settings-maintenance.settings-accordion > summary .settings-summary-label {
+    display: grid !important;
+    gap: 3px !important;
+    align-content: center !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    text-align: left !important;
+  }
+
+  body.settings-view details.settings-accordion > summary .settings-summary-label small,
+  body.settings-view .cloud-panel.settings-accordion > summary .settings-summary-label small,
+  body.settings-view .settings-maintenance.settings-accordion > summary .settings-summary-label small {
+    display: block !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    color: #817773 !important;
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    line-height: 1.25 !important;
+    text-align: left !important;
+  }
+
+  body.settings-view .settings-summary-metrics,
+  body.settings-view .settings-summary-count,
+  body.settings-view .settings-usage-count,
+  body.settings-view .settings-insight-box {
+    display: none !important;
+  }
+
+  body.settings-view .cloud-panel-header {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    gap: 8px !important;
+    align-items: center !important;
+    padding: 8px 10px !important;
+    border-top: 1px solid #eee8e5 !important;
+  }
+
+  body.settings-view .cloud-panel-header #cloudTitle,
+  body.settings-view .cloud-sync-state,
+  body.settings-view .cloud-sync-time,
+  body.settings-view .cloud-backup-warning {
+    display: none !important;
+  }
+
+  body.settings-view .cloud-panel-header #cloudStatus {
+    margin: 0 !important;
+    overflow: hidden !important;
+    color: #302b29 !important;
+    font-size: 12px !important;
+    font-weight: 850 !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  body.settings-view .cloud-panel-header #cloudLogoutButton {
+    min-height: 34px !important;
+    padding: 5px 10px !important;
+    font-size: 11px !important;
+    white-space: nowrap !important;
+  }
+
+  body.settings-view .cloud-login-form {
+    gap: 8px !important;
+    padding: 0 10px 10px !important;
+  }
+
+  body.settings-view .settings-maintenance .settings-summary-label small {
+    color: #9b5b55 !important;
+  }
+}
+
+/* Inventory list cleanup: keep search/filter compact and make each product row easy to scan. */
+body.work-tab-list .inventory-summary-section {
+  display: none !important;
+}
+
+body.work-tab-list .inventory-primary-search {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr) !important;
+  gap: 8px !important;
+  width: 100% !important;
+  max-width: none !important;
+  margin: 6px 0 8px !important;
+  padding: 6px !important;
+  box-sizing: border-box !important;
+}
+
+body.work-tab-list .inventory-primary-search > * {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  box-sizing: border-box !important;
+}
+
+body.work-tab-list .inventory-primary-search #searchInput,
+body.work-tab-list .inventory-primary-search #statusFilter {
+  min-height: 40px !important;
+  height: 40px !important;
+  padding: 8px 10px !important;
+  border-radius: 10px !important;
+  font-size: 12px !important;
+}
+
+body.work-tab-list .inventory-setting-wide {
+  grid-column: 1 / -1;
+}
+
+body.work-tab-list .inventory-setting-group select {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  min-height: 40px !important;
+  height: 40px !important;
+  box-sizing: border-box !important;
+}
+
+body.work-tab-list .compact-table-wrap tbody tr {
+  height: 46px !important;
+  border-bottom: 1px solid #e8e3e0 !important;
+}
+
+body.work-tab-list .compact-table-wrap tbody tr:nth-child(even) {
+  background: #fcfbfa !important;
+}
+
+body.work-tab-list .compact-table-wrap td {
+  height: 46px !important;
+  padding-top: 3px !important;
+  padding-bottom: 3px !important;
+  vertical-align: middle !important;
+}
+
+@media (max-width: 700px) {
+  body.work-tab-list .list-panel {
+    padding-right: 10px !important;
+    padding-left: 10px !important;
+  }
+
+  body.work-tab-list .inventory-primary-search {
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) !important;
+    overflow: visible !important;
+    margin: 4px 0 6px !important;
+    padding: 4px !important;
+  }
+
+  body.work-tab-list .inventory-primary-search #searchInput,
+  body.work-tab-list .inventory-primary-search #statusFilter {
+    min-width: 0 !important;
+    min-height: 38px !important;
+    height: 38px !important;
+    padding: 7px 8px !important;
+    font-size: 11px !important;
+  }
+
+  body.work-tab-list .inventory-toolbar {
+    margin-top: 6px !important;
+  }
+
+  body.work-tab-list .inventory-display-section,
+  body.work-tab-list .inventory-work-section {
+    border-radius: 10px !important;
+  }
+
+  body.work-tab-list .inventory-setting-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  body.work-tab-list .inventory-setting-group select,
+  body.work-tab-list .inventory-control-group button {
+    min-height: 38px !important;
+    height: 38px !important;
+  }
+
+  body.work-tab-list .mobile-compact-table-card {
+    grid-template-columns: 40px minmax(0, 1fr) 32px !important;
+    min-height: 52px !important;
+    height: 52px !important;
+    padding: 5px 4px !important;
+    border: 0 !important;
+    border-bottom: 1px solid #e6e0dc !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  body.work-tab-list .mobile-compact-table-card:nth-child(even) {
+    background: #fcfbfa !important;
+  }
+
+  body.work-tab-list .mobile-compact-table-card:nth-child(odd) {
+    background: #fff !important;
+  }
+
+  body.work-tab-list .mobile-compact-content {
+    align-content: center !important;
+    min-height: 40px !important;
+  }
+
+  body.work-tab-list .mobile-compact-title {
+    font-size: 10.5px !important;
+    line-height: 1.18 !important;
+  }
+
+  body.work-tab-list .mobile-compact-storage,
+  body.work-tab-list .mobile-compact-destination,
+  body.work-tab-list .mobile-compact-offer {
+    font-size: 8.5px !important;
+    line-height: 1.15 !important;
+  }
+
+  body.work-tab-list .mobile-compact-actions {
+    align-self: center !important;
+    justify-self: end !important;
+  }
+}
+
+.detail-navigation {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 0 0 10px;
+}
+
+.detail-navigation .ghost-button {
+  width: 100%;
+  min-height: var(--ui-control-height, 44px);
+}
+
+.detail-navigation .ghost-button:disabled {
+  border-color: #e9e4e1;
+  background: #f6f4f2;
+  color: #aaa19d;
+  cursor: not-allowed;
+}
+
+.shipping-management-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin: 8px 0 10px;
+}
+
+.shipping-management-toolbar select {
+  width: min(240px, 100%);
+  min-height: var(--ui-control-height, 44px);
+}
+
+.shipping-management-list {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.shipping-management-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(120px, 0.9fr) minmax(140px, 1fr);
+  gap: 8px;
+  align-items: center;
+  min-height: 58px;
+  padding: 8px 10px;
+  border: 1px solid #e6e0dc;
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.shipping-management-card:hover,
+.shipping-management-card:focus-visible {
+  border-color: #d9cbc6;
+  background: #fffafa;
+  outline: none;
+}
+
+.shipping-management-main,
+.shipping-management-meta,
+.shipping-management-sub {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.shipping-management-title {
+  overflow: hidden;
+  color: #302b29;
+  font-size: 13px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shipping-management-storage,
+.shipping-management-destination,
+.shipping-management-date,
+.shipping-management-tracking {
+  overflow: hidden;
+  color: #6f6662;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shipping-management-status {
+  width: fit-content;
+  padding: 2px 7px;
+  border: 1px solid #e8ddd8;
+  border-radius: 999px;
+  background: #fff7f5;
+  color: #7d352f;
+  font-size: 11px;
+  font-weight: 850;
+  line-height: 1.2;
+}
+
+.shipping-management-empty {
+  margin: 0;
+  padding: 10px;
+  border: 1px dashed #e2d9d4;
+  border-radius: 10px;
+  background: #fff;
+}
+
+@media (max-width: 700px) {
+  .detail-navigation {
+    gap: 6px;
+    padding-bottom: 8px;
+  }
+
+  .shipping-management-toolbar {
+    justify-content: stretch;
+    margin: 6px 0 8px;
+  }
+
+  .shipping-management-toolbar select {
+    width: 100%;
+  }
+
+  .shipping-management-list {
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+
+  .shipping-management-card {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+    min-height: 74px;
+    padding: 8px;
+    border-radius: 9px;
+  }
+
+  .shipping-management-meta,
+  .shipping-management-sub {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 6px;
+    align-items: center;
+  }
+
+  .shipping-management-title {
+    font-size: 12px;
+  }
+
+  .shipping-management-storage,
+  .shipping-management-destination,
+  .shipping-management-date,
+  .shipping-management-tracking,
+  .shipping-management-status {
+    font-size: 10.5px;
+  }
+}
+
+/* =========================================================
+   Common UI rules
+   New pages should use these variables and structural classes first.
+   ========================================================= */
+:root {
+  --ui-page-x: 16px;
+  --ui-page-y: 16px;
+  --ui-card-gap: 24px;
+  --ui-card-pad: 16px;
+  --ui-card-radius: 12px;
+  --ui-card-border: 1px solid #e6e0dc;
+  --ui-section-gap: 24px;
+  --ui-group-gap: 12px;
+  --ui-control-height: 44px;
+  --ui-control-radius: 10px;
+  --ui-title-gap: 8px;
+  --ui-icon-col: 24px;
+  --ui-description-gap: 4px;
+  --ui-list-row-height: 52px;
+}
+
+.dashboard-panel,
+.form-panel,
+.list-panel,
+.sorting-panel,
+.settings-panel,
+.sold-panel {
+  gap: var(--ui-section-gap);
+}
+
+.panel-heading,
+.dashboard-panel .panel-heading,
+.form-panel .panel-heading,
+.list-panel .panel-heading,
+.sorting-panel .panel-heading,
+.settings-panel .panel-heading,
+.sold-panel .panel-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--ui-title-gap);
+  width: 100%;
+  margin: 0 0 var(--ui-group-gap);
+  padding: 0;
+}
+
+.panel-heading h2,
+.panel-heading h3 {
+  margin: 0;
+  line-height: 1.25;
+}
+
+.panel-heading .muted,
+.settings-summary-label small,
+.ranking-note,
+.settings-future-note,
+.inventory-setting-label {
+  margin-top: var(--ui-description-gap);
+  line-height: 1.35;
+}
+
+input,
+select,
+button,
+.primary-button,
+.ghost-button,
+.text-button,
+.danger-button {
+  min-height: var(--ui-control-height);
+  border-radius: var(--ui-control-radius);
+}
+
+textarea {
+  border-radius: var(--ui-control-radius);
+}
+
+.primary-button,
+.ghost-button,
+.text-button,
+.danger-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.registration-card,
+.quick-search-panel,
+.registration-dock,
+.list-panel,
+.sorting-form-card,
+.sorting-filter-panel,
+.sorting-list-section,
+.shipping-management-panel,
+.settings-operations-summary,
+.settings-group,
+.settings-backup-group,
+.cloud-panel,
+.settings-maintenance,
+.dashboard-card,
+.input-issue-panel,
+.today-command-card,
+.profit-candidate-card,
+.storage-report-card,
+.inventory-shelf-card,
+.mobile-item-card,
+.sorting-work-card {
+  border: var(--ui-card-border);
+  border-radius: var(--ui-card-radius);
+}
+
+.registration-card,
+.quick-search-panel,
+.registration-dock,
+.sorting-form-card,
+.sorting-filter-panel,
+.sorting-list-section,
+.shipping-management-panel,
+.settings-operations-summary,
+.settings-group,
+.settings-backup-group,
+.cloud-panel,
+.settings-maintenance,
+.input-issue-panel,
+.today-command-card,
+.profit-candidate-card,
+.storage-report-card,
+.inventory-shelf-card,
+.mobile-item-card {
+  padding: var(--ui-card-pad);
+}
+
+.app-accordion > summary,
+.settings-accordion > summary,
+.sorting-form-card > summary,
+.sorting-extra-card > summary,
+.analysis-accordion > summary,
+.inventory-toolbar-section > summary {
+  display: grid;
+  grid-template-columns: var(--ui-icon-col) minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  min-height: var(--ui-control-height);
+  padding: 8px var(--ui-card-pad);
+}
+
+.app-accordion > summary::before,
+.settings-accordion > summary::before,
+.sorting-form-card > summary::before,
+.sorting-extra-card > summary::before,
+.analysis-accordion > summary::before,
+.inventory-toolbar-section > summary::before {
+  grid-column: 1;
+  justify-self: center;
+  width: var(--ui-icon-col);
+  text-align: center;
+}
+
+.app-accordion > summary > *,
+.settings-accordion > summary > *,
+.sorting-form-card > summary > *,
+.sorting-extra-card > summary > *,
+.analysis-accordion > summary > *,
+.inventory-toolbar-section > summary > * {
+  min-width: 0;
+}
+
+.mobile-compact-table-card,
+.sorting-work-card,
+.compact-list-row,
+.input-issue-item {
+  min-height: var(--ui-list-row-height);
+}
+
+@media (max-width: 700px) {
+  :root {
+    --ui-page-x: 12px;
+    --ui-page-y: 12px;
+    --ui-card-gap: 20px;
+    --ui-card-pad: 12px;
+    --ui-card-radius: 10px;
+    --ui-section-gap: 20px;
+    --ui-group-gap: 10px;
+    --ui-control-height: 44px;
+    --ui-control-radius: 10px;
+    --ui-icon-col: 22px;
+    --ui-list-row-height: 52px;
+  }
+
+  body {
+    overflow-x: hidden;
+  }
+
+  .dashboard-panel,
+  .form-panel,
+  .list-panel,
+  .sorting-panel,
+  .settings-panel,
+  .sold-panel {
+    width: auto;
+    max-width: none;
+    margin-right: var(--ui-page-x) !important;
+    margin-left: var(--ui-page-x) !important;
+  }
+
+  input,
+  select,
+  button,
+  .primary-button,
+  .ghost-button,
+  .text-button,
+  .danger-button {
+    min-height: var(--ui-control-height);
+  }
+
+  .panel-heading,
+  .dashboard-panel .panel-heading,
+  .form-panel .panel-heading,
+  .list-panel .panel-heading,
+  .sorting-panel .panel-heading,
+  .settings-panel .panel-heading,
+  .sold-panel .panel-heading {
+    margin-bottom: var(--ui-group-gap);
+  }
+
+  .app-accordion > summary,
+  .settings-accordion > summary,
+  .sorting-form-card > summary,
+  .sorting-extra-card > summary,
+  .analysis-accordion > summary,
+  .inventory-toolbar-section > summary {
+    min-height: var(--ui-control-height);
+    padding: 8px var(--ui-card-pad);
+  }
+
+  .mobile-compact-table-card,
+  .sorting-work-card,
+  .compact-list-row,
+  .input-issue-item {
+    min-height: var(--ui-list-row-height) !important;
+  }
 }
