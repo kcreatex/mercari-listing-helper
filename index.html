@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>メルカリ出品補助室</title>
-    <link rel="stylesheet" href="styles.css?v=settings-ui-20260626">
+    <link rel="stylesheet" href="styles.css?v=stability-guard-20260628">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
   <body class="work-view work-tab-form">
@@ -479,7 +479,7 @@
             <summary><span class="section-icon">写</span>画像管理</summary>
             <div class="photo-management-note">
               <strong>Googleフォト推奨</strong>
-              <p>画像本体はGoogleフォトで管理します。商品詳細から商品IDや検索用タグをコピーできます。</p>
+              <p>画像本体はGoogleフォトで管理し、この画面では検索用IDだけを持ちます。</p>
               <button class="ghost-button" type="button" id="formCopyItemCodeButton">商品IDコピー</button>
             </div>
             <div class="image-field compact-image-field">
@@ -490,7 +490,7 @@
               </div>
               <button class="ghost-button hidden" type="button" id="removeImageButton">画像を削除</button>
             </div>
-            <div class="image-reference-grid" aria-label="将来用画像ID">
+            <div class="image-reference-grid" aria-label="画像管理ID">
               <label>
                 管理方式
                 <select id="imageProvider">
@@ -500,17 +500,22 @@
                   <option value="cloud">クラウド画像</option>
                 </select>
               </label>
-              <label>
-                GoogleフォトID
+              <label class="image-reference-field image-reference-google">
+                <span>GoogleフォトID <small>共有検索用</small></span>
                 <input id="googlePhotoImageId" type="text" maxlength="120" placeholder="例：Googleフォト検索用ID">
+                <span class="image-reference-actions">
+                  <button class="ghost-button" type="button" id="generateGooglePhotoIdButton">ID生成</button>
+                  <button class="ghost-button" type="button" id="copyFormGooglePhotoIdButton">コピー</button>
+                </span>
               </label>
-              <label>
-                ローカル画像ID
+              <label class="image-reference-field image-reference-local">
+                <span>ローカル画像ID <small>この端末用</small></span>
                 <input id="localImageId" type="text" maxlength="120" placeholder="例：端末内画像ID">
               </label>
-              <label>
-                クラウド画像ID
+              <label class="image-reference-field image-reference-cloud">
+                <span>クラウド画像ID <small>将来用</small></span>
                 <input id="cloudImageId" type="text" maxlength="120" placeholder="将来用">
+                <small class="image-reference-help">現在は保存処理を行いません</small>
               </label>
             </div>
           </details>
@@ -831,10 +836,9 @@
 
           <details class="inventory-toolbar-section inventory-csv-section app-accordion">
             <summary>
-              <span class="section-icon">CSV</span>
+              <span class="section-icon" aria-hidden="true"></span>
               <span class="inventory-option-summary-copy">
                 <strong>CSV出力</strong>
-                <small>対象を選んで書き出し</small>
               </span>
             </summary>
             <div class="inventory-section-body">
@@ -975,6 +979,7 @@
 
         <div class="sorting-work-toolbar">
           <input id="sortingItemSearch" type="search" placeholder="商品名・保管場所で検索" aria-label="仕分け商品を検索">
+          <p class="sorting-toolbar-label">並び順・表示モード</p>
           <select id="sortingOrder" aria-label="仕分け商品の並び順">
             <option value="offerDesc">予定買取額が高い順</option>
             <option value="storage">保管場所順</option>
@@ -986,7 +991,7 @@
 
         <details class="sorting-filter-panel app-accordion">
           <summary>
-            <span class="accordion-label">詳細フィルター・集計</span>
+            <span class="accordion-label">詳細フィルター</span>
           </summary>
           <div class="sorting-filter-panel-body">
             <div class="sorting-controls">
@@ -1107,7 +1112,7 @@
           <details class="settings-group settings-accordion app-accordion">
             <summary>
               <span class="settings-summary-label">
-                カテゴリ
+                <span class="settings-title-line"><span class="settings-section-icon" aria-hidden="true">📂</span>カテゴリ</span>
                 <small>商品登録時のジャンル分類を管理</small>
               </span>
               <span class="settings-summary-metrics">
@@ -1128,7 +1133,7 @@
           <details class="settings-group settings-accordion app-accordion">
             <summary>
               <span class="settings-summary-label">
-                保管場所
+                <span class="settings-title-line"><span class="settings-section-icon" aria-hidden="true">📦</span>保管場所</span>
                 <small>商品の収納場所を管理</small>
               </span>
               <span class="settings-summary-metrics">
@@ -1149,7 +1154,7 @@
           <details class="settings-group settings-accordion app-accordion">
             <summary>
               <span class="settings-summary-label">
-                配送方法と送料
+                <span class="settings-title-line"><span class="settings-section-icon" aria-hidden="true">🚚</span>配送方法と送料</span>
                 <small>送料計算で使用する配送設定</small>
               </span>
               <span class="settings-summary-metrics">
@@ -1171,8 +1176,11 @@
           <details class="settings-group settings-accordion app-accordion">
             <summary>
               <span class="settings-summary-label">
-                査定情報
+                <span class="settings-title-line"><span class="settings-section-icon" aria-hidden="true">🏷</span>査定情報</span>
                 <small>売却先ごとの査定額入力欄を管理</small>
+              </span>
+              <span class="settings-summary-metrics">
+                <span class="settings-summary-count" id="appraisalSettingsCount">0件</span>
               </span>
             </summary>
             <div class="appraisal-settings-list" id="appraisalSettingsList"></div>
@@ -1190,7 +1198,7 @@
           <details class="settings-group settings-accordion template-settings-group app-accordion">
             <summary>
               <span class="settings-summary-label">
-                商品説明テンプレート
+                <span class="settings-title-line"><span class="settings-section-icon" aria-hidden="true">📝</span>商品説明テンプレート</span>
                 <small>説明文テンプレートを管理</small>
               </span>
               <span class="settings-summary-metrics">
@@ -1211,8 +1219,8 @@
 
         <details class="settings-backup-group settings-accordion app-accordion">
           <summary>
-            <span class="settings-summary-label">
-              バックアップ
+              <span class="settings-summary-label">
+              <span class="settings-title-line"><span class="settings-section-icon" aria-hidden="true">💾</span>バックアップ</span>
               <small>JSONの書き出し・読み込み</small>
             </span>
           </summary>
@@ -1232,7 +1240,7 @@
         <details class="cloud-panel settings-accordion app-accordion" aria-labelledby="cloudSummaryTitle">
           <summary class="cloud-summary" id="cloudSummaryTitle">
               <span class="settings-summary-label">
-                クラウド共有
+                <span class="settings-title-line"><span class="settings-section-icon" aria-hidden="true">☁</span>クラウド共有</span>
                 <small>同期設定</small>
               </span>
           </summary>
@@ -1264,7 +1272,7 @@
         <details class="settings-maintenance settings-accordion app-accordion">
           <summary>
             <span class="settings-summary-label">
-              メンテナンス
+              <span class="settings-title-line"><span class="settings-section-icon" aria-hidden="true">🛠</span>メンテナンス</span>
               <small>初期化など危険操作をまとめています</small>
             </span>
           </summary>
@@ -1307,7 +1315,10 @@
         <div class="modal-actions">
           <button class="primary-button" type="button" id="editDetailItemButton">編集</button>
           <button class="text-button detail-secondary-action" type="button" id="copyDetailItemIdButton">商品IDコピー</button>
+          <button class="text-button detail-secondary-action" type="button" id="copyGooglePhotoIdButton">GoogleフォトIDコピー</button>
           <button class="text-button detail-secondary-action" type="button" id="copyGooglePhotoTagButton">Googleフォト用タグコピー</button>
+          <button class="text-button detail-secondary-action" type="button" id="changeDetailLocalPhotoButton">ローカル画像追加/変更</button>
+          <button class="text-button detail-secondary-action" type="button" id="removeDetailLocalPhotoButton">ローカル画像削除</button>
           <button class="text-button" type="button" id="prepareRelistButton">再出品</button>
           <button class="text-button detail-secondary-action" type="button" id="copyMercariUrlButton">メルカリURLコピー</button>
           <button class="text-button detail-secondary-action" type="button" id="copyDetailTitleButton">タイトルコピー</button>
@@ -1330,6 +1341,6 @@
       </div>
     </div>
 
-    <script src="app.js"></script>
+    <script src="app.js?v=stability-guard-20260628"></script>
   </body>
 </html>

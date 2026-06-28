@@ -5,6 +5,7 @@ const TEMPLATES_KEY = "mercari-listing-helper-templates";
 const SORTING_STORAGE_KEY = "mercari-listing-helper-destination-sorting";
 const CLOUD_LAST_SYNC_KEY = "mercari-listing-helper-cloud-last-sync";
 const ITEM_SEQUENCE_KEY = "mercari-listing-helper-item-sequence";
+const LOCAL_IMAGE_REFS_KEY = "mercari-listing-helper-local-image-refs";
 const SUPABASE_URL = "https://pkbgvfurouxmghujlscs.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_pJVEFb8bDDTrdOaCYU3BRQ_jUnbesuv";
 
@@ -67,6 +68,8 @@ const imageProviderInput = document.querySelector("#imageProvider");
 const googlePhotoImageIdInput = document.querySelector("#googlePhotoImageId");
 const localImageIdInput = document.querySelector("#localImageId");
 const cloudImageIdInput = document.querySelector("#cloudImageId");
+const generateGooglePhotoIdButton = document.querySelector("#generateGooglePhotoIdButton");
+const copyFormGooglePhotoIdButton = document.querySelector("#copyFormGooglePhotoIdButton");
 const submitButton = document.querySelector("#submitButton");
 const cancelEditButton = document.querySelector("#cancelEditButton");
 const formTitle = document.querySelector("#formTitle");
@@ -267,6 +270,7 @@ const newShippingNameInput = document.querySelector("#newShippingName");
 const newShippingCostInput = document.querySelector("#newShippingCost");
 const addShippingMethodButton = document.querySelector("#addShippingMethodButton");
 const appraisalSettingsList = document.querySelector("#appraisalSettingsList");
+const appraisalSettingsCount = document.querySelector("#appraisalSettingsCount");
 const toggleAppraisalAddButton = document.querySelector("#toggleAppraisalAddButton");
 const appraisalAddRow = document.querySelector("#appraisalAddRow");
 const newAppraisalNameInput = document.querySelector("#newAppraisalName");
@@ -314,10 +318,13 @@ const detailModalContent = document.querySelector("#detailModalContent");
 const copyDetailTitleButton = document.querySelector("#copyDetailTitleButton");
 const copyDetailDescriptionButton = document.querySelector("#copyDetailDescriptionButton");
 const copyDetailItemIdButton = document.querySelector("#copyDetailItemIdButton");
+const copyGooglePhotoIdButton = document.querySelector("#copyGooglePhotoIdButton");
 const copyGooglePhotoTagButton = document.querySelector("#copyGooglePhotoTagButton");
 const copyMercariUrlButton = document.querySelector("#copyMercariUrlButton");
 const prepareRelistButton = document.querySelector("#prepareRelistButton");
 const editDetailItemButton = document.querySelector("#editDetailItemButton");
+const changeDetailLocalPhotoButton = document.querySelector("#changeDetailLocalPhotoButton");
+const removeDetailLocalPhotoButton = document.querySelector("#removeDetailLocalPhotoButton");
 const closeDetailModalButton = document.querySelector("#closeDetailModalButton");
 const previousDetailItemButton = document.querySelector("#previousDetailItemButton");
 const nextDetailItemButton = document.querySelector("#nextDetailItemButton");
@@ -338,6 +345,7 @@ let returnToDetailAfterEditId = "";
 let currentSortingDetailItem = null;
 let openMonthlyProfitKey = "";
 let currentImageData = "";
+let pendingFormItemCode = "";
 let isImageProcessing = false;
 let lastSavedShortcut = null;
 let isFormDirty = false;
@@ -537,16 +545,25 @@ const STATUS_CLASS_NAMES = {
 };
 const MASTER_SETTINGS_DEFINITIONS = {
   categories: {
+    label: "カテゴリ",
+    description: "商品登録時のジャンル分類を管理",
+    icon: "📂",
     rowClass: "category-setting-row",
     removeAction: "remove-category",
     fields: [{ name: "name", type: "text", label: "カテゴリ名" }],
   },
   storageLocations: {
+    label: "保管場所",
+    description: "商品の収納場所を管理",
+    icon: "📦",
     rowClass: "storage-setting-row",
     removeAction: "remove-storage",
     fields: [{ name: "name", type: "text", label: "保管場所名" }],
   },
   shippingMethods: {
+    label: "配送方法と送料",
+    description: "送料計算で使用する配送設定",
+    icon: "🚚",
     rowClass: "shipping-setting-row",
     removeAction: "remove-shipping",
     fields: [
@@ -555,11 +572,17 @@ const MASTER_SETTINGS_DEFINITIONS = {
     ],
   },
   appraisalSources: {
+    label: "査定情報",
+    description: "売却先ごとの査定額入力欄を管理",
+    icon: "🏷",
     rowClass: "appraisal-setting-row",
     removeAction: "remove-appraisal",
     fields: [{ name: "name", type: "text", label: "査定先名" }],
   },
   templates: {
+    label: "商品説明テンプレート",
+    description: "説明文テンプレートを管理",
+    icon: "📝",
     rowClass: "template-setting-row",
     removeAction: "remove-template",
     contentClass: "template-edit-fields",
@@ -569,6 +592,7 @@ const MASTER_SETTINGS_DEFINITIONS = {
     ],
   },
 };
+const MASTER_MANAGEMENT_KEYS = Object.freeze(Object.keys(MASTER_SETTINGS_DEFINITIONS));
 
 settings = loadSettings();
 descriptionTemplates = loadTemplates();
@@ -610,14 +634,75 @@ function normalizeImageRefs(value) {
   };
 }
 
-function normalizeItem(item = {}) {
+function getImageProviderLabel(provider) {
   return {
+    google_photos: "Googleフォト",
+    local: "ローカル画像",
+    cloud: "クラウド画像",
+  }[provider] || "未設定";
+}
+
+function loadLocalImageRefs() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(LOCAL_IMAGE_REFS_KEY) || "{}");
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveLocalImageRefs(refsMap) {
+  localStorage.setItem(LOCAL_IMAGE_REFS_KEY, JSON.stringify(refsMap || {}));
+}
+
+function getLocalImageRefKey(item) {
+  return String(item?.id || item?.itemCode || "").trim();
+}
+
+function getLocalImageRefs(item) {
+  const key = getLocalImageRefKey(item);
+  if (!key) {
+    return normalizeImageRefs({});
+  }
+
+  return normalizeImageRefs(loadLocalImageRefs()[key]);
+}
+
+function saveLocalImageRefsForItem(item, refs = {}) {
+  const key = getLocalImageRefKey(item);
+  if (!key) {
+    return;
+  }
+
+  const refsMap = loadLocalImageRefs();
+  refsMap[key] = {
+    ...normalizeImageRefs(refsMap[key]),
+    ...normalizeImageRefs(refs),
+  };
+  saveLocalImageRefs(refsMap);
+}
+
+function mergeLocalImageRefs(item) {
+  const sharedRefs = normalizeImageRefs(item?.imageRefs);
+  const localRefs = getLocalImageRefs(item);
+
+  return {
+    ...item,
+    imageRefs: normalizeImageRefs({
+      ...sharedRefs,
+      localImageId: localRefs.localImageId || sharedRefs.localImageId,
+    }),
+  };
+}
+
+function normalizeItem(item = {}) {
+  return mergeLocalImageRefs({
     ...item,
     id: String(item.id || createId()),
     imageRefs: normalizeImageRefs(item.imageRefs),
     editHistory: normalizeEditHistory(item.editHistory),
     updatedAt: item.updatedAt || new Date().toISOString(),
-  };
+  });
 }
 
 function loadSettings() {
@@ -961,7 +1046,7 @@ function showToast(message, type = "success") {
     setTimeout(() => {
       toastNotification.classList.add("hidden");
     }, 220);
-  }, 2600);
+  }, 1800);
 }
 
 function showSuccessMessage(message) {
@@ -1194,10 +1279,14 @@ async function loadItemsFromSupabase() {
         status: row.data?.status || row.status || DEFAULT_STATUS,
         category: row.data?.category || row.category || "",
         storageLocation: row.data?.storageLocation || row.storage_location || "",
-        plannedPrice: row.data?.plannedPrice ?? row.planned_price ?? "",
-        imageData: localItem?.imageData || "",
-      };
-    })
+	        plannedPrice: row.data?.plannedPrice ?? row.planned_price ?? "",
+	        imageData: localItem?.imageData || "",
+	        imageRefs: normalizeImageRefs({
+	          ...(row.data?.imageRefs || {}),
+	          localImageId: normalizeImageRefs(localItem?.imageRefs).localImageId || getLocalImageRefs({ id: itemId }).localImageId,
+	        }),
+	      };
+	    })
     .filter((item) => item.id);
   const didAddItemCodes = ensureItemCodes(items);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
@@ -1211,6 +1300,11 @@ async function loadItemsFromSupabase() {
 
 function createCloudItemData(item) {
   const { imageData, ...cloudItem } = item;
+  const imageRefs = normalizeImageRefs(cloudItem.imageRefs);
+  cloudItem.imageRefs = normalizeImageRefs({
+    ...imageRefs,
+    localImageId: "",
+  });
   return cloudItem;
 }
 
@@ -1392,19 +1486,61 @@ function getImageRefsFromForm(existingRefs = {}) {
   });
 }
 
+function createGooglePhotoId(itemCode) {
+  return itemCode ? `PHOTO-${itemCode}` : "";
+}
+
+function createLocalImageId(item) {
+  const code = getItemCode(item) || item?.id || "ITEM";
+  return `LOCAL-${code}-${Date.now()}`;
+}
+
+function ensurePendingFormItemCode() {
+  if (itemIdInput.value) {
+    const existingItem = items.find((item) => item.id === itemIdInput.value);
+    if (existingItem?.itemCode) {
+      return existingItem.itemCode;
+    }
+  }
+
+  if (!pendingFormItemCode) {
+    pendingFormItemCode = generateItemCode();
+  }
+
+  return pendingFormItemCode;
+}
+
+function updateImageReferenceMode() {
+  const provider = imageProviderInput?.value || "";
+  const photoDetails = document.querySelector(".form-details-photo");
+  if (photoDetails) {
+    photoDetails.dataset.imageProvider = provider || "unset";
+  }
+}
+
 function saveLocalItemImage(item, imageData) {
   if (!item) {
     return false;
   }
 
   const previousImage = item.imageData || "";
+  const previousRefs = normalizeImageRefs(item.imageRefs);
   item.imageData = imageData || "";
+  const nextLocalImageId = imageData ? (previousRefs.localImageId || createLocalImageId(item)) : "";
+  item.imageRefs = normalizeImageRefs({
+    ...previousRefs,
+    provider: imageData && previousRefs.provider !== "google_photos" ? "local" : previousRefs.provider,
+    localImageId: nextLocalImageId,
+  });
+  saveLocalImageRefsForItem(item, { localImageId: nextLocalImageId });
 
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
     return true;
   } catch (error) {
     item.imageData = previousImage;
+    item.imageRefs = previousRefs;
+    saveLocalImageRefsForItem(item, { localImageId: previousRefs.localImageId });
     console.warn("ローカル画像保存エラー:", error);
     return false;
   }
@@ -1494,13 +1630,15 @@ function getListingTitle(item) {
 }
 
 function createGooglePhotoTagText(item) {
+  const imageRefs = normalizeImageRefs(item.imageRefs);
   return [
+    imageRefs.googlePhotoId,
     getItemCode(item),
     getListingTitle(item) || "-",
     item.category || "-",
     item.storageLocation || "-",
     item.condition || "-",
-  ].join("\n");
+  ].filter(Boolean).join("\n");
 }
 
 function getSelectPlaceholder(select) {
@@ -2198,11 +2336,46 @@ function formatInventoryTop(group) {
   return group ? `${group.name} / ${formatMoney(group.projectedProfitTotal)}` : "-";
 }
 
+function createAnalysisEmptyState(message, description = "商品登録をすると、ここに分析結果が表示されます。") {
+  const empty = document.createElement("div");
+  const icon = document.createElement("span");
+  const text = document.createElement("div");
+  const title = document.createElement("strong");
+  const note = document.createElement("small");
+  const button = document.createElement("button");
+
+  empty.className = "analysis-empty-state";
+  icon.className = "analysis-empty-icon";
+  icon.textContent = "📦";
+  title.textContent = message;
+  note.textContent = description;
+  button.className = "ghost-button analysis-empty-action";
+  button.type = "button";
+  button.textContent = "商品登録はこちら";
+  button.addEventListener("click", () => {
+    setActiveNavigation("form");
+    document.querySelector("#formTitle")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+  text.append(title, note);
+  empty.append(icon, text, button);
+  return empty;
+}
+
+function renderAnalysisEmptyState(targetList, message, description) {
+  targetList.innerHTML = "";
+  targetList.append(createAnalysisEmptyState(message, description));
+}
+
 function renderExcavationRanking(storageRanking) {
   excavationRankingList.innerHTML = "";
-  setAnalysisListVisibility(excavationRankingList, storageRanking.length > 0, ".excavation-panel");
+  setAnalysisListVisibility(excavationRankingList, true, ".excavation-panel");
 
   if (storageRanking.length === 0) {
+    renderAnalysisEmptyState(
+      excavationRankingList,
+      "利益実績はまだありません",
+      "売却済み商品が増えると、利益が出やすい保管場所を確認できます。",
+    );
     return;
   }
 
@@ -2236,9 +2409,14 @@ function getExcavationExpectedRanking(storageRanking) {
 function renderExcavationExpectedRanking(storageRanking) {
   const expectedRanking = getExcavationExpectedRanking(storageRanking);
   excavationExpectedRankingList.innerHTML = "";
-  setAnalysisListVisibility(excavationExpectedRankingList, expectedRanking.length > 0, ".excavation-panel");
+  setAnalysisListVisibility(excavationExpectedRankingList, true, ".excavation-panel");
 
   if (expectedRanking.length === 0) {
+    renderAnalysisEmptyState(
+      excavationExpectedRankingList,
+      "期待値ランキングはまだありません",
+      "同じ保管場所で売却実績が3件以上になると表示されます。",
+    );
     return;
   }
 
@@ -2280,7 +2458,9 @@ function getStorageReports(allItems, storageProfitRanking, expectedRanking) {
       unlistedCount: 0,
       listedCount: 0,
       searchCount: 0,
+      inputIssueCount: 0,
       totalProfit: 0,
+      maxProfit: 0,
       firstSoldDate: "",
       lastSoldDate: "",
       unlistedPlannedPriceTotal: 0,
@@ -2290,13 +2470,16 @@ function getStorageReports(allItems, storageProfitRanking, expectedRanking) {
     const status = getItemStatus(item);
 
     currentReport.totalCount += 1;
+    currentReport.inputIssueCount += getInputIssues(item).length > 0 ? 1 : 0;
 
     if (status === "売却済み") {
       const profit = calculateActualProfit(item);
       const soldDate = parseDateValue(item.soldDate);
+      const normalizedProfit = profit === "" ? 0 : profit;
 
       currentReport.soldCount += 1;
-      currentReport.totalProfit += profit === "" ? 0 : profit;
+      currentReport.totalProfit += normalizedProfit;
+      currentReport.maxProfit = Math.max(currentReport.maxProfit, normalizedProfit);
 
       if (soldDate) {
         const timestamp = soldDate.getTime();
@@ -2382,10 +2565,10 @@ function renderStorageReports(allItems, storageProfitRanking, expectedRanking) {
   storageReportList.innerHTML = "";
 
   if (reports.length === 0) {
-    const emptyMessage = document.createElement("p");
-    emptyMessage.className = "muted";
-    emptyMessage.textContent = "保管場所カルテはまだありません。";
-    storageReportList.append(emptyMessage);
+    storageReportList.append(createAnalysisEmptyState(
+      "保管場所カルテはまだありません",
+      "保管場所を入れて商品登録すると、場所ごとの利益や入力不足を確認できます。",
+    ));
     return;
   }
 
@@ -2398,20 +2581,27 @@ function renderStorageReports(allItems, storageProfitRanking, expectedRanking) {
     summary.innerHTML = `
       <h4></h4>
       <dl>
+        <div><dt>商品数</dt><dd>${report.totalCount}件</dd></div>
         <div><dt>未出品</dt><dd>${report.unlistedCount}件</dd></div>
         <div><dt>見込み利益</dt><dd>${formatMoney(report.unlistedProjectedProfitTotal)}</dd></div>
+        <div><dt>平均利益</dt><dd>${formatMoney(report.averageProfit)}</dd></div>
+        <div><dt>最高利益</dt><dd>${formatMoney(report.maxProfit)}</dd></div>
+        <div><dt>入力不足</dt><dd>${report.inputIssueCount}件</dd></div>
         <div><dt>評価</dt><dd>${getStoragePriorityLabel(report)}</dd></div>
       </dl>
       <span class="storage-report-arrow">›</span>
     `;
     detail.className = "storage-report-detail";
     detail.innerHTML = `
+      <div><dt>商品数</dt><dd>${report.totalCount}件</dd></div>
       <div><dt>売却済</dt><dd>${report.soldCount}件</dd></div>
       <div><dt>出品中</dt><dd>${report.listedCount}件</dd></div>
-      <div><dt>🔍 要捜索</dt><dd>${report.searchCount}件</dd></div>
+      <div><dt>要捜索</dt><dd>${report.searchCount}件</dd></div>
       <div><dt>平均利益</dt><dd>${formatMoney(report.averageProfit)}</dd></div>
+      <div><dt>最高利益</dt><dd>${formatMoney(report.maxProfit)}</dd></div>
       <div><dt>売却率</dt><dd>${Math.round(report.soldRate * 100)}%</dd></div>
       <div><dt>未出品見込み</dt><dd>${formatMoney(report.unlistedProjectedProfitTotal)}</dd></div>
+      <div><dt>入力不足</dt><dd>${report.inputIssueCount}件</dd></div>
     `;
     summary.querySelector("h4").textContent = report.name;
     card.append(summary, detail);
@@ -2421,9 +2611,14 @@ function renderStorageReports(allItems, storageProfitRanking, expectedRanking) {
 
 function renderInventoryRanking(targetList, rankingItems, options) {
   targetList.innerHTML = "";
-  setAnalysisListVisibility(targetList, rankingItems.length > 0, "section");
+  setAnalysisListVisibility(targetList, true, "section");
 
   if (rankingItems.length === 0) {
+    renderAnalysisEmptyState(
+      targetList,
+      options.emptyMessage || "まだデータがありません",
+      "商品を登録すると、在庫や利益候補をここで確認できます。",
+    );
     return;
   }
 
@@ -2516,6 +2711,26 @@ function getInputIssues(item) {
   return issues;
 }
 
+function createInputIssueTag(issue) {
+  const labelMap = {
+    "保管場所未設定": "保管場所",
+    "販売価格未設定": "販売価格",
+    "最低出品価格未設定": "最低価格",
+    "カテゴリ未設定": "カテゴリ",
+    "状態未設定": "状態",
+    "説明文未登録": "説明文",
+  };
+  const tag = document.createElement("span");
+  tag.className = "input-issue-tag";
+  tag.textContent = labelMap[issue] || issue;
+  tag.title = issue;
+  return tag;
+}
+
+function renderIssueTags(target, issues) {
+  target.replaceChildren(...issues.map(createInputIssueTag));
+}
+
 function getInputIssueEntries(allItems) {
   return getInputIssueTargetItems(allItems)
     .map((item) => ({
@@ -2556,7 +2771,8 @@ function renderInputIssueList(issueItems) {
     row.tabIndex = 0;
     title.textContent = getListingTitle(item) || "商品タイトル未入力";
     status.textContent = formatStatusDisplay(getItemStatus(item));
-    issueText.textContent = issues.join(" / ");
+    issueText.className = "input-issue-tags";
+    renderIssueTags(issueText, issues);
     arrow.className = "input-issue-arrow";
     arrow.textContent = "›";
 
@@ -2585,11 +2801,13 @@ function updateInputIssueDashboard(allItems) {
   if (issueItems.length === 0) {
     analysisInputIssueItem.textContent = "入力不足の商品はありません";
     analysisInputIssueText.textContent = "出品判断に必要な情報が揃っています";
+    analysisInputIssueText.classList.remove("analysis-issue-tags");
     delete analysisInputIssueEditButton.dataset.id;
   } else {
     const firstIssue = issueItems[0];
     analysisInputIssueItem.textContent = getListingTitle(firstIssue.item) || "商品タイトル未入力";
-    analysisInputIssueText.textContent = firstIssue.issues.join(" / ");
+    analysisInputIssueText.classList.add("analysis-issue-tags");
+    renderIssueTags(analysisInputIssueText, firstIssue.issues);
     analysisInputIssueEditButton.dataset.id = firstIssue.item.id;
   }
 
@@ -3329,12 +3547,14 @@ function openDescriptionModal(item) {
   descriptionModalContent.textContent = currentDescriptionModalText || "説明文未入力";
   copyDescriptionModalButton.disabled = !currentDescriptionModalText.trim();
   descriptionModal.classList.remove("hidden");
+  lockPageScroll();
   closeDescriptionModalButton.focus();
 }
 
 function closeDescriptionModal() {
   descriptionModal.classList.add("hidden");
   currentDescriptionModalText = "";
+  unlockPageScroll();
 }
 
 function createDetailSection(title, rows) {
@@ -3485,6 +3705,10 @@ function createDetailHero(item) {
 function createDetailSummary(item) {
   const summary = document.createElement("section");
   const profit = calculateProfit(item);
+  const imageRefs = normalizeImageRefs(item.imageRefs);
+  const hasLocalImage = Boolean(getLocalItemImage(item));
+  const hasGooglePhotoId = Boolean(String(imageRefs.googlePhotoId || "").trim());
+  const imageStatus = hasLocalImage ? "端末画像あり" : hasGooglePhotoId ? "Google IDあり" : "任意";
   summary.className = "detail-priority-summary";
   summary.innerHTML = `
     <div class="detail-summary-card detail-summary-profit">
@@ -3499,6 +3723,10 @@ function createDetailSummary(item) {
       <span>📦 保管場所</span>
       <strong></strong>
     </div>
+    <div class="detail-summary-card detail-summary-image">
+      <span>画像</span>
+      <strong></strong>
+    </div>
   `;
 
   const profitValue = summary.querySelector(".detail-summary-profit strong");
@@ -3506,6 +3734,7 @@ function createDetailSummary(item) {
   applyProfitLevel(profitValue, profit);
   summary.querySelector(".detail-summary-status strong").textContent = formatStatusDisplay(getItemStatus(item));
   summary.querySelector(".detail-summary-storage strong").textContent = item.storageLocation || "-";
+  summary.querySelector(".detail-summary-image strong").textContent = imageStatus;
   return summary;
 }
 
@@ -3559,15 +3788,16 @@ function openAdjacentDetailItem(direction) {
 function openDetailModal(item) {
   currentDetailItem = item;
   detailModalContent.innerHTML = "";
+  const localImage = getLocalItemImage(item);
 
   detailModalContent.append(createDetailHero(item));
   detailModalContent.append(createDetailSummary(item));
 
   const imageWrap = document.createElement("div");
   imageWrap.className = "detail-image-wrap";
-  if (item.imageData) {
+  if (localImage) {
     const image = document.createElement("img");
-    image.src = item.imageData;
+    image.src = localImage;
     image.alt = `${getListingTitle(item)}の画像`;
     imageWrap.append(image);
   } else {
@@ -3580,10 +3810,10 @@ function openDetailModal(item) {
 
   const imageRefs = normalizeImageRefs(item.imageRefs);
   detailModalContent.append(createDetailCollapsibleSection("画像管理", [
-    ["管理方式", imageRefs.provider],
-    ["GoogleフォトID", imageRefs.googlePhotoId],
-    ["ローカル画像ID", imageRefs.localImageId],
-    ["クラウド画像ID", imageRefs.cloudImageId],
+    ["管理方式", getImageProviderLabel(imageRefs.provider)],
+    ["GoogleフォトID：共有検索用", imageRefs.googlePhotoId],
+    ["ローカル画像ID：この端末だけの画像表示用", imageRefs.localImageId],
+    ["クラウド画像ID：将来用", imageRefs.cloudImageId],
   ], "画像IDは未設定です"));
 
   detailModalContent.append(createDetailSection("基本情報", [
@@ -3631,9 +3861,12 @@ function openDetailModal(item) {
   copyDetailTitleButton.disabled = !String(getListingTitle(item) || "").trim();
   copyDetailDescriptionButton.disabled = !String(item.description || "").trim();
   copyDetailItemIdButton.disabled = !String(getItemCode(item) || "").trim();
+  copyGooglePhotoIdButton.disabled = !String(imageRefs.googlePhotoId || "").trim();
+  removeDetailLocalPhotoButton.disabled = !Boolean(localImage);
   updateDetailNavigationButtons();
 
   detailModal.classList.remove("hidden");
+  lockPageScroll();
   closeDetailModalButton.focus();
 }
 
@@ -3641,6 +3874,7 @@ function closeDetailModal() {
   detailModal.classList.add("hidden");
   currentDetailItem = null;
   updateDetailNavigationButtons();
+  unlockPageScroll();
 }
 
 function openListingUrl(item) {
@@ -3897,10 +4131,11 @@ function updateSubmitButtonState() {
 
 function updateFormItemCodeButton() {
   const currentItem = items.find((item) => item.id === itemIdInput.value);
-  const hasItemCode = Boolean(currentItem?.itemCode);
+  const itemCode = currentItem?.itemCode || pendingFormItemCode;
+  const hasItemCode = Boolean(itemCode);
 
   formCopyItemCodeButton.disabled = !hasItemCode;
-  formCopyItemCodeButton.textContent = hasItemCode ? `商品IDコピー（${currentItem.itemCode}）` : "商品IDコピー（登録後）";
+  formCopyItemCodeButton.textContent = hasItemCode ? `商品IDコピー（${itemCode}）` : "商品IDコピー（登録後）";
 }
 
 function updateSoldFieldsVisibility() {
@@ -4005,6 +4240,9 @@ async function removeLocalPhoto(item) {
 
   showToast("この端末の写真を削除しました", "success");
   render();
+  if (currentDetailItem?.id === item.id && !detailModal.classList.contains("hidden")) {
+    openDetailModal(item);
+  }
 }
 
 function getAppraisalFieldName(source) {
@@ -4872,6 +5110,7 @@ async function deleteSortingItem(item) {
 function closeSortingDetailModal() {
   sortingDetailModal.classList.add("hidden");
   currentSortingDetailItem = null;
+  unlockPageScroll();
 }
 
 function createSortingDetailMeta(label, value) {
@@ -4920,7 +5159,7 @@ function openSortingDetailModal(item) {
   const detailSummary = document.createElement("summary");
   const priceList = document.createElement("dl");
   detail.className = "sorting-detail-price-details app-accordion";
-  detailSummary.textContent = "その他査定先";
+  detailSummary.textContent = "その他の査定額を開く";
   priceEntries.forEach((entry) => {
     priceList.append(createSortingDetailMeta(entry.label, formatMoney(entry.value)));
   });
@@ -4931,6 +5170,7 @@ function openSortingDetailModal(item) {
 
   sortingDetailContent.append(hero, summary, detail);
   sortingDetailModal.classList.remove("hidden");
+  lockPageScroll();
 }
 
 function createSortingRow(item) {
@@ -5980,7 +6220,11 @@ function createMobileCompactTableCard(item) {
   card.querySelector(".mobile-compact-title").textContent = getListingTitle(item) || "-";
   card.querySelector(".mobile-compact-storage").textContent = `📦 ${item.storageLocation || "未設定"}`;
   card.querySelector(".mobile-compact-destination").textContent = `🏪 ${getSortingDestinationForItem(item)}`;
-  card.querySelector(".mobile-compact-offer").textContent = `💰 ${getHighestOfferForItem(item)}`;
+  const profit = calculateProfit(item);
+  const profitField = card.querySelector(".mobile-compact-offer");
+  profitField.textContent = profit === "" ? "利益 未入力" : `利益 ${formatMoney(profit)}`;
+  profitField.classList.toggle("profit-unset", profit === "");
+  applyProfitLevel(profitField, profit);
 
   return card;
 }
@@ -6344,6 +6588,9 @@ function renderSettings() {
   categorySettingsCount.textContent = `${settings.categories.length}件`;
   storageSettingsCount.textContent = `${settings.storageLocations.length}件`;
   shippingSettingsCount.textContent = `${settings.shippingMethods.length}件`;
+  if (appraisalSettingsCount) {
+    appraisalSettingsCount.textContent = `${getAppraisalSources().length}件`;
+  }
   templateSettingsCount.textContent = `${descriptionTemplates.length}件`;
 
   settings.categories.forEach((category, index) => {
@@ -6473,8 +6720,12 @@ function createMasterFieldControl(field) {
   return `<input type="text" ${attributes.join(" ")}>`;
 }
 
+function getMasterSettingsDefinition(masterKey) {
+  return MASTER_SETTINGS_DEFINITIONS[masterKey] || null;
+}
+
 function createMasterSettingsRow(masterKey, values, index, options = {}) {
-  const definition = MASTER_SETTINGS_DEFINITIONS[masterKey];
+  const definition = getMasterSettingsDefinition(masterKey);
   const row = document.createElement("div");
   const fields = definition.fields || [];
   const primaryField = fields[0];
@@ -6485,12 +6736,14 @@ function createMasterSettingsRow(masterKey, values, index, options = {}) {
   row.className = `master-setting-row ${definition.rowClass}`;
   row.dataset.index = String(index);
   row.dataset.master = masterKey;
+  row.draggable = true;
 
   Object.entries(options.dataset || {}).forEach(([key, value]) => {
     row.dataset[key] = value;
   });
 
   row.innerHTML = `
+    <span class="master-drag-handle" aria-hidden="true" title="ドラッグで並び替え">≡</span>
     <div class="master-setting-fields ${contentClass}">
       <div class="settings-row-main">
         ${primaryField ? createMasterFieldControl(primaryField) : ""}
@@ -6613,7 +6866,7 @@ function saveSettingsFromForm() {
   renderSortingAppraisalFields(getSortingAppraisalValuesFromInputs());
   renderSettings();
   renderSorting();
-  showSuccessMessage("設定を保存しました");
+  showSuccessMessage("✔ 保存しました");
 }
 
 function hasSettingsFormChanges() {
@@ -6864,6 +7117,63 @@ function moveSettingsRow(row, direction) {
   }
 }
 
+function getDragInsertTarget(list, pointerY) {
+  const rows = [...list.querySelectorAll(".master-setting-row:not(.is-dragging)")];
+
+  return rows.reduce((closest, row) => {
+    const rect = row.getBoundingClientRect();
+    const offset = pointerY - rect.top - rect.height / 2;
+
+    if (offset < 0 && offset > closest.offset) {
+      return { offset, row };
+    }
+
+    return closest;
+  }, { offset: Number.NEGATIVE_INFINITY, row: null }).row;
+}
+
+function bindMasterSettingsDrag(list) {
+  list.addEventListener("dragstart", (event) => {
+    const row = event.target.closest(".master-setting-row");
+
+    if (!row) {
+      return;
+    }
+
+    row.classList.add("is-dragging");
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", row.dataset.index || "");
+  });
+
+  list.addEventListener("dragover", (event) => {
+    const draggingRow = list.querySelector(".master-setting-row.is-dragging");
+
+    if (!draggingRow) {
+      return;
+    }
+
+    event.preventDefault();
+    const insertTarget = getDragInsertTarget(list, event.clientY);
+
+    if (insertTarget) {
+      list.insertBefore(draggingRow, insertTarget);
+    } else {
+      list.append(draggingRow);
+    }
+  });
+
+  list.addEventListener("dragend", () => {
+    const draggingRow = list.querySelector(".master-setting-row.is-dragging");
+
+    if (!draggingRow) {
+      return;
+    }
+
+    draggingRow.classList.remove("is-dragging");
+    markSettingsDirty();
+  });
+}
+
 async function handleMasterSettingsListClick(event) {
   const button = event.target.closest("button");
   const row = event.target.closest(".master-setting-row");
@@ -6899,6 +7209,7 @@ async function handleMasterSettingsListClick(event) {
 function bindMasterSettingsList(list) {
   list.addEventListener("input", markSettingsDirty);
   list.addEventListener("click", handleMasterSettingsListClick);
+  bindMasterSettingsDrag(list);
 }
 
 function applyShippingMethodCost() {
@@ -6945,6 +7256,7 @@ function resetForm() {
   form.reset();
   itemIdInput.value = "";
   nameInput.value = "";
+  pendingFormItemCode = "";
   currentImageData = "";
   updateImagePreview("");
   imageProviderInput.value = "";
@@ -6966,6 +7278,7 @@ function resetForm() {
   updateFormSelectPlaceholderStates();
   refreshStorageLocationOptions();
   updateConditionQuickButtons();
+  updateImageReferenceMode();
   formDetailSections.forEach((details) => {
     details.open = false;
   });
@@ -6979,6 +7292,7 @@ function resetForm() {
 
 function startEdit(item, options = {}) {
   returnToDetailAfterEditId = options.returnToDetail ? item.id : "";
+  pendingFormItemCode = "";
   setActiveNavigation("form");
   hideCompletionPanel();
   itemIdInput.value = item.id;
@@ -7016,6 +7330,7 @@ function startEdit(item, options = {}) {
   googlePhotoImageIdInput.value = imageRefs.googlePhotoId;
   localImageIdInput.value = imageRefs.localImageId;
   cloudImageIdInput.value = imageRefs.cloudImageId;
+  updateImageReferenceMode();
   updateProfitPreview();
   updateSoldFieldsVisibility();
   updateFormSelectPlaceholderStates();
@@ -7215,9 +7530,9 @@ form.addEventListener("submit", (event) => {
   const existingItem = editingIndex >= 0 ? items[editingIndex] : {};
   const isSold = statusInput.value === "売却済み";
 
-  const formItem = {
-    id: formItemId,
-    itemCode: existingItem.itemCode || generateItemCode(),
+	  const formItem = {
+	    id: formItemId,
+	    itemCode: existingItem.itemCode || pendingFormItemCode || generateItemCode(),
     name: isSold ? (existingItem.name || normalizeText(listingTitleInput.value)) : normalizeText(listingTitleInput.value),
     listingTitle: isSold ? (getListingTitle(existingItem) || normalizeText(listingTitleInput.value)) : normalizeText(listingTitleInput.value),
     category: isSold ? (existingItem.category || categoryInput.value) : categoryInput.value,
@@ -7242,11 +7557,23 @@ form.addEventListener("submit", (event) => {
     memo: isSold ? (existingItem.memo || normalizeText(memoInput.value)) : normalizeText(memoInput.value),
     description: isSold ? (existingItem.description || normalizeText(descriptionInput.value)) : normalizeText(descriptionInput.value),
     priceLimitMemo: editingIndex >= 0 ? items[editingIndex].priceLimitMemo : "",
-    imageData: isSold ? (existingItem.imageData || currentImageData) : currentImageData,
-    imageRefs: getImageRefsFromForm(existingItem.imageRefs),
+	    imageData: isSold ? (existingItem.imageData || currentImageData) : currentImageData,
+	    imageRefs: getImageRefsFromForm(existingItem.imageRefs),
     editHistory: normalizeEditHistory(existingItem.editHistory),
     updatedAt: new Date().toISOString(),
-  };
+	  };
+
+	  if (formItem.imageData && !normalizeImageRefs(formItem.imageRefs).localImageId) {
+	    formItem.imageRefs = normalizeImageRefs({
+	      ...formItem.imageRefs,
+	      provider: normalizeImageRefs(formItem.imageRefs).provider || "local",
+	      localImageId: createLocalImageId(formItem),
+	    });
+	  }
+
+	  saveLocalImageRefsForItem(formItem, {
+	    localImageId: normalizeImageRefs(formItem.imageRefs).localImageId,
+	  });
 
   if (editingIndex >= 0) {
     formItem.editHistory = appendEditHistory(existingItem, getItemChangeDescriptions(existingItem, formItem), formItem.updatedAt);
@@ -7453,6 +7780,28 @@ function handleMobileCompactKeydown(event) {
 
 let compactLongPressTimer = null;
 let suppressedCompactClickId = "";
+let lockedScrollY = 0;
+
+function lockPageScroll() {
+  if (document.body.classList.contains("modal-scroll-locked")) {
+    return;
+  }
+
+  lockedScrollY = window.scrollY || document.documentElement.scrollTop || 0;
+  document.body.style.top = `-${lockedScrollY}px`;
+  document.body.classList.add("modal-scroll-locked");
+}
+
+function unlockPageScroll() {
+  if (!document.body.classList.contains("modal-scroll-locked")) {
+    return;
+  }
+
+  document.body.classList.remove("modal-scroll-locked");
+  document.body.style.top = "";
+  window.scrollTo(0, lockedScrollY);
+  lockedScrollY = 0;
+}
 
 function cancelCompactLongPress() {
   if (compactLongPressTimer) {
@@ -7788,13 +8137,16 @@ listPhotoInput.addEventListener("change", async () => {
   try {
     const imageData = await readImageFile(file);
 
-    if (!saveLocalItemImage(item, imageData)) {
-      throw new Error("この端末へ写真を保存できませんでした");
-    }
+	    if (!saveLocalItemImage(item, imageData)) {
+	      throw new Error("この端末へ写真を保存できませんでした");
+	    }
 
-    showToast("この端末へ写真を保存しました", "success");
-    render();
-  } catch (error) {
+	    showToast("この端末へ写真を保存しました", "success");
+	    render();
+	    if (currentDetailItem?.id === item.id && !detailModal.classList.contains("hidden")) {
+	      openDetailModal(item);
+	    }
+	  } catch (error) {
     showToast(error.message || "写真を保存できませんでした", "error");
   } finally {
     listPhotoInput.value = "";
@@ -7818,9 +8170,12 @@ imageInput.addEventListener("change", async () => {
   try {
     isImageProcessing = true;
     setSubmitDisabled(true);
-    imagePreview.textContent = "画像を準備中...";
-    currentImageData = await readImageFile(file);
-    updateImagePreview(currentImageData);
+	    imagePreview.textContent = "画像を準備中...";
+	    currentImageData = await readImageFile(file);
+	    imageProviderInput.value = imageProviderInput.value || "local";
+	    localImageIdInput.value = localImageIdInput.value || `LOCAL-${ensurePendingFormItemCode()}-${Date.now()}`;
+	    updateImageReferenceMode();
+	    updateImagePreview(currentImageData);
   } catch (error) {
     showErrorMessage(error.message);
     imageInput.value = "";
@@ -7840,13 +8195,40 @@ removeImageButton.addEventListener("click", () => {
 
 formCopyItemCodeButton.addEventListener("click", () => {
   const currentItem = items.find((item) => item.id === itemIdInput.value);
+  const itemCode = currentItem?.itemCode || pendingFormItemCode;
 
-  if (!currentItem?.itemCode) {
-    showToast("登録後に商品IDをコピーできます", "error");
+  if (!itemCode) {
+    showToast("先にGoogleフォトIDを生成するか、登録後にコピーできます", "error");
     return;
   }
 
-  copyText(currentItem.itemCode, "商品IDをコピーしました。");
+  copyText(itemCode, "商品IDをコピーしました。");
+});
+
+imageProviderInput.addEventListener("change", () => {
+  updateImageReferenceMode();
+  isFormDirty = true;
+});
+
+generateGooglePhotoIdButton.addEventListener("click", () => {
+  const itemCode = ensurePendingFormItemCode();
+  imageProviderInput.value = "google_photos";
+  googlePhotoImageIdInput.value = googlePhotoImageIdInput.value || createGooglePhotoId(itemCode);
+  updateImageReferenceMode();
+  updateFormItemCodeButton();
+  isFormDirty = true;
+  showToast("GoogleフォトIDを生成しました", "success");
+});
+
+copyFormGooglePhotoIdButton.addEventListener("click", () => {
+  const googlePhotoId = googlePhotoImageIdInput.value.trim();
+
+  if (!googlePhotoId) {
+    showToast("GoogleフォトIDが未入力です", "error");
+    return;
+  }
+
+  copyText(googlePhotoId, "GoogleフォトIDをコピーしました。");
 });
 
 cancelEditButton?.addEventListener("click", async () => {
@@ -8172,6 +8554,52 @@ destinationProfitButton?.addEventListener("click", () => {
   document.querySelector("#sortingListTitle")?.scrollIntoView({ behavior: "smooth", block: "start" });
 });
 
+document.querySelectorAll(".profit-candidate-card").forEach((card) => {
+  card.role = "button";
+  card.tabIndex = 0;
+  card.addEventListener("click", (event) => {
+    if (event.target.closest("button, a, input, select, textarea, summary")) {
+      return;
+    }
+
+    card.querySelector("button:not(:disabled)")?.click();
+  });
+  card.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") {
+      return;
+    }
+
+    event.preventDefault();
+    card.querySelector("button:not(:disabled)")?.click();
+  });
+});
+
+document.querySelector(".analysis-input-preview")?.addEventListener("click", (event) => {
+  if (event.target.closest("button, a, input, select, textarea, summary")) {
+    return;
+  }
+
+  if (!analysisInputIssueEditButton.disabled) {
+    analysisInputIssueEditButton.click();
+  }
+});
+
+const analysisInputPreviewCard = document.querySelector(".analysis-input-preview");
+if (analysisInputPreviewCard) {
+  analysisInputPreviewCard.role = "button";
+  analysisInputPreviewCard.tabIndex = 0;
+  analysisInputPreviewCard.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") {
+      return;
+    }
+
+    event.preventDefault();
+    if (!analysisInputIssueEditButton.disabled) {
+      analysisInputIssueEditButton.click();
+    }
+  });
+}
+
 analysisInputIssueEditButton?.addEventListener("click", () => {
   const item = items.find((currentItem) => currentItem.id === analysisInputIssueEditButton.dataset.id);
 
@@ -8386,6 +8814,10 @@ copyDetailDescriptionButton.addEventListener("click", () => {
 copyDetailItemIdButton.addEventListener("click", () => {
   copyText(currentDetailItem ? getItemCode(currentDetailItem) : "", "商品IDをコピーしました。");
 });
+copyGooglePhotoIdButton.addEventListener("click", () => {
+  const googlePhotoId = normalizeImageRefs(currentDetailItem?.imageRefs).googlePhotoId;
+  copyText(googlePhotoId, "GoogleフォトIDをコピーしました。");
+});
 copyGooglePhotoTagButton.addEventListener("click", () => {
   copyText(currentDetailItem ? createGooglePhotoTagText(currentDetailItem) : "", "Googleフォト用タグをコピーしました。");
 });
@@ -8403,6 +8835,16 @@ editDetailItemButton.addEventListener("click", () => {
     const itemToEdit = currentDetailItem;
     closeDetailModal();
     startEdit(itemToEdit, { returnToDetail: true });
+  }
+});
+changeDetailLocalPhotoButton.addEventListener("click", () => {
+  if (currentDetailItem) {
+    requestLocalPhoto(currentDetailItem.id);
+  }
+});
+removeDetailLocalPhotoButton.addEventListener("click", () => {
+  if (currentDetailItem) {
+    removeLocalPhoto(currentDetailItem);
   }
 });
 previousDetailItemButton?.addEventListener("click", () => {
@@ -8522,6 +8964,7 @@ if (ensureItemCodes(items)) {
 renderSettings();
 updateProfitPreview();
 updateSoldFieldsVisibility();
+updateImageReferenceMode();
 updateFormSelectPlaceholderStates();
 updateConditionQuickButtons();
 collapseCloudPanelOnMobile();

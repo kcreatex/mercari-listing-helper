@@ -17760,3 +17760,2045 @@ body.settings-view .template-setting-row .danger-button {
   grid-column: 3 !important;
   grid-row: 2 !important;
 }
+
+/* Final settings summary metrics: show counts on the right side. */
+body.settings-view details.settings-accordion > summary,
+body.settings-view .cloud-panel.settings-accordion > summary,
+body.settings-view .settings-maintenance.settings-accordion > summary {
+  grid-template-columns: 22px minmax(0, 1fr) max-content !important;
+}
+
+body.settings-view details.settings-accordion > summary .settings-summary-metrics {
+  display: flex !important;
+  grid-column: 3 !important;
+  width: auto !important;
+  min-width: max-content !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+body.settings-view details.settings-accordion > summary .settings-summary-count {
+  display: inline-flex !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+body.settings-view details.settings-accordion > summary .settings-summary-count[id$="UsageCount"] {
+  display: none !important;
+}
+
+/* Image management: shared Google Photos IDs + per-device local image IDs. */
+body.work-tab-form .form-details-photo,
+body.work-tab-form .form-details-listing {
+  overflow-x: hidden !important;
+}
+
+body.work-tab-form .photo-management-note {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  gap: 8px !important;
+  align-items: center !important;
+  margin-bottom: 10px !important;
+  padding: 10px !important;
+  border: 1px solid #eee5e0 !important;
+  border-radius: 10px !important;
+  background: #fffaf8 !important;
+}
+
+body.work-tab-form .photo-management-note strong,
+body.work-tab-form .photo-management-note p {
+  margin: 0 !important;
+  min-width: 0 !important;
+}
+
+body.work-tab-form .photo-management-note strong {
+  font-size: 12px !important;
+}
+
+body.work-tab-form .photo-management-note p {
+  color: #817773 !important;
+  font-size: 11px !important;
+  line-height: 1.35 !important;
+}
+
+body.work-tab-form .photo-management-note button {
+  grid-row: 1 / 3 !important;
+  min-width: 118px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+}
+
+body.work-tab-form .image-reference-grid {
+  align-items: stretch !important;
+}
+
+body.work-tab-form .image-reference-field {
+  position: relative !important;
+  gap: 6px !important;
+  padding: 9px !important;
+  border: 1px solid #ece5e1 !important;
+  border-radius: 10px !important;
+  background: #fff !important;
+}
+
+body.work-tab-form .image-reference-field > span:first-child {
+  display: flex !important;
+  gap: 6px !important;
+  align-items: baseline !important;
+  justify-content: space-between !important;
+  min-width: 0 !important;
+}
+
+body.work-tab-form .image-reference-field small,
+body.work-tab-form .image-reference-help {
+  color: #8a807b !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  line-height: 1.3 !important;
+}
+
+body.work-tab-form .image-reference-actions {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 6px !important;
+}
+
+body.work-tab-form .image-reference-actions button {
+  width: 100% !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  padding: 0 8px !important;
+  font-size: 11px !important;
+}
+
+body.work-tab-form .form-details-photo[data-image-provider="google_photos"] .image-reference-google,
+body.work-tab-form .form-details-photo[data-image-provider="local"] .image-reference-local,
+body.work-tab-form .form-details-photo[data-image-provider="cloud"] .image-reference-cloud {
+  border-color: #e6aaa0 !important;
+  background: #fff7f5 !important;
+}
+
+body.work-tab-form .form-details-photo[data-image-provider="cloud"] .image-reference-cloud::after {
+  content: "将来用";
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #f0ebe8;
+  color: #817773;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+body.work-tab-form .form-details-listing .form-detail-group,
+body.work-tab-form .form-details-listing .form-detail-group-grid {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+body.work-tab-form .form-details-listing label {
+  align-content: start !important;
+}
+
+body.work-tab-form .form-details-listing input,
+body.work-tab-form .form-details-listing select,
+body.work-tab-form .image-reference-grid input,
+body.work-tab-form .image-reference-grid select {
+  height: 44px !important;
+  min-height: 44px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  line-height: 1.2 !important;
+}
+
+body.work-tab-form .form-details-listing textarea {
+  min-height: 88px !important;
+}
+
+/* Master management and analysis polish: small, shared rules without changing current flows. */
+body.settings-view .master-setting-row,
+body.settings-view .shipping-setting-row,
+body.settings-view .template-setting-row {
+  grid-template-columns: 24px minmax(0, 1fr) 36px 36px 56px !important;
+  align-items: center !important;
+}
+
+body.settings-view .master-drag-handle {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  display: grid !important;
+  place-items: center !important;
+  width: 24px !important;
+  min-width: 24px !important;
+  height: 36px !important;
+  color: #9a908b !important;
+  font-size: 16px !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  cursor: grab !important;
+  user-select: none !important;
+}
+
+body.settings-view .master-setting-fields,
+body.settings-view .template-edit-fields,
+body.settings-view .settings-row-main {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+}
+
+body.settings-view .master-setting-row .compact-row-button[data-action="move-up"] {
+  grid-column: 3 !important;
+  grid-row: 1 !important;
+}
+
+body.settings-view .master-setting-row .compact-row-button[data-action="move-down"] {
+  grid-column: 4 !important;
+  grid-row: 1 !important;
+}
+
+body.settings-view .master-setting-row .danger-button {
+  grid-column: 5 !important;
+  grid-row: 1 !important;
+}
+
+body.settings-view .template-setting-row .template-edit-fields {
+  grid-column: 2 / -1 !important;
+  grid-row: 1 !important;
+}
+
+body.settings-view .template-setting-row .compact-row-button[data-action="move-up"] {
+  grid-column: 2 !important;
+  grid-row: 2 !important;
+}
+
+body.settings-view .template-setting-row .compact-row-button[data-action="move-down"] {
+  grid-column: 3 !important;
+  grid-row: 2 !important;
+}
+
+body.settings-view .template-setting-row .danger-button {
+  grid-column: 4 !important;
+  grid-row: 2 !important;
+}
+
+body.settings-view .settings-accordion,
+body.settings-view .master-setting-row,
+body.analysis-view .analysis-accordion,
+body.analysis-view .profit-candidate-card,
+body.analysis-view .analysis-input-preview,
+body.analysis-view .dashboard-card,
+body.analysis-view .mobile-asset-summary-grid > div {
+  transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease, transform 140ms ease;
+}
+
+body.analysis-view .mobile-asset-summary-grid > div {
+  border-color: #e9e2de !important;
+  background: #fff !important;
+}
+
+body.analysis-view .mobile-asset-summary-grid > div:nth-child(1) {
+  border-left: 3px solid #a5a09d !important;
+  background: #fbfaf9 !important;
+}
+
+body.analysis-view .mobile-asset-summary-grid > div:nth-child(2),
+body.analysis-view .mobile-asset-summary-grid > div:nth-child(3) {
+  border-left: 3px solid #7aa7d9 !important;
+  background: #f7fbff !important;
+}
+
+body.analysis-view .mobile-asset-summary-grid > div:nth-child(4) {
+  border-left: 3px solid #8aa7d1 !important;
+  background: #f8fbff !important;
+}
+
+body.analysis-view .mobile-asset-summary-grid > div:nth-child(5) {
+  border-left: 3px solid #74b883 !important;
+  background: #f7fff8 !important;
+}
+
+body.analysis-view .mobile-asset-summary-grid > div:nth-child(6) {
+  border-left: 3px solid #df7d72 !important;
+  background: #fff8f6 !important;
+}
+
+body.analysis-view .profit-candidate-card,
+body.analysis-view .analysis-input-preview {
+  cursor: pointer !important;
+}
+
+body.analysis-view .profit-candidate-card:hover,
+body.analysis-view .profit-candidate-card:focus-within,
+body.analysis-view .analysis-input-preview:hover,
+body.analysis-view .analysis-input-preview:focus-within {
+  border-color: #e3c0b8 !important;
+  background: #fffaf8 !important;
+}
+
+body.analysis-view .profit-candidate-card:active,
+body.analysis-view .analysis-input-preview:active,
+body.analysis-view .dashboard-card:active {
+  transform: scale(0.995) !important;
+}
+
+body.analysis-view details.analysis-accordion {
+  border-color: #ebe5e1 !important;
+  background: #fffdfc !important;
+}
+
+body.analysis-view details.analysis-accordion:not([open]) > summary {
+  min-height: 40px !important;
+  background: #faf8f7 !important;
+}
+
+body.analysis-view details.analysis-accordion[open] > summary {
+  border-bottom: 1px solid #eee8e5 !important;
+  background: #fff !important;
+}
+
+body.analysis-view .input-issue-tags,
+body.analysis-view .analysis-issue-tags {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 5px !important;
+  min-width: 0 !important;
+}
+
+body.analysis-view .input-issue-tag {
+  display: inline-flex !important;
+  align-items: center !important;
+  max-width: 100% !important;
+  min-height: 22px !important;
+  padding: 2px 7px !important;
+  border: 1px solid #f0c4bd !important;
+  border-radius: 999px !important;
+  background: #fff5f3 !important;
+  color: #b34b43 !important;
+  font-size: 10.5px !important;
+  font-weight: 850 !important;
+  line-height: 1.2 !important;
+  white-space: nowrap !important;
+}
+
+body.analysis-view .input-issue-item .input-issue-tags {
+  grid-column: 1 / -2 !important;
+}
+
+body.analysis-view .buried-ranking-item strong,
+body.analysis-view .excavation-ranking-item strong {
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
+body.analysis-view .buried-ranking-item strong::before,
+body.analysis-view .excavation-ranking-item strong::before {
+  margin-right: 3px !important;
+  content: "•" !important;
+  color: #b76c5f !important;
+}
+
+body.analysis-view .buried-ranking-item:nth-child(1) strong::before,
+body.analysis-view .excavation-ranking-item:nth-child(1) strong::before {
+  content: "🥇" !important;
+}
+
+body.analysis-view .buried-ranking-item:nth-child(2) strong::before,
+body.analysis-view .excavation-ranking-item:nth-child(2) strong::before {
+  content: "🥈" !important;
+}
+
+body.analysis-view .buried-ranking-item:nth-child(3) strong::before,
+body.analysis-view .excavation-ranking-item:nth-child(3) strong::before {
+  content: "🥉" !important;
+}
+
+body.analysis-view .analysis-empty-state {
+  display: grid !important;
+  grid-template-columns: 34px minmax(0, 1fr) auto !important;
+  gap: 8px !important;
+  align-items: center !important;
+  width: 100% !important;
+  min-height: 58px !important;
+  padding: 10px !important;
+  border: 1px dashed #e4dcd8 !important;
+  border-radius: 10px !important;
+  background: #fffaf8 !important;
+}
+
+body.analysis-view .analysis-empty-icon {
+  display: grid !important;
+  place-items: center !important;
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 10px !important;
+  background: #f4eeeb !important;
+  font-size: 17px !important;
+}
+
+body.analysis-view .analysis-empty-state > div {
+  display: grid !important;
+  gap: 2px !important;
+  min-width: 0 !important;
+}
+
+body.analysis-view .analysis-empty-state strong {
+  overflow: hidden !important;
+  color: #3a3330 !important;
+  font-size: 12px !important;
+  font-weight: 850 !important;
+  line-height: 1.25 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+body.analysis-view .analysis-empty-state small {
+  overflow: hidden !important;
+  color: #817773 !important;
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  line-height: 1.35 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+body.analysis-view .analysis-empty-action {
+  width: auto !important;
+  min-width: 104px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 0 10px !important;
+  font-size: 11px !important;
+}
+
+body.analysis-view .storage-report-card > summary {
+  background: #fff !important;
+}
+
+body.analysis-view .storage-report-card summary dl {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 5px 8px !important;
+}
+
+body.analysis-view .storage-report-card summary dl div,
+body.analysis-view .storage-report-detail div {
+  min-height: 22px !important;
+}
+
+body.analysis-view .storage-report-detail {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  padding-top: 8px !important;
+  border-top: 1px solid #eee8e5 !important;
+}
+
+body.analysis-view .storage-report-card dd,
+body.analysis-view .storage-report-detail dd {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+body.analysis-view .buried-ranking-item,
+body.analysis-view .excavation-ranking-item {
+  grid-template-columns: 48px minmax(0, 1fr) minmax(82px, auto) !important;
+  min-height: 52px !important;
+  padding: 9px 10px !important;
+  border-color: #e9e2de !important;
+  background: #fff !important;
+}
+
+body.analysis-view .buried-ranking-item strong,
+body.analysis-view .excavation-ranking-item strong {
+  grid-column: 1 !important;
+  grid-row: 1 / 3 !important;
+  align-self: center !important;
+  color: #3f3734 !important;
+  font-size: 12px !important;
+}
+
+body.analysis-view .buried-ranking-item span:nth-child(2),
+body.analysis-view .excavation-ranking-item span:nth-child(2) {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  color: #2f2926 !important;
+  font-size: 12.5px !important;
+  font-weight: 850 !important;
+}
+
+body.analysis-view .buried-ranking-item span:nth-child(3),
+body.analysis-view .excavation-ranking-item span:nth-child(3) {
+  grid-column: 2 !important;
+  grid-row: 2 !important;
+  color: #746b66 !important;
+  font-size: 11px !important;
+}
+
+body.analysis-view .buried-ranking-item span:nth-child(4),
+body.analysis-view .excavation-ranking-item span:nth-child(4) {
+  grid-column: 3 !important;
+  grid-row: 1 / 3 !important;
+  align-self: center !important;
+  justify-self: end !important;
+  color: #357343 !important;
+  font-size: 11.5px !important;
+  font-weight: 900 !important;
+  text-align: right !important;
+}
+
+body.analysis-view .input-issue-item {
+  border-left: 3px solid #df7d72 !important;
+  background: #fff !important;
+}
+
+body.analysis-view .input-issue-item:hover,
+body.analysis-view .input-issue-item:focus {
+  background: #fff8f6 !important;
+}
+
+body.analysis-view button,
+body.analysis-view .ghost-button,
+body.analysis-view .text-button {
+  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease, transform 120ms ease, box-shadow 140ms ease !important;
+}
+
+body.analysis-view button:active,
+body.analysis-view .ghost-button:active,
+body.analysis-view .text-button:active {
+  transform: scale(0.98) !important;
+}
+
+body.analysis-view details.analysis-accordion > :not(summary) {
+  animation: analysisAccordionOpen 160ms ease-out;
+}
+
+@keyframes analysisAccordionOpen {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 700px) {
+  body.settings-view .master-setting-row,
+  body.settings-view .shipping-setting-row {
+    grid-template-columns: 24px minmax(0, 1fr) 34px 34px 54px !important;
+  }
+
+  body.settings-view .template-setting-row {
+    grid-template-columns: 24px minmax(0, 1fr) 34px 34px 54px !important;
+  }
+
+  body.settings-view .master-drag-handle {
+    width: 22px !important;
+    min-width: 22px !important;
+  }
+
+  body.analysis-view .analysis-empty-state {
+    grid-template-columns: 30px minmax(0, 1fr) !important;
+  }
+
+  body.analysis-view .analysis-empty-action {
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+  }
+
+  body.analysis-view .storage-report-card summary dl,
+  body.analysis-view .storage-report-detail {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  body.analysis-view .buried-ranking-item,
+  body.analysis-view .excavation-ranking-item {
+    grid-template-columns: 42px minmax(0, 1fr) minmax(74px, auto) !important;
+  }
+}
+
+/* Mobile master rows: keep editing fields wide, actions compact below. */
+@media (max-width: 700px) {
+  body.settings-view .master-setting-row,
+  body.settings-view .shipping-setting-row,
+  body.settings-view .template-setting-row {
+    grid-template-columns: 24px minmax(0, 1fr) 54px 54px 64px !important;
+    align-items: start !important;
+  }
+
+  body.settings-view .master-drag-handle {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+  }
+
+  body.settings-view .master-setting-fields,
+  body.settings-view .template-edit-fields,
+  body.settings-view .settings-row-main {
+    grid-column: 2 / -1 !important;
+    grid-row: 1 !important;
+  }
+
+  body.settings-view .master-setting-row .compact-row-button[data-action="move-up"] {
+    grid-column: 2 !important;
+    grid-row: 2 !important;
+  }
+
+  body.settings-view .master-setting-row .compact-row-button[data-action="move-down"] {
+    grid-column: 3 !important;
+    grid-row: 2 !important;
+  }
+
+  body.settings-view .master-setting-row .danger-button {
+    grid-column: 4 / 6 !important;
+    grid-row: 2 !important;
+  }
+}
+
+body.work-tab-form .registration-card {
+  padding-bottom: calc(164px + env(safe-area-inset-bottom)) !important;
+}
+
+/* Settings polish: master-management list with icons, counts, drag handles, and a calmer premium feel. */
+body.settings-view details.settings-accordion,
+body.settings-view .cloud-panel.settings-accordion,
+body.settings-view .settings-maintenance.settings-accordion {
+  border-color: #e9e1dd !important;
+  border-radius: 14px !important;
+  background: linear-gradient(180deg, #fff, #fffdfc) !important;
+  box-shadow: 0 6px 18px rgba(63, 50, 45, 0.04) !important;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 140ms ease, background-color 160ms ease !important;
+}
+
+body.settings-view details.settings-accordion[open],
+body.settings-view .cloud-panel.settings-accordion[open],
+body.settings-view .settings-maintenance.settings-accordion[open] {
+  border-color: #e2d3cd !important;
+  box-shadow: 0 10px 24px rgba(63, 50, 45, 0.065) !important;
+}
+
+body.settings-view details.settings-accordion > summary,
+body.settings-view .cloud-panel.settings-accordion > summary,
+body.settings-view .settings-maintenance.settings-accordion > summary {
+  grid-template-columns: 22px minmax(0, 1fr) auto !important;
+  min-height: 60px !important;
+  padding: 10px 12px !important;
+}
+
+body.settings-view .settings-summary-label,
+body.settings-view .cloud-panel.settings-accordion > summary .settings-summary-label,
+body.settings-view .settings-maintenance.settings-accordion > summary .settings-summary-label {
+  grid-column: 2 !important;
+  gap: 4px !important;
+}
+
+body.settings-view .settings-title-line {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+  color: #2f2926 !important;
+  font-size: 13.5px !important;
+  font-weight: 900 !important;
+  line-height: 1.2 !important;
+}
+
+body.settings-view .settings-section-icon {
+  display: grid !important;
+  place-items: center !important;
+  width: 24px !important;
+  min-width: 24px !important;
+  height: 24px !important;
+  border-radius: 8px !important;
+  background: #f6efeb !important;
+  font-size: 14px !important;
+}
+
+body.settings-view .settings-summary-metrics {
+  grid-column: 3 !important;
+  display: flex !important;
+  justify-content: flex-end !important;
+  align-items: center !important;
+  gap: 5px !important;
+  min-width: max-content !important;
+}
+
+body.settings-view .settings-summary-count {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 42px !important;
+  min-height: 24px !important;
+  padding: 3px 8px !important;
+  border: 1px solid #eadfd9 !important;
+  border-radius: 999px !important;
+  background: #fff8f5 !important;
+  color: #6c5b55 !important;
+  font-size: 10.5px !important;
+  font-weight: 850 !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
+body.settings-view .settings-summary-count[id$="UsageCount"] {
+  display: none !important;
+}
+
+body.settings-view details.settings-accordion[open] > :not(summary),
+body.settings-view .cloud-panel.settings-accordion[open] > :not(summary),
+body.settings-view .settings-maintenance.settings-accordion[open] > :not(summary) {
+  animation: settingsAccordionOpen 160ms ease-out;
+}
+
+@keyframes settingsAccordionOpen {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+body.settings-view .master-setting-row,
+body.settings-view .shipping-setting-row,
+body.settings-view .template-setting-row {
+  border-radius: 11px !important;
+  background: #fff !important;
+  transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease, transform 130ms ease, opacity 130ms ease !important;
+}
+
+body.settings-view .master-setting-row.is-dragging {
+  opacity: 0.62 !important;
+  border-color: #d9b7ad !important;
+  background: #fff7f4 !important;
+  box-shadow: 0 12px 24px rgba(63, 50, 45, 0.12) !important;
+}
+
+body.settings-view .master-drag-handle {
+  border: 1px solid #eee4df !important;
+  border-radius: 9px !important;
+  background: #faf7f5 !important;
+  color: #8a7b75 !important;
+}
+
+body.settings-view .master-drag-handle:active {
+  cursor: grabbing !important;
+  transform: scale(0.96) !important;
+}
+
+body.settings-view .master-setting-row .compact-row-button[data-action="move-up"],
+body.settings-view .master-setting-row .compact-row-button[data-action="move-down"],
+body.settings-view .shipping-setting-row .compact-row-button[data-action="move-up"],
+body.settings-view .shipping-setting-row .compact-row-button[data-action="move-down"],
+body.settings-view .template-setting-row .compact-row-button[data-action="move-up"],
+body.settings-view .template-setting-row .compact-row-button[data-action="move-down"] {
+  position: absolute !important;
+  width: 1px !important;
+  min-width: 1px !important;
+  height: 1px !important;
+  min-height: 1px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+body.settings-view .master-setting-row input,
+body.settings-view .master-setting-row textarea,
+body.settings-view .shipping-add-row input,
+body.settings-view .category-add-row input,
+body.settings-view .storage-add-row input,
+body.settings-view .appraisal-add-row input,
+body.settings-view .template-add-row input,
+body.settings-view .template-add-row textarea,
+body.settings-view .cloud-login-form input {
+  min-height: 38px !important;
+  height: 38px !important;
+  padding: 7px 10px !important;
+  border-radius: 9px !important;
+  font-size: 13px !important;
+}
+
+body.settings-view .master-setting-row textarea,
+body.settings-view .template-add-row textarea {
+  height: auto !important;
+  min-height: 92px !important;
+}
+
+body.settings-view button,
+body.settings-view .ghost-button,
+body.settings-view .primary-button,
+body.settings-view .danger-button {
+  min-height: 40px !important;
+  height: 40px !important;
+  border-radius: 10px !important;
+  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease, transform 120ms ease, box-shadow 140ms ease !important;
+}
+
+body.settings-view button:active,
+body.settings-view .ghost-button:active,
+body.settings-view .primary-button:active,
+body.settings-view .danger-button:active {
+  transform: scale(0.98) !important;
+}
+
+body.settings-view .settings-add-toggle::before {
+  content: "+ ";
+  font-weight: 900;
+}
+
+body.settings-view .settings-maintenance.settings-accordion {
+  border-color: #e7c5bf !important;
+  background: #fff8f6 !important;
+}
+
+body.settings-view .settings-maintenance.settings-accordion > summary .settings-section-icon {
+  background: #ffe7e2 !important;
+}
+
+body.settings-view .settings-maintenance-actions {
+  padding: 10px !important;
+  border: 1px solid #edc8c2 !important;
+  border-radius: 12px !important;
+  background: #fff4f1 !important;
+}
+
+body.settings-view .settings-maintenance-actions::before {
+  content: "⚠ 危険操作";
+  color: #a7433a;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+body.settings-view .settings-maintenance-actions .danger-button {
+  border-color: #de8f85 !important;
+  background: #fff !important;
+  color: #9e3c34 !important;
+}
+
+body.settings-view .settings-maintenance-actions .danger-button:hover {
+  background: #fff0ed !important;
+}
+
+body.settings-view .master-setting-row,
+body.settings-view .shipping-setting-row,
+body.settings-view .template-setting-row {
+  position: relative !important;
+  grid-template-columns: 28px minmax(0, 1fr) 64px !important;
+}
+
+body.settings-view .master-setting-fields,
+body.settings-view .settings-row-main {
+  grid-column: 2 !important;
+}
+
+body.settings-view .template-setting-row .template-edit-fields {
+  grid-column: 2 / 4 !important;
+  grid-row: 1 !important;
+}
+
+body.settings-view .master-setting-row .danger-button,
+body.settings-view .shipping-setting-row .danger-button {
+  grid-column: 3 !important;
+  grid-row: 1 !important;
+}
+
+body.settings-view .template-setting-row .danger-button {
+  grid-column: 3 !important;
+  grid-row: 2 !important;
+}
+
+@media (max-width: 700px) {
+  body.work-tab-form #itemForm select.condition-hidden-select,
+  body.work-tab-form .condition-hidden-select {
+    position: absolute !important;
+    width: 1px !important;
+    max-width: 1px !important;
+    min-width: 0 !important;
+    height: 1px !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+
+  body.work-tab-form .photo-management-note {
+    grid-template-columns: 1fr !important;
+    gap: 6px !important;
+    padding: 9px !important;
+  }
+
+  body.work-tab-form .photo-management-note button {
+    grid-row: auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  body.work-tab-form .image-reference-field {
+    padding: 8px !important;
+  }
+
+  body.work-tab-form .image-reference-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+body.work-tab-form .registration-card {
+    padding-bottom: calc(178px + env(safe-area-inset-bottom)) !important;
+  }
+}
+
+/* Final settings row layout: drag handle, editable field, delete action. */
+body.settings-view .master-setting-row,
+body.settings-view .shipping-setting-row,
+body.settings-view .template-setting-row {
+  position: relative !important;
+  grid-template-columns: 28px minmax(0, 1fr) 64px !important;
+}
+
+body.settings-view .master-setting-row .master-drag-handle,
+body.settings-view .shipping-setting-row .master-drag-handle,
+body.settings-view .template-setting-row .master-drag-handle {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+}
+
+body.settings-view .master-setting-row .master-setting-fields,
+body.settings-view .shipping-setting-row .master-setting-fields {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+}
+
+body.settings-view .template-setting-row .template-edit-fields {
+  grid-column: 2 / 4 !important;
+  grid-row: 1 !important;
+}
+
+body.settings-view .master-setting-row .danger-button,
+body.settings-view .shipping-setting-row .danger-button {
+  grid-column: 3 !important;
+  grid-row: 1 !important;
+}
+
+body.settings-view .template-setting-row .danger-button {
+  grid-column: 3 !important;
+  grid-row: 2 !important;
+}
+
+/* Smartphone inventory polish: compact controls, visible action sheets, and modal-only scrolling. */
+body.modal-scroll-locked {
+  position: fixed !important;
+  right: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  overflow: hidden !important;
+  touch-action: none;
+}
+
+body.work-tab-list .list-panel,
+body.work-tab-list .list-panel * {
+  box-sizing: border-box;
+}
+
+body.work-tab-list .inventory-primary-search {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.35fr) minmax(118px, 0.85fr) !important;
+  gap: 6px !important;
+  align-items: stretch !important;
+  width: 100% !important;
+  max-width: none !important;
+  margin: 4px 0 8px !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+body.work-tab-list .inventory-primary-search #searchInput,
+body.work-tab-list .inventory-primary-search #statusFilter {
+  grid-column: auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  min-height: 38px !important;
+  height: 38px !important;
+  padding: 7px 9px !important;
+  border: 1px solid #ded6d1 !important;
+  border-radius: 10px !important;
+  background-color: #fff !important;
+  font-size: 12px !important;
+  line-height: 1.2 !important;
+}
+
+body.work-tab-list .compact-table-grid,
+body.work-tab-list .mobile-card-list,
+body.work-tab-list .inventory-shelf-list,
+body.work-tab-list .compact-table-grid * {
+  overflow: visible !important;
+}
+
+body.work-tab-list .mobile-compact-table-card {
+  position: relative !important;
+  grid-template-columns: 42px minmax(0, 1fr) 34px !important;
+  gap: 7px !important;
+  min-height: 58px !important;
+  padding: 6px !important;
+  border: 1px solid #e8e1dd !important;
+  border-radius: 9px !important;
+  background: #fff !important;
+}
+
+body.work-tab-list .mobile-compact-table-card + .mobile-compact-table-card {
+  margin-top: 5px !important;
+}
+
+body.work-tab-list .mobile-compact-content {
+  grid-template-columns: minmax(0, 1fr) minmax(72px, auto) !important;
+  gap: 2px 6px !important;
+  padding-right: 0 !important;
+}
+
+body.work-tab-list .mobile-compact-title {
+  font-size: 11.5px !important;
+  line-height: 1.22 !important;
+}
+
+body.work-tab-list .mobile-compact-storage,
+body.work-tab-list .mobile-compact-destination {
+  font-size: 9.5px !important;
+  line-height: 1.2 !important;
+}
+
+body.work-tab-list .mobile-compact-offer {
+  min-width: 70px !important;
+  font-size: 10.5px !important;
+  line-height: 1.2 !important;
+  white-space: nowrap !important;
+}
+
+body.work-tab-list .mobile-compact-offer.profit-level-low,
+body.work-tab-list .mobile-compact-offer.profit-level-green,
+body.work-tab-list .mobile-compact-offer.profit-level-blue,
+body.work-tab-list .mobile-compact-offer.profit-level-gold,
+body.work-tab-list .mobile-compact-offer.profit-positive {
+  color: #167047 !important;
+}
+
+body.work-tab-list .mobile-compact-offer.profit-negative {
+  color: #b73027 !important;
+}
+
+body.work-tab-list .mobile-compact-offer.profit-unset {
+  color: #8a817d !important;
+}
+
+body.work-tab-list .mobile-compact-actions {
+  position: static !important;
+  z-index: 40 !important;
+}
+
+body.work-tab-list .mobile-compact-actions > summary,
+body.work-tab-list .compact-list-actions > summary {
+  width: 32px !important;
+  min-width: 32px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+}
+
+@media (max-width: 700px) {
+  body.work-tab-list .row-action-menu[open] .actions {
+    position: fixed !important;
+    right: 12px !important;
+    bottom: calc(14px + env(safe-area-inset-bottom)) !important;
+    left: 12px !important;
+    top: auto !important;
+    z-index: 20000 !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 7px !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    max-height: min(68vh, 420px) !important;
+    padding: 12px !important;
+    overflow-y: auto !important;
+    border: 1px solid #ddd4cf !important;
+    border-radius: 16px !important;
+    background: #fff !important;
+    box-shadow: 0 -12px 36px rgba(48, 43, 41, 0.22) !important;
+  }
+
+  body.work-tab-list .row-action-menu[open] .actions button {
+    min-height: 40px !important;
+    height: 40px !important;
+    padding: 6px 8px !important;
+    font-size: 12px !important;
+  }
+}
+
+.detail-modal-panel {
+  display: flex !important;
+  flex-direction: column !important;
+  max-height: min(88vh, 780px) !important;
+  overflow: hidden !important;
+  overscroll-behavior: contain !important;
+}
+
+.detail-modal-content {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior: contain !important;
+  padding-right: 2px !important;
+}
+
+.detail-modal-panel .modal-actions {
+  flex: 0 0 auto !important;
+}
+
+.detail-priority-summary {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 6px !important;
+}
+
+.detail-summary-card {
+  min-height: 54px !important;
+  padding: 7px 5px !important;
+}
+
+.detail-summary-card span {
+  font-size: 9.5px !important;
+}
+
+.detail-summary-card strong {
+  font-size: 11.5px !important;
+}
+
+body.work-tab-list .inventory-toolbar {
+  display: grid !important;
+  gap: 8px !important;
+  margin-top: 8px !important;
+}
+
+body.work-tab-list .inventory-toolbar-section {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  border: 1px solid #e6ded9 !important;
+  border-radius: 10px !important;
+  background: #fff !important;
+}
+
+body.work-tab-list .inventory-toolbar-section > summary {
+  display: grid !important;
+  grid-template-columns: 22px minmax(0, 1fr) !important;
+  gap: 8px !important;
+  align-items: center !important;
+  min-height: 40px !important;
+  padding: 8px 10px !important;
+  list-style: none !important;
+}
+
+body.work-tab-list .inventory-toolbar-section > summary::-webkit-details-marker {
+  display: none !important;
+}
+
+body.work-tab-list .inventory-toolbar-section > summary::before {
+  position: static !important;
+  grid-column: 1 !important;
+  width: 22px !important;
+  min-width: 22px !important;
+  margin: 0 !important;
+  color: #8a817d !important;
+  content: "▶" !important;
+  font-size: 11px !important;
+  line-height: 1 !important;
+  text-align: center !important;
+  transform: none !important;
+}
+
+body.work-tab-list .inventory-toolbar-section[open] > summary::before {
+  content: "▼" !important;
+}
+
+body.work-tab-list .inventory-toolbar-section > summary::after {
+  display: none !important;
+  content: none !important;
+}
+
+body.work-tab-list .inventory-toolbar-section > summary .section-icon {
+  display: none !important;
+}
+
+body.work-tab-list .inventory-option-summary-copy {
+  display: grid !important;
+  gap: 1px !important;
+  min-width: 0 !important;
+}
+
+body.work-tab-list .inventory-option-summary-copy strong {
+  overflow: hidden !important;
+  color: #3d3531 !important;
+  font-size: 12.5px !important;
+  line-height: 1.25 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+body.work-tab-list .inventory-option-summary-copy small {
+  overflow: hidden !important;
+  color: #8a817d !important;
+  font-size: 10.5px !important;
+  line-height: 1.2 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+body.work-tab-list .inventory-section-body {
+  padding: 0 10px 10px !important;
+}
+
+body.work-tab-list .inventory-setting-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+
+body.work-tab-list .inventory-setting-wide {
+  grid-column: span 1 !important;
+}
+
+body.work-tab-list .inventory-setting-group {
+  display: grid !important;
+  gap: 4px !important;
+  min-width: 0 !important;
+}
+
+body.work-tab-list .inventory-setting-label {
+  margin: 0 !important;
+  color: #756c67 !important;
+  font-size: 10.5px !important;
+  font-weight: 850 !important;
+  line-height: 1.2 !important;
+}
+
+body.work-tab-list .inventory-setting-group select,
+body.work-tab-list .inventory-control-group button {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 38px !important;
+  height: 38px !important;
+  padding: 6px 8px !important;
+  border-radius: 9px !important;
+  font-size: 11.5px !important;
+  line-height: 1.2 !important;
+}
+
+body.work-tab-list .inventory-control-group {
+  display: grid !important;
+  gap: 6px !important;
+  width: 100% !important;
+}
+
+body.work-tab-list .inventory-target-toggle,
+body.work-tab-list .storage-view-toggle,
+body.work-tab-list .view-toggle,
+body.work-tab-list .quick-actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+body.work-tab-list .inventory-control-group .active {
+  border-color: #e2b8b1 !important;
+  background: #fff4f2 !important;
+  color: #8c312a !important;
+}
+
+body.work-tab-list .csv-target-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 6px !important;
+}
+
+body.work-tab-list .csv-target-grid label {
+  min-height: 34px !important;
+  height: 34px !important;
+  padding: 5px 8px !important;
+  border-radius: 9px !important;
+  font-size: 11px !important;
+  line-height: 1.2 !important;
+}
+
+body.work-tab-list .csv-target-grid input {
+  width: 14px !important;
+  min-width: 14px !important;
+  height: 14px !important;
+  min-height: 14px !important;
+}
+
+body.work-tab-list .csv-export-action {
+  width: 100% !important;
+  min-height: 38px !important;
+  height: 38px !important;
+  margin-top: 8px !important;
+}
+
+@media (max-width: 390px) {
+  body.work-tab-list .inventory-primary-search {
+    grid-template-columns: minmax(0, 1.2fr) minmax(104px, 0.8fr) !important;
+    gap: 5px !important;
+  }
+
+  body.work-tab-list .inventory-primary-search #searchInput,
+  body.work-tab-list .inventory-primary-search #statusFilter {
+    font-size: 11px !important;
+    padding-right: 7px !important;
+    padding-left: 7px !important;
+  }
+
+  .detail-priority-summary {
+    gap: 5px !important;
+  }
+}
+
+/* Sorting mobile polish: separate search, sorting controls, filters, and stable shipping rows. */
+body.work-tab-sorting .sorting-work-toolbar,
+body.work-tab-sorting .sorting-work-toolbar * {
+  box-sizing: border-box;
+}
+
+body.work-tab-sorting .sorting-toolbar-label {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #756c67;
+  font-size: 11px;
+  font-weight: 850;
+  line-height: 1.2;
+}
+
+body.work-tab-sorting .sorting-work-toolbar {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.9fr) minmax(0, 0.9fr) !important;
+  gap: 6px !important;
+  align-items: stretch !important;
+  width: 100% !important;
+  margin: 8px 0 !important;
+}
+
+body.work-tab-sorting #sortingItemSearch {
+  grid-column: 1 / -1 !important;
+}
+
+body.work-tab-sorting #sortingOrder,
+body.work-tab-sorting #sortingShippingModeButton {
+  grid-column: auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 40px !important;
+  height: 40px !important;
+  padding: 7px 9px !important;
+  border-radius: 10px !important;
+  font-size: 12px !important;
+  line-height: 1.2 !important;
+}
+
+body.work-tab-sorting #sortingShippingModeButton,
+body.work-tab-sorting #sortingShippingModeButton.active {
+  max-width: none !important;
+  transform: none !important;
+}
+
+@media (max-width: 700px) {
+  body.work-tab-sorting .sorting-work-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  body.work-tab-sorting #sortingItemSearch,
+  body.work-tab-sorting .sorting-toolbar-label {
+    grid-column: 1 / -1 !important;
+  }
+
+  body.work-tab-sorting #sortingOrder,
+  body.work-tab-sorting #sortingShippingModeButton {
+    grid-column: auto !important;
+  }
+}
+
+body.work-tab-sorting .sorting-filter-panel {
+  margin: 8px 0 10px !important;
+  overflow: hidden !important;
+  border: 1px solid #e6ded9 !important;
+  border-radius: 10px !important;
+  background: #fff !important;
+}
+
+body.work-tab-sorting .sorting-filter-panel > summary {
+  display: grid !important;
+  grid-template-columns: 22px minmax(0, 1fr) !important;
+  gap: 8px !important;
+  align-items: center !important;
+  min-height: 40px !important;
+  padding: 8px 10px !important;
+  color: #3d3531 !important;
+  font-size: 12.5px !important;
+  font-weight: 850 !important;
+  list-style: none !important;
+  white-space: nowrap !important;
+}
+
+body.work-tab-sorting .sorting-filter-panel > summary::-webkit-details-marker {
+  display: none !important;
+}
+
+body.work-tab-sorting .sorting-filter-panel > summary::before {
+  position: static !important;
+  grid-column: 1 !important;
+  width: 22px !important;
+  min-width: 22px !important;
+  margin: 0 !important;
+  color: #8a817d !important;
+  content: "▶" !important;
+  font-size: 11px !important;
+  line-height: 1 !important;
+  text-align: center !important;
+  transform: none !important;
+}
+
+body.work-tab-sorting .sorting-filter-panel[open] > summary::before {
+  content: "▼" !important;
+}
+
+body.work-tab-sorting .sorting-filter-panel > summary::after {
+  display: none !important;
+  content: none !important;
+}
+
+body.work-tab-sorting .sorting-filter-panel-body {
+  padding: 0 10px 10px !important;
+}
+
+body.work-tab-sorting .sorting-summary-grid {
+  gap: 6px !important;
+}
+
+body.work-tab-sorting .sorting-summary-chip {
+  min-height: 34px !important;
+  padding: 5px 8px !important;
+  border-radius: 9px !important;
+  font-size: 11px !important;
+}
+
+body.work-tab-sorting .sorting-work-card-list:not(.hidden) {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 6px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow: visible !important;
+}
+
+body.work-tab-sorting .sorting-work-card,
+body.work-tab-sorting .sorting-work-card.shipping-mode-card {
+  position: relative !important;
+  display: grid !important;
+  grid-template-columns: 42px minmax(0, 1fr) 82px !important;
+  grid-template-rows: auto auto !important;
+  gap: 3px 8px !important;
+  align-items: center !important;
+  width: 100% !important;
+  min-height: 62px !important;
+  padding: 6px !important;
+  overflow: visible !important;
+  border: 1px solid #e8e1dd !important;
+  border-radius: 9px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+body.work-tab-sorting .sorting-work-card.shipping-mode-card {
+  grid-template-columns: 24px 42px minmax(0, 1fr) 82px !important;
+}
+
+body.work-tab-sorting .sorting-work-thumb {
+  grid-column: 1 !important;
+  grid-row: 1 / 3 !important;
+  align-self: center !important;
+}
+
+body.work-tab-sorting .shipping-mode-card .sorting-work-thumb {
+  grid-column: 2 !important;
+}
+
+body.work-tab-sorting .sorting-pick-check {
+  grid-column: 1 !important;
+  grid-row: 1 / 3 !important;
+  align-self: center !important;
+  justify-self: center !important;
+}
+
+body.work-tab-sorting .sorting-work-thumb .list-thumbnail-button {
+  width: 40px !important;
+  min-width: 40px !important;
+  max-width: 40px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
+}
+
+body.work-tab-sorting .sorting-work-card-body {
+  grid-column: 2 !important;
+  grid-row: 1 / 3 !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 2px !important;
+  min-width: 0 !important;
+  align-self: center !important;
+}
+
+body.work-tab-sorting .shipping-mode-card .sorting-work-card-body {
+  grid-column: 3 !important;
+}
+
+body.work-tab-sorting .sorting-work-title {
+  display: -webkit-box !important;
+  overflow: hidden !important;
+  min-width: 0 !important;
+  color: #302b29 !important;
+  font-size: 12px !important;
+  font-weight: 850 !important;
+  line-height: 1.25 !important;
+  text-align: left !important;
+  -webkit-box-orient: vertical !important;
+  -webkit-line-clamp: 2 !important;
+}
+
+body.work-tab-sorting .sorting-work-offer {
+  overflow: hidden !important;
+  min-width: 0 !important;
+  color: #3b7048 !important;
+  font-size: 12.5px !important;
+  font-weight: 900 !important;
+  line-height: 1.2 !important;
+  text-align: left !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+body.work-tab-sorting .sorting-work-storage {
+  display: flex !important;
+  align-items: center !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  color: #645d59 !important;
+  font-size: 10.5px !important;
+  font-weight: 750 !important;
+  line-height: 1.2 !important;
+  text-align: left !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+body.work-tab-sorting .sorting-action-menu {
+  grid-column: 3 !important;
+  grid-row: 1 !important;
+  align-self: start !important;
+  justify-self: end !important;
+  z-index: 40 !important;
+}
+
+body.work-tab-sorting .shipping-mode-card .sorting-action-menu {
+  grid-column: 4 !important;
+}
+
+body.work-tab-sorting .sorting-action-menu > summary {
+  width: 32px !important;
+  min-width: 32px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  padding: 0 !important;
+  border-radius: 999px !important;
+}
+
+body.work-tab-sorting .sorting-work-destination {
+  grid-column: 3 !important;
+  grid-row: 2 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  align-self: center !important;
+  justify-self: stretch !important;
+  width: 82px !important;
+  min-width: 82px !important;
+  max-width: 82px !important;
+  min-height: 20px !important;
+  overflow: hidden !important;
+  color: #645d59 !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+  text-align: left !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+body.work-tab-sorting .shipping-mode-card .sorting-work-destination {
+  grid-column: 4 !important;
+}
+
+@media (max-width: 700px) {
+  body.work-tab-sorting .sorting-action-menu[open] .sorting-action-panel,
+  body.work-tab-sorting .row-action-menu[open] .sorting-action-panel {
+    position: fixed !important;
+    right: 12px !important;
+    bottom: calc(14px + env(safe-area-inset-bottom)) !important;
+    left: 12px !important;
+    top: auto !important;
+    z-index: 20000 !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 7px !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    max-height: min(62vh, 360px) !important;
+    padding: 12px !important;
+    overflow-y: auto !important;
+    border: 1px solid #ddd4cf !important;
+    border-radius: 16px !important;
+    background: #fff !important;
+    box-shadow: 0 -12px 36px rgba(48, 43, 41, 0.22) !important;
+  }
+
+  body.work-tab-sorting .sorting-action-panel button {
+    min-height: 40px !important;
+    height: 40px !important;
+    padding: 6px 8px !important;
+    font-size: 12px !important;
+  }
+}
+
+.sorting-detail-modal-panel {
+  display: flex !important;
+  flex-direction: column !important;
+  max-height: min(88vh, 780px) !important;
+  overflow: hidden !important;
+  overscroll-behavior: contain !important;
+}
+
+.sorting-detail-content {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior: contain !important;
+}
+
+.sorting-detail-hero {
+  padding: 12px !important;
+}
+
+.sorting-detail-hero strong {
+  display: block !important;
+  margin-top: 2px !important;
+  color: #2f2926 !important;
+  font-size: 22px !important;
+  line-height: 1.2 !important;
+}
+
+.sorting-detail-section dl,
+.sorting-detail-price-details dl {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+
+.sorting-detail-section dl div,
+.sorting-detail-price-details dl div {
+  display: grid !important;
+  grid-template-columns: 72px minmax(0, 1fr) !important;
+  gap: 4px !important;
+  min-width: 0 !important;
+}
+
+.sorting-detail-section dt,
+.sorting-detail-price-details dt,
+.sorting-detail-section dd,
+.sorting-detail-price-details dd {
+  min-width: 0 !important;
+  margin: 0 !important;
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+}
+
+.sorting-detail-price-details > summary {
+  display: grid !important;
+  grid-template-columns: 22px minmax(0, 1fr) !important;
+  gap: 8px !important;
+  align-items: center !important;
+  min-height: 40px !important;
+  padding: 8px 10px !important;
+  list-style: none !important;
+  white-space: nowrap !important;
+}
+
+.sorting-detail-price-details > summary::-webkit-details-marker {
+  display: none !important;
+}
+
+.sorting-detail-price-details > summary::before {
+  width: 22px !important;
+  content: "▶" !important;
+  color: #8a817d !important;
+  font-size: 11px !important;
+  text-align: center !important;
+}
+
+.sorting-detail-price-details[open] > summary::before {
+  content: "▼" !important;
+}
+
+@media (max-width: 390px) {
+  .sorting-detail-section dl,
+  .sorting-detail-price-details dl {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Settings premium polish final override. */
+body.settings-view details.settings-accordion > summary,
+body.settings-view .cloud-panel.settings-accordion > summary,
+body.settings-view .settings-maintenance.settings-accordion > summary {
+  grid-template-columns: 22px minmax(0, 1fr) max-content !important;
+}
+
+body.settings-view details.settings-accordion > summary .settings-summary-metrics {
+  display: flex !important;
+  grid-column: 3 !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  width: auto !important;
+  min-width: max-content !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+body.settings-view details.settings-accordion > summary .settings-summary-count {
+  display: inline-flex !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+body.settings-view details.settings-accordion > summary .settings-summary-count[id$="UsageCount"] {
+  display: none !important;
+}
+
+body.settings-view .master-setting-row,
+body.settings-view .shipping-setting-row,
+body.settings-view .template-setting-row {
+  position: relative !important;
+  grid-template-columns: 28px minmax(0, 1fr) 64px !important;
+}
+
+body.settings-view .master-setting-row .compact-row-button[data-action="move-up"],
+body.settings-view .master-setting-row .compact-row-button[data-action="move-down"],
+body.settings-view .shipping-setting-row .compact-row-button[data-action="move-up"],
+body.settings-view .shipping-setting-row .compact-row-button[data-action="move-down"],
+body.settings-view .template-setting-row .compact-row-button[data-action="move-up"],
+body.settings-view .template-setting-row .compact-row-button[data-action="move-down"] {
+  position: absolute !important;
+  width: 1px !important;
+  min-width: 1px !important;
+  height: 1px !important;
+  min-height: 1px !important;
+  overflow: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Settings premium polish final cascade guard. */
+body.settings-view .settings-panel .settings-grid details.settings-accordion > summary,
+body.settings-view .settings-panel details.settings-accordion > summary,
+body.settings-view .settings-panel .cloud-panel.settings-accordion > summary,
+body.settings-view .settings-panel .settings-maintenance.settings-accordion > summary {
+  grid-template-columns: 22px minmax(0, 1fr) max-content !important;
+}
+
+body.settings-view .settings-panel .settings-grid details.settings-accordion > summary .settings-summary-metrics,
+body.settings-view .settings-panel details.settings-accordion > summary .settings-summary-metrics,
+body.settings-view .settings-panel .cloud-panel.settings-accordion > summary .settings-summary-metrics,
+body.settings-view .settings-panel .settings-maintenance.settings-accordion > summary .settings-summary-metrics {
+  display: flex !important;
+  grid-column: 3 !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 4px !important;
+  width: auto !important;
+  min-width: max-content !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+body.settings-view .settings-panel .settings-grid details.settings-accordion > summary .settings-summary-count,
+body.settings-view .settings-panel details.settings-accordion > summary .settings-summary-count,
+body.settings-view .settings-panel .cloud-panel.settings-accordion > summary .settings-summary-count,
+body.settings-view .settings-panel .settings-maintenance.settings-accordion > summary .settings-summary-count {
+  display: inline-flex !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+body.settings-view .settings-panel .settings-grid details.settings-accordion > summary .settings-summary-count[id$="UsageCount"],
+body.settings-view .settings-panel details.settings-accordion > summary .settings-summary-count[id$="UsageCount"],
+body.settings-view .settings-panel .cloud-panel.settings-accordion > summary .settings-summary-count[id$="UsageCount"],
+body.settings-view .settings-panel .settings-maintenance.settings-accordion > summary .settings-summary-count[id$="UsageCount"] {
+  display: none !important;
+}
+
+body.settings-view .settings-panel .category-add-row.hidden,
+body.settings-view .settings-panel .storage-add-row.hidden,
+body.settings-view .settings-panel .shipping-add-row.hidden,
+body.settings-view .settings-panel .appraisal-add-row.hidden,
+body.settings-view .settings-panel .template-add-row.hidden {
+  display: none !important;
+}
+
+body.settings-view .settings-panel .category-add-row:not(.hidden),
+body.settings-view .settings-panel .storage-add-row:not(.hidden),
+body.settings-view .settings-panel .shipping-add-row:not(.hidden),
+body.settings-view .settings-panel .appraisal-add-row:not(.hidden),
+body.settings-view .settings-panel .template-add-row:not(.hidden) {
+  animation: settingsAccordionOpen 140ms ease-out both;
+}
+
+/* Stability guard before final UI tuning.
+   Keep shared mobile layout predictable without changing each feature's behavior. */
+:root {
+  --stable-page-x: 12px;
+  --stable-card-pad: 12px;
+  --stable-card-radius: 10px;
+  --stable-control-height: 44px;
+  --stable-accordion-icon: 22px;
+}
+
+html,
+body {
+  max-width: 100%;
+}
+
+body,
+.app-shell,
+.dashboard-panel,
+.form-panel,
+.list-panel,
+.sorting-panel,
+.settings-panel,
+.sold-panel,
+.modal-panel {
+  box-sizing: border-box;
+}
+
+.app-accordion > summary,
+.settings-accordion > summary,
+.analysis-accordion > summary,
+.inventory-toolbar-section > summary,
+.sorting-filter-panel > summary,
+.sorting-form-card > summary,
+.sorting-extra-card > summary,
+.sorting-detail-price-details > summary {
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+}
+
+.app-accordion > summary *,
+.settings-accordion > summary *,
+.analysis-accordion > summary *,
+.inventory-toolbar-section > summary *,
+.sorting-filter-panel > summary *,
+.sorting-form-card > summary *,
+.sorting-extra-card > summary *,
+.sorting-detail-price-details > summary * {
+  min-width: 0;
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+}
+
+button,
+input,
+select,
+textarea,
+.primary-button,
+.ghost-button,
+.text-button,
+.danger-button {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+.primary-button,
+.ghost-button,
+.text-button,
+.danger-button {
+  min-height: var(--stable-control-height);
+}
+
+textarea {
+  min-width: 0;
+}
+
+.modal-backdrop:not(.hidden) {
+  overscroll-behavior: contain;
+}
+
+.modal-panel {
+  max-width: min(920px, calc(100vw - 24px));
+  overflow-x: hidden;
+}
+
+.modal-panel,
+.modal-panel * {
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+}
+
+.row-action-menu[open] {
+  z-index: 30000 !important;
+}
+
+.row-action-menu[open] .actions,
+.row-action-menu[open] .sorting-action-panel {
+  z-index: 30001 !important;
+}
+
+@media (max-width: 700px) {
+  html,
+  body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden !important;
+  }
+
+  .app-shell,
+  .dashboard-panel,
+  .form-panel,
+  .list-panel,
+  .sorting-panel,
+  .settings-panel,
+  .sold-panel {
+    width: calc(100% - (var(--stable-page-x) * 2)) !important;
+    max-width: 680px !important;
+    margin-right: auto !important;
+    margin-left: auto !important;
+  }
+
+  .registration-card,
+  .quick-search-panel,
+  .registration-dock,
+  .list-panel,
+  .sorting-form-card,
+  .sorting-filter-panel,
+  .sorting-list-section,
+  .shipping-management-panel,
+  .settings-operations-summary,
+  .settings-group,
+  .settings-backup-group,
+  .cloud-panel,
+  .settings-maintenance,
+  .input-issue-panel,
+  .today-command-card,
+  .profit-candidate-card,
+  .storage-report-card,
+  .inventory-shelf-card,
+  .mobile-item-card,
+  .sorting-work-card {
+    max-width: 100% !important;
+    border-radius: var(--stable-card-radius) !important;
+    box-sizing: border-box !important;
+  }
+
+  .registration-card,
+  .quick-search-panel,
+  .registration-dock,
+  .sorting-form-card,
+  .sorting-filter-panel,
+  .sorting-list-section,
+  .shipping-management-panel,
+  .settings-operations-summary,
+  .settings-group,
+  .settings-backup-group,
+  .cloud-panel,
+  .settings-maintenance,
+  .input-issue-panel,
+  .today-command-card,
+  .profit-candidate-card,
+  .storage-report-card,
+  .inventory-shelf-card,
+  .mobile-item-card {
+    padding: var(--stable-card-pad) !important;
+  }
+
+  .app-accordion > summary,
+  .settings-accordion > summary,
+  .analysis-accordion > summary,
+  .inventory-toolbar-section > summary,
+  .sorting-filter-panel > summary,
+  .sorting-form-card > summary,
+  .sorting-extra-card > summary,
+  .sorting-detail-price-details > summary {
+    display: grid !important;
+    grid-template-columns: var(--stable-accordion-icon) minmax(0, 1fr) auto !important;
+    gap: 8px !important;
+    align-items: center !important;
+    min-height: var(--stable-control-height) !important;
+    padding: 8px var(--stable-card-pad) !important;
+    list-style: none !important;
+    white-space: normal !important;
+  }
+
+  .app-accordion > summary::before,
+  .settings-accordion > summary::before,
+  .analysis-accordion > summary::before,
+  .inventory-toolbar-section > summary::before,
+  .sorting-filter-panel > summary::before,
+  .sorting-form-card > summary::before,
+  .sorting-extra-card > summary::before,
+  .sorting-detail-price-details > summary::before {
+    grid-column: 1 !important;
+    width: var(--stable-accordion-icon) !important;
+    min-width: var(--stable-accordion-icon) !important;
+    text-align: center !important;
+  }
+
+  input,
+  select,
+  button,
+  .primary-button,
+  .ghost-button,
+  .text-button,
+  .danger-button {
+    min-height: var(--stable-control-height);
+  }
+
+  textarea {
+    min-height: 88px;
+  }
+
+  .row-action-menu[open] .actions,
+  .row-action-menu[open] .sorting-action-panel {
+    position: fixed !important;
+    right: 12px !important;
+    bottom: calc(14px + env(safe-area-inset-bottom)) !important;
+    left: 12px !important;
+    top: auto !important;
+    width: auto !important;
+    max-width: none !important;
+    max-height: min(68vh, 420px) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+  }
+}
