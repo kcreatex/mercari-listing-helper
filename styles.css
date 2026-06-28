@@ -9824,6 +9824,38 @@ body.analysis-view .sold-summary div {
   font-size: 12px;
 }
 
+.cloud-fetch-count {
+  margin: 4px 0 0;
+  color: #665c58;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.cloud-household-tools {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.cloud-household-tools input {
+  width: 100%;
+  min-width: 0;
+}
+
+.cloud-household-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.cloud-household-actions button {
+  width: 100%;
+  min-width: 0;
+  min-height: 38px;
+  padding: 0 8px;
+  font-size: 11px;
+}
+
 .settings-backup-group {
   border: 1px solid var(--line);
   border-radius: var(--ui-card-radius, 10px);
@@ -17684,6 +17716,19 @@ body.settings-view .cloud-backup-warning {
   display: none !important;
 }
 
+body.settings-view .cloud-fetch-count {
+  margin: 4px 0 0 !important;
+  font-size: 11px !important;
+}
+
+body.settings-view .cloud-household-tools {
+  grid-column: 1 / -1 !important;
+}
+
+body.settings-view .cloud-household-actions {
+  grid-template-columns: 1fr !important;
+}
+
 body.settings-view .cloud-panel-header #cloudStatus {
   margin: 0 !important;
   overflow: hidden !important;
@@ -20394,5 +20439,77 @@ body.settings-view .master-drag-handle {
   body.settings-view .template-setting-row .compact-row-button[data-action="move-down"] {
     height: 36px !important;
     min-height: 36px !important;
+  }
+}
+
+/* Sorting form image management and fixed submit bar. */
+.sorting-image-card .photo-management-note,
+.sorting-image-card .image-field,
+.sorting-image-card .image-reference-grid {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.sorting-image-card .image-preview {
+  min-height: 72px;
+}
+
+.sorting-detail-image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  margin: 6px 0;
+  border: 1px solid #ece5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #9a918d;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.sorting-detail-image img {
+  width: 100%;
+  max-height: 140px;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+@media (max-width: 700px) {
+  body.work-view.work-tab-sorting .sorting-form {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom)) !important;
+  }
+
+  body.work-view.work-tab-sorting .sorting-actions {
+    position: fixed !important;
+    right: 12px !important;
+    bottom: calc(10px + env(safe-area-inset-bottom)) !important;
+    left: 12px !important;
+    z-index: 1200 !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr) !important;
+    gap: 8px !important;
+    align-items: center !important;
+    padding: 8px !important;
+    border: 1px solid #eaded8 !important;
+    border-radius: 14px !important;
+    background: rgba(255, 255, 255, 0.96) !important;
+    box-shadow: 0 10px 28px rgba(48, 43, 41, 0.16) !important;
+  }
+
+  body.work-view.work-tab-sorting .sorting-actions #sortingSubmitButton,
+  body.work-view.work-tab-sorting .sorting-actions #sortingCancelButton {
+    width: 100% !important;
+    min-height: 44px !important;
+    height: 44px !important;
+    margin: 0 !important;
+  }
+
+  body.work-view.work-tab-sorting .sorting-actions #sortingCancelButton.hidden {
+    display: none !important;
+  }
+
+  body.work-view.work-tab-sorting .sorting-actions:has(#sortingCancelButton.hidden) {
+    grid-template-columns: 1fr !important;
   }
 }

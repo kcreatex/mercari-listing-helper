@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>メルカリ出品補助室</title>
-    <link rel="stylesheet" href="styles.css?v=cloud-source-sync-20260628">
+    <link rel="stylesheet" href="styles.css?v=sorting-image-fix-20260628">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
   <body class="work-view work-tab-form">
@@ -935,6 +935,45 @@
             </div>
           </div>
 
+          <details class="sorting-form-card sorting-extra-card sorting-image-card app-accordion">
+            <summary>画像管理</summary>
+            <div class="photo-management-note sorting-photo-note">
+              <strong>Googleフォト推奨</strong>
+              <p>画像本体は任意です。仕分け商品単体にも画像IDを保持できます。</p>
+            </div>
+            <div class="image-field compact-image-field">
+              <label for="sortingImageInput">任意画像メモ</label>
+              <input id="sortingImageInput" type="file" accept="image/*">
+              <div class="image-preview" id="sortingImagePreview" aria-live="polite">
+                <span>＋任意で画像追加</span>
+              </div>
+              <button class="ghost-button hidden" type="button" id="sortingRemoveImageButton">画像を削除</button>
+            </div>
+            <div class="image-reference-grid" aria-label="仕分け画像管理ID">
+              <label>
+                管理方式
+                <select id="sortingImageProvider">
+                  <option value="">未設定</option>
+                  <option value="google_photos">Googleフォト</option>
+                  <option value="local">ローカル画像</option>
+                  <option value="cloud">クラウド画像</option>
+                </select>
+              </label>
+              <label class="image-reference-field">
+                <span>GoogleフォトID <small>共有検索用</small></span>
+                <input id="sortingGooglePhotoImageId" type="text" maxlength="120" placeholder="例：Googleフォト検索用ID">
+              </label>
+              <label class="image-reference-field">
+                <span>ローカル画像ID <small>この端末用</small></span>
+                <input id="sortingLocalImageId" type="text" maxlength="120" placeholder="例：端末内画像ID">
+              </label>
+              <label class="image-reference-field">
+                <span>クラウド画像ID <small>将来用</small></span>
+                <input id="sortingCloudImageId" type="text" maxlength="120" placeholder="将来用">
+              </label>
+            </div>
+          </details>
+
           <details class="sorting-form-card sorting-extra-card app-accordion">
             <summary>商品詳細</summary>
             <div class="sorting-card-grid">
@@ -1250,7 +1289,19 @@
               <p class="muted" id="cloudStatus">未ログイン</p>
               <p class="cloud-sync-state" id="cloudSyncState">同期状態 ローカル保存</p>
               <p class="cloud-sync-time" id="cloudLastSync">最終同期 -</p>
+              <p class="cloud-fetch-count" id="cloudFetchCount">取得商品数：-</p>
               <button class="ghost-button cloud-reload-button hidden" type="button" id="cloudReloadButton">クラウドから再読み込み</button>
+              <div class="cloud-household-tools hidden" id="cloudHouseholdTools">
+                <label>
+                  共有グループID
+                  <input id="cloudHouseholdInput" type="text" autocomplete="off" placeholder="household_id">
+                </label>
+                <div class="cloud-household-actions">
+                  <button class="ghost-button" type="button" id="cloudCopyHouseholdButton">グループIDコピー</button>
+                  <button class="ghost-button" type="button" id="cloudJoinHouseholdButton">このグループに参加</button>
+                  <button class="ghost-button" type="button" id="cloudCreateHouseholdButton">新しい共有グループ作成</button>
+                </div>
+              </div>
               <p class="cloud-backup-warning">Supabaseへ移行する前に、PC版の設定ページからJSONバックアップを書き出して保存してください。</p>
             </div>
             <button class="ghost-button hidden" type="button" id="cloudLogoutButton">ログアウト</button>
@@ -1348,6 +1399,6 @@
       </div>
     </div>
 
-    <script src="app.js?v=cloud-source-sync-20260628"></script>
+    <script src="app.js?v=sorting-image-fix-20260628"></script>
   </body>
 </html>

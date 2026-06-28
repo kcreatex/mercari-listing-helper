@@ -4,6 +4,7 @@ const SETTINGS_KEY = "mercari-listing-helper-settings";
 const TEMPLATES_KEY = "mercari-listing-helper-templates";
 const SORTING_STORAGE_KEY = "mercari-listing-helper-destination-sorting";
 const CLOUD_LAST_SYNC_KEY = "mercari-listing-helper-cloud-last-sync";
+const CLOUD_SELECTED_HOUSEHOLD_KEY = "mercari-listing-helper-selected-household";
 const CLOUD_APP_STATE_LOCAL_ID = "__app_state__";
 const CLOUD_APP_STATE_RECORD_TYPE = "app_state";
 const ITEM_SEQUENCE_KEY = "mercari-listing-helper-item-sequence";
@@ -93,6 +94,12 @@ const migrateToSupabaseButton = document.querySelector("#migrateToSupabaseButton
 const cloudLastSync = document.querySelector("#cloudLastSync");
 const cloudSyncState = document.querySelector("#cloudSyncState");
 const cloudReloadButton = document.querySelector("#cloudReloadButton");
+const cloudFetchCount = document.querySelector("#cloudFetchCount");
+const cloudHouseholdTools = document.querySelector("#cloudHouseholdTools");
+const cloudHouseholdInput = document.querySelector("#cloudHouseholdInput");
+const cloudCopyHouseholdButton = document.querySelector("#cloudCopyHouseholdButton");
+const cloudJoinHouseholdButton = document.querySelector("#cloudJoinHouseholdButton");
+const cloudCreateHouseholdButton = document.querySelector("#cloudCreateHouseholdButton");
 const searchInput = document.querySelector("#searchInput");
 const listPhotoInput = document.querySelector("#listPhotoInput");
 const listUnlistedCount = document.querySelector("#listUnlistedCount");
@@ -216,6 +223,13 @@ const sortingDestinationInput = document.querySelector("#sortingDestination");
 const sortingStatusInput = document.querySelector("#sortingStatus");
 const sortingShippingStatusInput = document.querySelector("#sortingShippingStatus");
 const sortingBoxNumberInput = document.querySelector("#sortingBoxNumber");
+const sortingImageInput = document.querySelector("#sortingImageInput");
+const sortingImagePreview = document.querySelector("#sortingImagePreview");
+const sortingRemoveImageButton = document.querySelector("#sortingRemoveImageButton");
+const sortingImageProviderInput = document.querySelector("#sortingImageProvider");
+const sortingGooglePhotoImageIdInput = document.querySelector("#sortingGooglePhotoImageId");
+const sortingLocalImageIdInput = document.querySelector("#sortingLocalImageId");
+const sortingCloudImageIdInput = document.querySelector("#sortingCloudImageId");
 const sortingMercariPriceInput = document.querySelector("#sortingMercariPrice");
 const sortingYahooPriceInput = document.querySelector("#sortingYahooPrice");
 const sortingSurugayaPriceInput = document.querySelector("#sortingSurugayaPrice");
@@ -349,6 +363,7 @@ let returnToDetailAfterEditId = "";
 let currentSortingDetailItem = null;
 let openMonthlyProfitKey = "";
 let currentImageData = "";
+let currentSortingImageData = "";
 let pendingFormItemCode = "";
 let isImageProcessing = false;
 let lastSavedShortcut = null;
@@ -362,6 +377,8 @@ let supabaseClient = null;
 let supabaseSession = null;
 let cloudUser = null;
 let cloudHouseholdId = "";
+let cloudHouseholdMemberIds = [];
+let cloudUserHouseholdIds = [];
 let isCloudReady = false;
 let hasCloudSaveWarning = false;
 let isApplyingCloudSnapshot = false;
@@ -370,6 +387,7 @@ let isSettingsDirty = false;
 let toastTimer = null;
 let isSortingShippingMode = false;
 let pendingPhotoItemId = "";
+let pendingPhotoCollection = "items";
 const sortingShippingCheckedIds = new Set();
 
 function isMobileViewport() {
@@ -765,6 +783,8 @@ function normalizeSortingItem(item) {
     trackingNumber: String(item.trackingNumber || "").trim(),
     boxNumber: String(item.boxNumber || "").trim(),
     sourceItemId: String(item.sourceItemId || "").trim(),
+    imageData: String(item.imageData || ""),
+    imageRefs: normalizeImageRefs(item.imageRefs),
     memo: String(item.memo || "").trim(),
     createdAt: item.createdAt || new Date().toISOString(),
     updatedAt: item.updatedAt || new Date().toISOString(),
@@ -1042,10 +1062,41 @@ function updateCloudLastSyncDisplay() {
   cloudLastSync.textContent = formatCloudSyncTime(localStorage.getItem(CLOUD_LAST_SYNC_KEY));
 }
 
-function logCloudDataSource(reason = "") {
+function updateCloudFetchCount(count = null) {
+  if (!cloudFetchCount) {
+    return;
+  }
+
+  cloudFetchCount.textContent = Number.isFinite(count)
+    ? `取得商品数：${count}件`
+    : "取得商品数：-";
+}
+
+function getLocalStorageDebugCounts() {
+  return {
+    items: loadItems().length,
+    sortingItems: loadSortingItems().length,
+    settingsCategories: loadSettings().categories.length,
+    templates: loadTemplates().length,
+  };
+}
+
+function logCloudDataSource(reason = "", fetchedCount = null) {
   const source = isCloudReady ? "Supabase" : "localStorage";
   const lastSync = formatCloudSyncTime(localStorage.getItem(CLOUD_LAST_SYNC_KEY));
-  console.log(`現在の保存先：${source}`, lastSync, reason ? `理由：${reason}` : "");
+  const localCounts = getLocalStorageDebugCounts();
+  console.log(`現在の保存先：${source}`);
+  console.log(`ログイン状態：${cloudUser ? "ログイン中" : "未ログイン"}`);
+  console.log(`ログインユーザーID：${cloudUser?.id || "-"}`);
+  console.log(`所属household_id：${cloudHouseholdId || "-"}`);
+  console.log(`所属グループ一覧：${cloudUserHouseholdIds.length ? cloudUserHouseholdIds.join(", ") : "-"}`);
+  console.log(`共有メンバーuser_id：${cloudHouseholdMemberIds.length ? cloudHouseholdMemberIds.join(", ") : "-"}`);
+  console.log(`Supabase取得件数：${Number.isFinite(fetchedCount) ? `${fetchedCount}件` : "-"}`);
+  console.log(`localStorage取得件数：商品${localCounts.items}件 / 仕分け${localCounts.sortingItems}件 / カテゴリ${localCounts.settingsCategories}件 / テンプレ${localCounts.templates}件`);
+  console.log(lastSync);
+  if (reason) {
+    console.log(`同期理由：${reason}`);
+  }
 }
 
 function showToast(message, type = "success") {
@@ -1158,9 +1209,13 @@ function renderCloudAuthState() {
   cloudLogoutButton.classList.toggle("hidden", !cloudUser);
   migrateToSupabaseButton.classList.toggle("hidden", !isLoggedIn);
   cloudReloadButton?.classList.toggle("hidden", !isLoggedIn);
+  cloudHouseholdTools?.classList.add("hidden");
   cloudPanel.classList.toggle("cloud-logged-in", isLoggedIn);
   cloudEmailInput.disabled = Boolean(cloudUser);
   cloudPasswordInput.disabled = Boolean(cloudUser);
+  if (cloudHouseholdInput && cloudHouseholdId && cloudHouseholdInput !== document.activeElement) {
+    cloudHouseholdInput.value = cloudHouseholdId;
+  }
   if (cloudUser) {
     cloudPasswordInput.value = "";
   }
@@ -1173,11 +1228,13 @@ function renderCloudAuthState() {
 
   if (cloudUser && !cloudHouseholdId) {
     setCloudStatus("共有グループ未設定", "warning");
+    updateCloudFetchCount(null);
     return;
   }
 
   setCloudStatus("未ログイン");
   updateCloudLastSyncDisplay();
+  updateCloudFetchCount(null);
 }
 
 function collapseCloudPanelOnMobile() {
@@ -1222,6 +1279,7 @@ function initializeSupabaseClient() {
 async function initializeCloud() {
   if (!initializeSupabaseClient()) {
     renderCloudAuthState();
+    render();
     return;
   }
 
@@ -1249,6 +1307,8 @@ async function initializeCloud() {
 
 async function loadCloudHousehold() {
   cloudHouseholdId = "";
+  cloudHouseholdMemberIds = [];
+  cloudUserHouseholdIds = [];
   isCloudReady = false;
 
   if (!supabaseClient || !cloudUser) {
@@ -1257,17 +1317,52 @@ async function loadCloudHousehold() {
 
   const { data, error } = await supabaseClient
     .from("household_members")
-    .select("household_id")
+    .select("household_id,user_id")
     .eq("user_id", cloudUser.id)
-    .limit(1)
-    .maybeSingle();
+    .order("household_id", { ascending: true });
 
   if (error) {
     throw error;
   }
 
-  cloudHouseholdId = data?.household_id || "";
+  const memberships = Array.isArray(data) ? data : [];
+  cloudUserHouseholdIds = [...new Set(memberships.map((member) => String(member.household_id || "").trim()).filter(Boolean))];
+  const selectedHouseholdId = String(localStorage.getItem(CLOUD_SELECTED_HOUSEHOLD_KEY) || "").trim();
+
+  cloudHouseholdId = cloudUserHouseholdIds.includes(selectedHouseholdId)
+    ? selectedHouseholdId
+    : cloudUserHouseholdIds[0] || "";
   isCloudReady = Boolean(cloudHouseholdId);
+
+  if (cloudHouseholdId) {
+    localStorage.setItem(CLOUD_SELECTED_HOUSEHOLD_KEY, cloudHouseholdId);
+    await loadCloudHouseholdMembers();
+  }
+
+  logCloudDataSource("共有グループ確認");
+}
+
+async function loadCloudHouseholdMembers() {
+  cloudHouseholdMemberIds = [];
+
+  if (!supabaseClient || !cloudHouseholdId) {
+    return;
+  }
+
+  const { data, error } = await supabaseClient
+    .from("household_members")
+    .select("user_id")
+    .eq("household_id", cloudHouseholdId)
+    .order("user_id", { ascending: true });
+
+  if (error) {
+    console.warn("household_members確認エラー:", error);
+    return;
+  }
+
+  cloudHouseholdMemberIds = Array.isArray(data)
+    ? data.map((member) => String(member.user_id || "").trim()).filter(Boolean)
+    : [];
 }
 
 async function loadItemsFromSupabase() {
@@ -1316,11 +1411,7 @@ async function loadItemsFromSupabase() {
 
   applyCloudAppState(appStateRow?.data || null);
   const didAddItemCodes = ensureItemCodes(items);
-  if (itemRows.length > 0) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-  } else {
-    console.info("クラウド側の商品が空のため、端末内バックアップは上書きしません。");
-  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
   hasCloudSaveWarning = false;
 
   if (itemRows.length === 0) {
@@ -1335,25 +1426,91 @@ async function loadItemsFromSupabase() {
     markCloudSynced();
   }
 
+  updateCloudFetchCount(itemRows.length);
   renderCloudAuthState();
-  logCloudDataSource("クラウドから再読み込み");
+  logCloudDataSource("クラウドから再読み込み", itemRows.length);
 }
 
-function applyCloudAppState(appStateData) {
-  if (!appStateData || appStateData.__recordType !== CLOUD_APP_STATE_RECORD_TYPE) {
+async function joinCloudHousehold(householdId) {
+  const targetHouseholdId = String(householdId || "").trim();
+
+  if (!supabaseClient || !cloudUser || !targetHouseholdId) {
+    showErrorMessage("共有グループIDを入力してください");
     return;
   }
 
+  const { error } = await supabaseClient
+    .from("household_members")
+    .upsert([{
+      household_id: targetHouseholdId,
+      user_id: cloudUser.id,
+    }], { onConflict: "household_id,user_id" });
+
+  if (error) {
+    const { error: insertError } = await supabaseClient
+      .from("household_members")
+      .insert([{
+        household_id: targetHouseholdId,
+        user_id: cloudUser.id,
+      }]);
+
+    if (insertError) {
+      throw insertError;
+    }
+  }
+
+  localStorage.setItem(CLOUD_SELECTED_HOUSEHOLD_KEY, targetHouseholdId);
+  await reloadCloudData({ reason: "共有グループ参加", showToast: true, force: true });
+}
+
+async function createCloudHousehold() {
+  if (!supabaseClient || !cloudUser) {
+    showErrorMessage("先にログインしてください");
+    return;
+  }
+
+  let householdId = "";
+  let insertError = null;
+
+  for (const payload of [{ name: "共有グループ" }, {}]) {
+    const { data, error } = await supabaseClient
+      .from("households")
+      .insert([payload])
+      .select("id")
+      .single();
+
+    if (!error && data?.id) {
+      householdId = String(data.id);
+      break;
+    }
+
+    insertError = error;
+  }
+
+  if (!householdId) {
+    throw insertError || new Error("共有グループを作成できませんでした");
+  }
+
+  await joinCloudHousehold(householdId);
+  if (cloudHouseholdInput) {
+    cloudHouseholdInput.value = householdId;
+  }
+  showSuccessMessage("共有グループを作成しました");
+}
+
+function applyCloudAppState(appStateData) {
   isApplyingCloudSnapshot = true;
   try {
-    settings = normalizeSettings(appStateData.settings || settings);
-    descriptionTemplates = normalizeTemplates(
-      appStateData.descriptionTemplates || appStateData.templates,
-      descriptionTemplates,
-    );
-    sortingItems = Array.isArray(appStateData.sortingItems)
+    const hasCloudAppState = appStateData && appStateData.__recordType === CLOUD_APP_STATE_RECORD_TYPE;
+    settings = hasCloudAppState
+      ? normalizeSettings(appStateData.settings || {})
+      : normalizeSettings({});
+    descriptionTemplates = hasCloudAppState
+      ? normalizeTemplates(appStateData.descriptionTemplates || appStateData.templates, [])
+      : normalizeTemplates(DEFAULT_TEMPLATES, []);
+    sortingItems = hasCloudAppState && Array.isArray(appStateData.sortingItems)
       ? appStateData.sortingItems.map(normalizeSortingItem)
-      : sortingItems;
+      : [];
 
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
     localStorage.setItem(TEMPLATES_KEY, JSON.stringify(descriptionTemplates));
@@ -1647,6 +1804,17 @@ function getImageRefsFromForm(existingRefs = {}) {
   });
 }
 
+function getSortingImageRefsFromForm(existingRefs = {}) {
+  const fallbackRefs = normalizeImageRefs(existingRefs);
+
+  return normalizeImageRefs({
+    provider: sortingImageProviderInput ? sortingImageProviderInput.value : fallbackRefs.provider,
+    googlePhotoId: sortingGooglePhotoImageIdInput?.value || "",
+    localImageId: sortingLocalImageIdInput?.value || "",
+    cloudImageId: sortingCloudImageIdInput?.value || "",
+  });
+}
+
 function createGooglePhotoId(itemCode) {
   return itemCode ? `PHOTO-${itemCode}` : "";
 }
@@ -1679,7 +1847,15 @@ function updateImageReferenceMode() {
   }
 }
 
-function saveLocalItemImage(item, imageData) {
+function updateSortingImageReferenceMode() {
+  const provider = sortingImageProviderInput?.value || "";
+  const sortingPhotoDetails = document.querySelector(".sorting-image-card");
+  if (sortingPhotoDetails) {
+    sortingPhotoDetails.dataset.imageProvider = provider || "unset";
+  }
+}
+
+function saveLocalItemImage(item, imageData, collection = "items") {
   if (!item) {
     return false;
   }
@@ -1696,7 +1872,14 @@ function saveLocalItemImage(item, imageData) {
   saveLocalImageRefsForItem(item, { localImageId: nextLocalImageId });
 
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    if (collection === "sorting") {
+      localStorage.setItem(SORTING_STORAGE_KEY, JSON.stringify(sortingItems));
+      syncAppStateToSupabase().catch((error) => {
+        handleCloudSaveError(error);
+      });
+    } else {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    }
     return true;
   } catch (error) {
     item.imageData = previousImage;
@@ -1715,6 +1898,11 @@ function getSortingSourceItem(sortingItem) {
   return items.find((item) => item.id === sortingItem.sourceItemId)
     || items.find((item) => getListingTitle(item) === sortingItem.name)
     || null;
+}
+
+function getSortingImageDisplayItem(sortingItem) {
+  const sourceItem = getSortingSourceItem(sortingItem);
+  return getLocalItemImage(sortingItem) ? sortingItem : (sourceItem || sortingItem);
 }
 
 function createListThumbnail(item, options = {}) {
@@ -4352,6 +4540,26 @@ function updateImagePreview(imageData) {
   removeImageButton.classList.remove("hidden");
 }
 
+function updateSortingImagePreview(imageData) {
+  if (!sortingImagePreview || !sortingRemoveImageButton) {
+    return;
+  }
+
+  sortingImagePreview.innerHTML = "";
+
+  if (!imageData) {
+    sortingImagePreview.textContent = "＋画像追加";
+    sortingRemoveImageButton.classList.add("hidden");
+    return;
+  }
+
+  const image = document.createElement("img");
+  image.src = imageData;
+  image.alt = "選択中の仕分け画像";
+  sortingImagePreview.append(image);
+  sortingRemoveImageButton.classList.remove("hidden");
+}
+
 function readImageFile(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -4380,20 +4588,23 @@ function readImageFile(file) {
   });
 }
 
-function requestLocalPhoto(itemId) {
-  const item = items.find((currentItem) => currentItem.id === itemId);
+function requestLocalPhoto(itemId, collection = "items") {
+  const item = collection === "sorting"
+    ? sortingItems.find((currentItem) => currentItem.id === itemId)
+    : items.find((currentItem) => currentItem.id === itemId);
 
   if (!item) {
-    showToast("元の商品データが見つかりません", "error");
+    showToast(collection === "sorting" ? "仕分けデータが見つかりません" : "元の商品データが見つかりません", "error");
     return;
   }
 
   pendingPhotoItemId = itemId;
+  pendingPhotoCollection = collection;
   listPhotoInput.value = "";
   listPhotoInput.click();
 }
 
-async function removeLocalPhoto(item) {
+async function removeLocalPhoto(item, collection = "items") {
   if (!item || !getLocalItemImage(item)) {
     showToast("削除する写真がありません", "error");
     return;
@@ -4403,12 +4614,20 @@ async function removeLocalPhoto(item) {
     return;
   }
 
-  if (!saveLocalItemImage(item, "")) {
+  if (!saveLocalItemImage(item, "", collection)) {
     showToast("写真を削除できませんでした", "error");
     return;
   }
 
   showToast("この端末の写真を削除しました", "success");
+  if (collection === "sorting") {
+    renderSorting();
+    if (currentSortingDetailItem?.id === item.id && !sortingDetailModal.classList.contains("hidden")) {
+      openSortingDetailModal(item);
+    }
+    return;
+  }
+
   render();
   if (currentDetailItem?.id === item.id && !detailModal.classList.contains("hidden")) {
     openDetailModal(item);
@@ -4755,6 +4974,7 @@ function createSortingWorkCard(item) {
   const bestOffer = getBestSortingOffer(item);
   const checked = sortingShippingCheckedIds.has(item.id);
   const sourceItem = getSortingSourceItem(item);
+  const imageItem = getSortingImageDisplayItem(item);
 
   card.className = "sorting-work-card";
   card.classList.toggle("shipping-mode-card", isSortingShippingMode);
@@ -4781,16 +5001,15 @@ function createSortingWorkCard(item) {
         <button class="text-button" type="button" data-action="view-sorting-detail">詳細</button>
         <button class="text-button" type="button" data-action="edit-sorting">編集</button>
         <button class="text-button sorting-source-action hidden" type="button" data-action="copy-source-item-code">商品IDコピー</button>
-        <button class="text-button sorting-source-action hidden" type="button" data-action="change-source-photo">写真追加・変更</button>
-        <button class="text-button sorting-source-action hidden" type="button" data-action="remove-source-photo">写真削除</button>
+        <button class="text-button" type="button" data-action="change-sorting-photo">写真追加・変更</button>
+        <button class="text-button" type="button" data-action="remove-sorting-photo">写真削除</button>
         <button class="danger-button" type="button" data-action="delete-sorting">削除</button>
       </div>
     </details>
   `;
-  const thumbnail = createListThumbnail(sourceItem, { compact: true });
+  const thumbnail = createListThumbnail(imageItem, { compact: true });
   thumbnail.classList.add("sorting-thumbnail-button");
-  thumbnail.dataset.action = sourceItem ? "change-source-photo" : "";
-  thumbnail.disabled = !sourceItem;
+  thumbnail.dataset.action = "change-sorting-photo";
   card.querySelector(".sorting-work-thumb").append(thumbnail);
   card.querySelector(".sorting-work-title").textContent = item.name || "商品名未設定";
   card.querySelector(".sorting-work-offer").textContent = bestOffer ? formatMoney(bestOffer.value) : "査定額未設定";
@@ -5313,7 +5532,18 @@ function openSortingDetailModal(item) {
 
   const summary = document.createElement("section");
   const summaryList = document.createElement("dl");
+  const imageBlock = document.createElement("div");
+  const imageData = getLocalItemImage(getSortingImageDisplayItem(item));
   summary.className = "sorting-detail-section";
+  imageBlock.className = "sorting-detail-image";
+  if (imageData) {
+    const image = document.createElement("img");
+    image.src = imageData;
+    image.alt = `${item.name || "商品"}の画像`;
+    imageBlock.append(image);
+  } else {
+    imageBlock.textContent = "画像なし";
+  }
   summary.innerHTML = `<h3>${item.name || "-"}</h3>`;
   summaryList.append(
     createSortingDetailMeta("📦 保管場所", item.storageLocation || "-"),
@@ -5323,7 +5553,7 @@ function openSortingDetailModal(item) {
     createSortingDetailMeta("箱番号", item.boxNumber || "-"),
     createSortingDetailMeta("メモ", item.memo || "-"),
   );
-  summary.append(summaryList);
+  summary.append(imageBlock, summaryList);
 
   const detail = document.createElement("details");
   const detailSummary = document.createElement("summary");
@@ -5363,6 +5593,8 @@ function createSortingRow(item) {
         <div class="actions sorting-row-actions sorting-action-panel">
           <button class="text-button" type="button" data-action="view-sorting-detail">詳細</button>
           <button class="text-button" type="button" data-action="edit-sorting">編集</button>
+          <button class="text-button" type="button" data-action="change-sorting-photo">写真追加・変更</button>
+          <button class="text-button" type="button" data-action="remove-sorting-photo">写真削除</button>
           <button class="danger-button" type="button" data-action="delete-sorting">削除</button>
         </div>
       </details>
@@ -5438,9 +5670,27 @@ function renderSorting() {
 function resetSortingForm() {
   sortingForm.reset();
   sortingIdInput.value = "";
+  currentSortingImageData = "";
   refreshSortingDestinationOptions(SORTING_UNDECIDED_DESTINATION);
   sortingStatusInput.value = "未確認";
   sortingShippingStatusInput.value = "未仕分け";
+  if (sortingImageInput) {
+    sortingImageInput.value = "";
+  }
+  if (sortingImageProviderInput) {
+    sortingImageProviderInput.value = "";
+  }
+  if (sortingGooglePhotoImageIdInput) {
+    sortingGooglePhotoImageIdInput.value = "";
+  }
+  if (sortingLocalImageIdInput) {
+    sortingLocalImageIdInput.value = "";
+  }
+  if (sortingCloudImageIdInput) {
+    sortingCloudImageIdInput.value = "";
+  }
+  updateSortingImageReferenceMode();
+  updateSortingImagePreview("");
   renderSortingAppraisalFields();
   sortingSubmitButton.textContent = "仕分け登録";
   sortingCancelButton.classList.add("hidden");
@@ -5456,6 +5706,22 @@ function startSortingEdit(item) {
   sortingStatusInput.value = item.status || "未確認";
   sortingShippingStatusInput.value = item.shippingStatus || "未仕分け";
   sortingBoxNumberInput.value = item.boxNumber || "";
+  currentSortingImageData = item.imageData || "";
+  const imageRefs = normalizeImageRefs(item.imageRefs);
+  if (sortingImageProviderInput) {
+    sortingImageProviderInput.value = imageRefs.provider;
+  }
+  if (sortingGooglePhotoImageIdInput) {
+    sortingGooglePhotoImageIdInput.value = imageRefs.googlePhotoId;
+  }
+  if (sortingLocalImageIdInput) {
+    sortingLocalImageIdInput.value = imageRefs.localImageId;
+  }
+  if (sortingCloudImageIdInput) {
+    sortingCloudImageIdInput.value = imageRefs.cloudImageId;
+  }
+  updateSortingImageReferenceMode();
+  updateSortingImagePreview(currentSortingImageData);
   renderSortingAppraisalFields(item);
   sortingMemoInput.value = item.memo || "";
   sortingSubmitButton.textContent = "仕分け更新";
@@ -5467,6 +5733,14 @@ function createSortingFormItem() {
   const id = sortingIdInput.value || createId();
   const existingItem = sortingItems.find((item) => item.id === id) || {};
   const appraisalValues = getSortingAppraisalValuesFromInputs();
+  const imageRefs = getSortingImageRefsFromForm(existingItem.imageRefs);
+  const normalizedImageRefs = currentSortingImageData && !imageRefs.localImageId
+    ? normalizeImageRefs({
+      ...imageRefs,
+      provider: imageRefs.provider || "local",
+      localImageId: createLocalImageId({ id }),
+    })
+    : imageRefs;
 
   return normalizeSortingItem({
     ...existingItem,
@@ -5480,6 +5754,8 @@ function createSortingFormItem() {
     shippingStatus: sortingShippingStatusInput.value,
     boxNumber: sortingBoxNumberInput.value,
     sourceItemId: existingItem.sourceItemId || "",
+    imageData: currentSortingImageData,
+    imageRefs: normalizedImageRefs,
     memo: sortingMemoInput.value,
     ...appraisalValues,
     createdAt: existingItem.createdAt || new Date().toISOString(),
@@ -5509,6 +5785,8 @@ function createSortingItemFromSourceItem(item, existingItem = {}, overrides = {}
     status: existingItem.status || "未確認",
     shippingStatus: existingItem.shippingStatus || "未仕分け",
     boxNumber: existingItem.boxNumber || "",
+    imageData: existingItem.imageData || item.imageData || "",
+    imageRefs: normalizeImageRefs(existingItem.imageRefs || item.imageRefs),
     memo: existingItem.memo || "",
     createdAt: existingItem.createdAt || new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -8361,6 +8639,8 @@ cloudLogoutButton.addEventListener("click", async () => {
   supabaseSession = null;
   cloudUser = null;
   cloudHouseholdId = "";
+  cloudHouseholdMemberIds = [];
+  cloudUserHouseholdIds = [];
   isCloudReady = false;
   hasCloudSaveWarning = false;
   cloudEmailInput.disabled = false;
@@ -8384,12 +8664,50 @@ cloudReloadButton?.addEventListener("click", () => {
     });
 });
 
+cloudCopyHouseholdButton?.addEventListener("click", () => {
+  if (!cloudHouseholdId) {
+    showErrorMessage("共有グループIDがありません");
+    return;
+  }
+
+  copyText(cloudHouseholdId, "共有グループIDをコピーしました");
+});
+
+cloudJoinHouseholdButton?.addEventListener("click", () => {
+  cloudJoinHouseholdButton.disabled = true;
+  joinCloudHousehold(cloudHouseholdInput?.value || "")
+    .catch((error) => {
+      console.warn("共有グループ参加エラー:", error);
+      showErrorMessage("共有グループへ参加できませんでした");
+      setCloudStatus(`共有グループ参加に失敗しました: ${error.message}`, "warning");
+    })
+    .finally(() => {
+      cloudJoinHouseholdButton.disabled = false;
+    });
+});
+
+cloudCreateHouseholdButton?.addEventListener("click", () => {
+  cloudCreateHouseholdButton.disabled = true;
+  createCloudHousehold()
+    .catch((error) => {
+      console.warn("共有グループ作成エラー:", error);
+      showErrorMessage("共有グループを作成できませんでした");
+      setCloudStatus(`共有グループ作成に失敗しました: ${error.message}`, "warning");
+    })
+    .finally(() => {
+      cloudCreateHouseholdButton.disabled = false;
+    });
+});
+
 listPhotoInput.addEventListener("change", async () => {
   const file = listPhotoInput.files[0];
   const item = items.find((currentItem) => currentItem.id === pendingPhotoItemId);
+  const sortingItem = sortingItems.find((currentItem) => currentItem.id === pendingPhotoItemId);
+  const targetItem = pendingPhotoCollection === "sorting" ? sortingItem : item;
 
-  if (!file || !item) {
+  if (!file || !targetItem) {
     pendingPhotoItemId = "";
+    pendingPhotoCollection = "items";
     return;
   }
 
@@ -8397,26 +8715,35 @@ listPhotoInput.addEventListener("change", async () => {
     showToast("画像ファイルを選択してください", "error");
     listPhotoInput.value = "";
     pendingPhotoItemId = "";
+    pendingPhotoCollection = "items";
     return;
   }
 
   try {
     const imageData = await readImageFile(file);
 
-	    if (!saveLocalItemImage(item, imageData)) {
+	    if (!saveLocalItemImage(targetItem, imageData, pendingPhotoCollection)) {
 	      throw new Error("この端末へ写真を保存できませんでした");
 	    }
 
 	    showToast("この端末へ写真を保存しました", "success");
-	    render();
-	    if (currentDetailItem?.id === item.id && !detailModal.classList.contains("hidden")) {
-	      openDetailModal(item);
+	    if (pendingPhotoCollection === "sorting") {
+	      renderSorting();
+	      if (currentSortingDetailItem?.id === targetItem.id && !sortingDetailModal.classList.contains("hidden")) {
+	        openSortingDetailModal(targetItem);
+	      }
+	    } else {
+	      render();
+	      if (currentDetailItem?.id === targetItem.id && !detailModal.classList.contains("hidden")) {
+	        openDetailModal(targetItem);
+	      }
 	    }
 	  } catch (error) {
     showToast(error.message || "写真を保存できませんでした", "error");
   } finally {
     listPhotoInput.value = "";
     pendingPhotoItemId = "";
+    pendingPhotoCollection = "items";
   }
 });
 
@@ -8452,6 +8779,50 @@ imageInput.addEventListener("change", async () => {
     setSubmitDisabled(false);
   }
 });
+
+sortingImageInput?.addEventListener("change", async () => {
+  const file = sortingImageInput.files[0];
+
+  if (!file) {
+    return;
+  }
+
+  if (!file.type.startsWith("image/")) {
+    showErrorMessage("画像ファイルを選択してください");
+    sortingImageInput.value = "";
+    return;
+  }
+
+  try {
+    currentSortingImageData = await readImageFile(file);
+    if (sortingImageProviderInput) {
+      sortingImageProviderInput.value = sortingImageProviderInput.value || "local";
+    }
+    if (sortingLocalImageIdInput) {
+      sortingLocalImageIdInput.value = sortingLocalImageIdInput.value || `LOCAL-SORTING-${sortingIdInput.value || Date.now()}-${Date.now()}`;
+    }
+    updateSortingImageReferenceMode();
+    updateSortingImagePreview(currentSortingImageData);
+  } catch (error) {
+    showErrorMessage(error.message);
+    sortingImageInput.value = "";
+    currentSortingImageData = "";
+    updateSortingImagePreview("");
+  }
+});
+
+sortingRemoveImageButton?.addEventListener("click", () => {
+  if (sortingImageInput) {
+    sortingImageInput.value = "";
+  }
+  currentSortingImageData = "";
+  if (sortingLocalImageIdInput) {
+    sortingLocalImageIdInput.value = "";
+  }
+  updateSortingImagePreview("");
+});
+
+sortingImageProviderInput?.addEventListener("change", updateSortingImageReferenceMode);
 
 removeImageButton.addEventListener("click", () => {
   imageInput.value = "";
@@ -8644,6 +9015,16 @@ sortingTableBody.addEventListener("click", async (event) => {
     returnToSourceItem(item);
   }
 
+  if (button.dataset.action === "change-sorting-photo") {
+    closeSortingActionMenus();
+    requestLocalPhoto(item.id, "sorting");
+  }
+
+  if (button.dataset.action === "remove-sorting-photo") {
+    closeSortingActionMenus();
+    removeLocalPhoto(item, "sorting");
+  }
+
   if (button.dataset.action === "delete-sorting") {
     closeSortingActionMenus();
     await deleteSortingItem(item);
@@ -8737,13 +9118,12 @@ sortingWorkCardList.addEventListener("click", async (event) => {
     copyText(getItemCode(sourceItem), "商品IDをコピーしました。");
     return;
   }
-  if (button?.dataset.action === "change-source-photo") {
-    requestLocalPhoto(card.dataset.sourceId);
+  if (button?.dataset.action === "change-sorting-photo") {
+    requestLocalPhoto(item.id, "sorting");
     return;
   }
-  if (button?.dataset.action === "remove-source-photo") {
-    const sourceItem = items.find((currentItem) => currentItem.id === card.dataset.sourceId);
-    removeLocalPhoto(sourceItem);
+  if (button?.dataset.action === "remove-sorting-photo") {
+    removeLocalPhoto(item, "sorting");
     return;
   }
 
@@ -9270,5 +9650,4 @@ collapseCloudPanelOnMobile();
 collapseSortingExtrasOnMobile();
 restoreInventoryOptionsOpenState();
 setActiveNavigation("form");
-render();
 initializeCloud();
