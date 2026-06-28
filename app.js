@@ -4,6 +4,8 @@ const SETTINGS_KEY = "mercari-listing-helper-settings";
 const TEMPLATES_KEY = "mercari-listing-helper-templates";
 const SORTING_STORAGE_KEY = "mercari-listing-helper-destination-sorting";
 const CLOUD_LAST_SYNC_KEY = "mercari-listing-helper-cloud-last-sync";
+const CLOUD_APP_STATE_LOCAL_ID = "__app_state__";
+const CLOUD_APP_STATE_RECORD_TYPE = "app_state";
 const ITEM_SEQUENCE_KEY = "mercari-listing-helper-item-sequence";
 const LOCAL_IMAGE_REFS_KEY = "mercari-listing-helper-local-image-refs";
 const SUPABASE_URL = "https://pkbgvfurouxmghujlscs.supabase.co";
@@ -90,6 +92,7 @@ const cloudLogoutButton = document.querySelector("#cloudLogoutButton");
 const migrateToSupabaseButton = document.querySelector("#migrateToSupabaseButton");
 const cloudLastSync = document.querySelector("#cloudLastSync");
 const cloudSyncState = document.querySelector("#cloudSyncState");
+const cloudReloadButton = document.querySelector("#cloudReloadButton");
 const searchInput = document.querySelector("#searchInput");
 const listPhotoInput = document.querySelector("#listPhotoInput");
 const listUnlistedCount = document.querySelector("#listUnlistedCount");
@@ -322,6 +325,7 @@ const copyGooglePhotoIdButton = document.querySelector("#copyGooglePhotoIdButton
 const copyGooglePhotoTagButton = document.querySelector("#copyGooglePhotoTagButton");
 const copyMercariUrlButton = document.querySelector("#copyMercariUrlButton");
 const prepareRelistButton = document.querySelector("#prepareRelistButton");
+const deleteDetailItemButton = document.querySelector("#deleteDetailItemButton");
 const editDetailItemButton = document.querySelector("#editDetailItemButton");
 const changeDetailLocalPhotoButton = document.querySelector("#changeDetailLocalPhotoButton");
 const removeDetailLocalPhotoButton = document.querySelector("#removeDetailLocalPhotoButton");
@@ -360,6 +364,8 @@ let cloudUser = null;
 let cloudHouseholdId = "";
 let isCloudReady = false;
 let hasCloudSaveWarning = false;
+let isApplyingCloudSnapshot = false;
+let lastCloudReloadRequestAt = 0;
 let isSettingsDirty = false;
 let toastTimer = null;
 let isSortingShippingMode = false;
@@ -946,14 +952,23 @@ function getItemChangeDescriptions(beforeItem = {}, afterItem = {}) {
 
 function saveSettings() {
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  syncAppStateToSupabase().catch((error) => {
+    handleCloudSaveError(error);
+  });
 }
 
 function saveTemplates() {
   localStorage.setItem(TEMPLATES_KEY, JSON.stringify(descriptionTemplates));
+  syncAppStateToSupabase().catch((error) => {
+    handleCloudSaveError(error);
+  });
 }
 
 function saveSortingItems() {
   localStorage.setItem(SORTING_STORAGE_KEY, JSON.stringify(sortingItems));
+  syncAppStateToSupabase().catch((error) => {
+    handleCloudSaveError(error);
+  });
 }
 
 function saveItemsToLocalStorage() {
@@ -990,10 +1005,10 @@ function setCloudStatus(message, type = "") {
   cloudStatus.textContent = message;
   if (cloudSyncState) {
     const syncLabel = type === "connected"
-      ? "同期状態 クラウド同期中"
+      ? "現在の保存先：Supabase"
       : type === "warning"
-        ? "同期状態 注意あり"
-        : "同期状態 ローカル保存";
+        ? "現在の保存先：注意あり"
+        : "現在の保存先：localStorage";
     cloudSyncState.textContent = syncLabel;
   }
   cloudPanel.classList.toggle("cloud-connected", type === "connected");
@@ -1025,6 +1040,12 @@ function updateCloudLastSyncDisplay() {
   }
 
   cloudLastSync.textContent = formatCloudSyncTime(localStorage.getItem(CLOUD_LAST_SYNC_KEY));
+}
+
+function logCloudDataSource(reason = "") {
+  const source = isCloudReady ? "Supabase" : "localStorage";
+  const lastSync = formatCloudSyncTime(localStorage.getItem(CLOUD_LAST_SYNC_KEY));
+  console.log(`現在の保存先：${source}`, lastSync, reason ? `理由：${reason}` : "");
 }
 
 function showToast(message, type = "success") {
@@ -1126,6 +1147,7 @@ function confirmCancel(message) {
 function markCloudSynced() {
   localStorage.setItem(CLOUD_LAST_SYNC_KEY, new Date().toISOString());
   updateCloudLastSyncDisplay();
+  logCloudDataSource("同期完了");
 }
 
 function renderCloudAuthState() {
@@ -1135,6 +1157,7 @@ function renderCloudAuthState() {
   cloudLoginButton.disabled = false;
   cloudLogoutButton.classList.toggle("hidden", !cloudUser);
   migrateToSupabaseButton.classList.toggle("hidden", !isLoggedIn);
+  cloudReloadButton?.classList.toggle("hidden", !isLoggedIn);
   cloudPanel.classList.toggle("cloud-logged-in", isLoggedIn);
   cloudEmailInput.disabled = Boolean(cloudUser);
   cloudPasswordInput.disabled = Boolean(cloudUser);
@@ -1262,13 +1285,15 @@ async function loadItemsFromSupabase() {
     throw error;
   }
 
-  if (!data || data.length === 0) {
-    setCloudStatus("クラウド側の商品はまだ空です。必要なら「Supabaseへ移行」でこの端末の商品をアップロードできます。", "connected");
-    return;
-  }
+  const cloudRows = Array.isArray(data) ? data : [];
+  const appStateRow = cloudRows.find((row) => {
+    const recordType = String(row.data?.__recordType || "").trim();
+    return row.local_id === CLOUD_APP_STATE_LOCAL_ID || recordType === CLOUD_APP_STATE_RECORD_TYPE;
+  });
+  const itemRows = cloudRows.filter((row) => row !== appStateRow);
 
   const localItemsById = new Map(loadItems().map((item) => [String(item.id), item]));
-  items = data
+  items = itemRows
     .map((row) => {
       const itemId = String(row.data?.id || row.local_id || "");
       const localItem = localItemsById.get(itemId);
@@ -1286,16 +1311,151 @@ async function loadItemsFromSupabase() {
 	          localImageId: normalizeImageRefs(localItem?.imageRefs).localImageId || getLocalImageRefs({ id: itemId }).localImageId,
 	        }),
 	      };
-	    })
+    })
     .filter((item) => item.id);
+
+  applyCloudAppState(appStateRow?.data || null);
   const didAddItemCodes = ensureItemCodes(items);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  if (itemRows.length > 0) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  } else {
+    console.info("クラウド側の商品が空のため、端末内バックアップは上書きしません。");
+  }
   hasCloudSaveWarning = false;
+
+  if (itemRows.length === 0) {
+    setCloudStatus("クラウド側の商品はまだ空です。必要ならPC側から移行してください。", "connected");
+  } else {
+    setCloudStatus(cloudUser?.email || "クラウド同期中", "connected");
+  }
+
   if (didAddItemCodes) {
     await syncItemsToSupabase();
   } else {
     markCloudSynced();
   }
+
+  renderCloudAuthState();
+  logCloudDataSource("クラウドから再読み込み");
+}
+
+function applyCloudAppState(appStateData) {
+  if (!appStateData || appStateData.__recordType !== CLOUD_APP_STATE_RECORD_TYPE) {
+    return;
+  }
+
+  isApplyingCloudSnapshot = true;
+  try {
+    settings = normalizeSettings(appStateData.settings || settings);
+    descriptionTemplates = normalizeTemplates(
+      appStateData.descriptionTemplates || appStateData.templates,
+      descriptionTemplates,
+    );
+    sortingItems = Array.isArray(appStateData.sortingItems)
+      ? appStateData.sortingItems.map(normalizeSortingItem)
+      : sortingItems;
+
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    localStorage.setItem(TEMPLATES_KEY, JSON.stringify(descriptionTemplates));
+    localStorage.setItem(SORTING_STORAGE_KEY, JSON.stringify(sortingItems));
+
+    refreshCategoryOptions(categoryInput.value);
+    refreshStorageLocationOptions(storageLocationInput.value);
+    refreshShippingMethodOptions(shippingMethodInput.value);
+    refreshTemplateOptions(descriptionTemplateInput.value);
+    refreshSortingDestinationOptions(sortingDestinationInput?.value);
+    renderSortingAppraisalFields(getSortingAppraisalValuesFromInputs());
+  } finally {
+    isApplyingCloudSnapshot = false;
+  }
+}
+
+function createCloudAppStateData() {
+  return {
+    __recordType: CLOUD_APP_STATE_RECORD_TYPE,
+    version: 1,
+    settings,
+    descriptionTemplates,
+    sortingItems,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+async function syncAppStateToSupabase() {
+  if (isApplyingCloudSnapshot || !isCloudReady || !supabaseClient || !cloudUser || !cloudHouseholdId) {
+    return;
+  }
+
+  const { error } = await supabaseClient
+    .from("items")
+    .upsert([{
+      household_id: cloudHouseholdId,
+      local_id: CLOUD_APP_STATE_LOCAL_ID,
+      title: "アプリ設定",
+      status: DEFAULT_STATUS,
+      category: "",
+      storage_location: "",
+      planned_price: null,
+      data: createCloudAppStateData(),
+    }], { onConflict: "household_id,local_id" });
+
+  if (error) {
+    throw error;
+  }
+
+  hasCloudSaveWarning = false;
+  markCloudSynced();
+}
+
+async function reloadCloudData({ reason = "手動同期", showToast = false, force = false } = {}) {
+  if (!supabaseClient && !initializeSupabaseClient()) {
+    showErrorMessage("Supabase接続情報が読み込めません");
+    return;
+  }
+
+  if (!cloudUser) {
+    const { data, error } = await supabaseClient.auth.getSession();
+
+    if (error) {
+      throw error;
+    }
+
+    supabaseSession = data.session;
+    cloudUser = data.session?.user || null;
+  }
+
+  if (!cloudUser) {
+    logCloudDataSource(`${reason}: 未ログイン`);
+    return;
+  }
+
+  const now = Date.now();
+  if (!force && now - lastCloudReloadRequestAt < 10000) {
+    return;
+  }
+  lastCloudReloadRequestAt = now;
+
+  await loadCloudHousehold();
+  await loadItemsFromSupabase();
+  render();
+
+  if (showToast) {
+    showSuccessMessage("クラウドから再読み込みしました");
+  }
+
+  logCloudDataSource(reason);
+}
+
+function reloadCloudDataIfReady(reason) {
+  if (!cloudUser || !isCloudReady) {
+    logCloudDataSource(`${reason}: ローカル表示`);
+    return;
+  }
+
+  reloadCloudData({ reason }).catch((error) => {
+    setCloudStatus(`クラウド再読み込みに失敗しました: ${error.message}`, "warning");
+    console.warn("Supabase再読み込みエラー:", error);
+  });
 }
 
 function createCloudItemData(item) {
@@ -1416,6 +1576,7 @@ async function migrateLocalItemsToSupabase() {
       throw error;
     }
 
+    await syncAppStateToSupabase();
     items = localItems;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
     hasCloudSaveWarning = false;
@@ -3872,9 +4033,18 @@ function openDetailModal(item) {
 
 function closeDetailModal() {
   detailModal.classList.add("hidden");
+  detailModal.querySelectorAll(".detail-more-action-menu[open]").forEach((menu) => {
+    menu.removeAttribute("open");
+  });
   currentDetailItem = null;
   updateDetailNavigationButtons();
   unlockPageScroll();
+}
+
+function closeDetailMoreActionMenu() {
+  detailModal.querySelectorAll(".detail-more-action-menu[open]").forEach((menu) => {
+    menu.removeAttribute("open");
+  });
 }
 
 function openListingUrl(item) {
@@ -6736,14 +6906,13 @@ function createMasterSettingsRow(masterKey, values, index, options = {}) {
   row.className = `master-setting-row ${definition.rowClass}`;
   row.dataset.index = String(index);
   row.dataset.master = masterKey;
-  row.draggable = true;
 
   Object.entries(options.dataset || {}).forEach(([key, value]) => {
     row.dataset[key] = value;
   });
 
   row.innerHTML = `
-    <span class="master-drag-handle" aria-hidden="true" title="ドラッグで並び替え">≡</span>
+    <button class="master-drag-handle" type="button" draggable="true" data-action="drag-handle" aria-label="ドラッグで並び替え" title="ドラッグで並び替え">≡</button>
     <div class="master-setting-fields ${contentClass}">
       <div class="settings-row-main">
         ${primaryField ? createMasterFieldControl(primaryField) : ""}
@@ -7133,13 +7302,21 @@ function getDragInsertTarget(list, pointerY) {
 }
 
 function bindMasterSettingsDrag(list) {
+  list.addEventListener("pointerdown", (event) => {
+    if (event.target.closest(".master-drag-handle")) {
+      event.stopPropagation();
+    }
+  });
+
   list.addEventListener("dragstart", (event) => {
     const row = event.target.closest(".master-setting-row");
 
-    if (!row) {
+    if (!row || !event.target.closest(".master-drag-handle")) {
+      event.preventDefault();
       return;
     }
 
+    event.stopPropagation();
     row.classList.add("is-dragging");
     event.dataTransfer.effectAllowed = "move";
     event.dataTransfer.setData("text/plain", row.dataset.index || "");
@@ -7153,6 +7330,7 @@ function bindMasterSettingsDrag(list) {
     }
 
     event.preventDefault();
+    event.stopPropagation();
     const insertTarget = getDragInsertTarget(list, event.clientY);
 
     if (insertTarget) {
@@ -7162,7 +7340,14 @@ function bindMasterSettingsDrag(list) {
     }
   });
 
-  list.addEventListener("dragend", () => {
+  list.addEventListener("drop", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+  });
+
+  list.addEventListener("dragend", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
     const draggingRow = list.querySelector(".master-setting-row.is-dragging");
 
     if (!draggingRow) {
@@ -7179,6 +7364,13 @@ async function handleMasterSettingsListClick(event) {
   const row = event.target.closest(".master-setting-row");
 
   if (!button || !row) {
+    return;
+  }
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  if (button.dataset.action === "drag-handle") {
     return;
   }
 
@@ -7402,8 +7594,19 @@ sideNavLinks.forEach((link) => {
     event.preventDefault();
     setActiveNavigation(view);
     render();
+    reloadCloudDataIfReady(`タブ切り替え:${view}`);
     document.querySelector(link.getAttribute("href"))?.scrollIntoView({ behavior: "smooth", block: "start" });
   });
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) {
+    reloadCloudDataIfReady("画面復帰");
+  }
+});
+
+window.addEventListener("focus", () => {
+  reloadCloudDataIfReady("ウィンドウ復帰");
 });
 
 recentStorageList.addEventListener("click", (event) => {
@@ -7628,6 +7831,45 @@ function closeItemActionMenus(exceptMenu = null) {
   });
 }
 
+function positionItemActionMenu(menu) {
+  const summary = menu?.querySelector("summary");
+  const panel = menu?.querySelector(".actions");
+
+  if (!summary || !panel || !menu.open) {
+    return;
+  }
+
+  panel.style.setProperty("--action-menu-left", "12px");
+  panel.style.setProperty("--action-menu-top", "12px");
+
+  const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 390;
+  const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 700;
+  const margin = 12;
+  const gap = 6;
+  const summaryRect = summary.getBoundingClientRect();
+  const panelRect = panel.getBoundingClientRect();
+  const panelWidth = Math.min(panelRect.width || 220, viewportWidth - margin * 2);
+  const panelHeight = Math.min(panelRect.height || panel.scrollHeight || 280, viewportHeight - margin * 2);
+  const preferredLeft = summaryRect.right - panelWidth;
+  const left = Math.max(margin, Math.min(preferredLeft, viewportWidth - panelWidth - margin));
+  const belowTop = summaryRect.bottom + gap;
+  const aboveTop = summaryRect.top - panelHeight - gap;
+  const canOpenBelow = belowTop + panelHeight <= viewportHeight - margin;
+  const top = Math.max(
+    margin,
+    Math.min(canOpenBelow ? belowTop : aboveTop, viewportHeight - panelHeight - margin),
+  );
+
+  panel.style.setProperty("--action-menu-left", `${left}px`);
+  panel.style.setProperty("--action-menu-top", `${top}px`);
+}
+
+function positionOpenItemActionMenus() {
+  document.querySelectorAll(
+    "#itemTableBody .row-action-menu[open], #compactTableGrid .row-action-menu[open], #storageLocationView .row-action-menu[open], #inventoryShelfList .row-action-menu[open], #mobileCardList .row-action-menu[open], #recentDockTableBody .row-action-menu[open], #recentDockMobileList .row-action-menu[open]",
+  ).forEach((menu) => positionItemActionMenu(menu));
+}
+
 async function handleItemTableAction(event) {
   const button = event.target.closest("button");
   const actionSummary = event.target.closest(".row-action-menu > summary");
@@ -7636,8 +7878,18 @@ async function handleItemTableAction(event) {
   const row = event.target.closest("tr, .inventory-shelf-card, .mobile-item-card, .mobile-compact-table-card, .compact-list-row");
 
   if (actionSummary) {
+    event.preventDefault();
     event.stopPropagation();
-    closeItemActionMenus(actionSummary.closest(".row-action-menu"));
+    const menu = actionSummary.closest(".row-action-menu");
+    const shouldOpen = !menu.open;
+    closeItemActionMenus(menu);
+
+    if (shouldOpen) {
+      menu.open = true;
+      requestAnimationFrame(() => positionItemActionMenu(menu));
+    } else {
+      menu.removeAttribute("open");
+    }
     return;
   }
 
@@ -7868,6 +8120,8 @@ document.addEventListener("click", (event) => {
     closeItemActionMenus();
   }
 });
+window.addEventListener("resize", positionOpenItemActionMenus);
+window.addEventListener("scroll", positionOpenItemActionMenus, true);
 
 openFullListButton.addEventListener("click", () => {
   setActiveNavigation("list");
@@ -8117,6 +8371,18 @@ cloudLogoutButton.addEventListener("click", async () => {
 });
 
 migrateToSupabaseButton.addEventListener("click", migrateLocalItemsToSupabase);
+
+cloudReloadButton?.addEventListener("click", () => {
+  cloudReloadButton.disabled = true;
+  reloadCloudData({ reason: "手動同期", showToast: true, force: true })
+    .catch((error) => {
+      setCloudStatus(`クラウド再読み込みに失敗しました: ${error.message}`, "warning");
+      showErrorMessage("クラウド再読み込みに失敗しました");
+    })
+    .finally(() => {
+      cloudReloadButton.disabled = false;
+    });
+});
 
 listPhotoInput.addEventListener("change", async () => {
   const file = listPhotoInput.files[0];
@@ -8817,15 +9083,19 @@ copyDetailItemIdButton.addEventListener("click", () => {
 copyGooglePhotoIdButton.addEventListener("click", () => {
   const googlePhotoId = normalizeImageRefs(currentDetailItem?.imageRefs).googlePhotoId;
   copyText(googlePhotoId, "GoogleフォトIDをコピーしました。");
+  closeDetailMoreActionMenu();
 });
 copyGooglePhotoTagButton.addEventListener("click", () => {
   copyText(currentDetailItem ? createGooglePhotoTagText(currentDetailItem) : "", "Googleフォト用タグをコピーしました。");
+  closeDetailMoreActionMenu();
 });
 copyMercariUrlButton.addEventListener("click", () => {
   copyText(currentDetailItem?.listingUrl || "", "メルカリURLをコピーしました。");
+  closeDetailMoreActionMenu();
 });
 prepareRelistButton.addEventListener("click", () => {
   if (currentDetailItem) {
+    closeDetailMoreActionMenu();
     closeDetailModal();
     relistItem(currentDetailItem);
   }
@@ -8840,12 +9110,36 @@ editDetailItemButton.addEventListener("click", () => {
 changeDetailLocalPhotoButton.addEventListener("click", () => {
   if (currentDetailItem) {
     requestLocalPhoto(currentDetailItem.id);
+    closeDetailMoreActionMenu();
   }
 });
 removeDetailLocalPhotoButton.addEventListener("click", () => {
   if (currentDetailItem) {
     removeLocalPhoto(currentDetailItem);
+    closeDetailMoreActionMenu();
   }
+});
+deleteDetailItemButton?.addEventListener("click", async () => {
+  if (!currentDetailItem) {
+    return;
+  }
+
+  const itemToDelete = currentDetailItem;
+  const shouldDelete = await confirmDelete(`「${getListingTitle(itemToDelete)}」を削除しますか？`);
+
+  if (!shouldDelete) {
+    return;
+  }
+
+  closeDetailMoreActionMenu();
+  items = items.filter((item) => item.id !== itemToDelete.id);
+  saveItems();
+  deleteItemFromSupabase(itemToDelete.id).catch((error) => {
+    handleCloudSaveError(error);
+  });
+  closeDetailModal();
+  resetForm();
+  render();
 });
 previousDetailItemButton?.addEventListener("click", () => {
   openAdjacentDetailItem(-1);
@@ -8857,6 +9151,11 @@ closeDetailModalButton.addEventListener("click", closeDetailModal);
 detailModal.addEventListener("click", (event) => {
   if (event.target === detailModal) {
     closeDetailModal();
+    return;
+  }
+
+  if (!event.target.closest(".detail-more-action-menu")) {
+    closeDetailMoreActionMenu();
   }
 });
 closeSortingDetailModalButton.addEventListener("click", closeSortingDetailModal);

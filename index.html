@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>メルカリ出品補助室</title>
-    <link rel="stylesheet" href="styles.css?v=stability-guard-20260628">
+    <link rel="stylesheet" href="styles.css?v=cloud-source-sync-20260628">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
   <body class="work-view work-tab-form">
@@ -1250,6 +1250,7 @@
               <p class="muted" id="cloudStatus">未ログイン</p>
               <p class="cloud-sync-state" id="cloudSyncState">同期状態 ローカル保存</p>
               <p class="cloud-sync-time" id="cloudLastSync">最終同期 -</p>
+              <button class="ghost-button cloud-reload-button hidden" type="button" id="cloudReloadButton">クラウドから再読み込み</button>
               <p class="cloud-backup-warning">Supabaseへ移行する前に、PC版の設定ページからJSONバックアップを書き出して保存してください。</p>
             </div>
             <button class="ghost-button hidden" type="button" id="cloudLogoutButton">ログアウト</button>
@@ -1312,17 +1313,23 @@
           <button class="ghost-button" type="button" id="nextDetailItemButton">次の商品</button>
         </div>
         <div class="detail-modal-content" id="detailModalContent"></div>
-        <div class="modal-actions">
+        <div class="modal-actions detail-modal-actions">
           <button class="primary-button" type="button" id="editDetailItemButton">編集</button>
           <button class="text-button detail-secondary-action" type="button" id="copyDetailItemIdButton">商品IDコピー</button>
-          <button class="text-button detail-secondary-action" type="button" id="copyGooglePhotoIdButton">GoogleフォトIDコピー</button>
-          <button class="text-button detail-secondary-action" type="button" id="copyGooglePhotoTagButton">Googleフォト用タグコピー</button>
-          <button class="text-button detail-secondary-action" type="button" id="changeDetailLocalPhotoButton">ローカル画像追加/変更</button>
-          <button class="text-button detail-secondary-action" type="button" id="removeDetailLocalPhotoButton">ローカル画像削除</button>
-          <button class="text-button" type="button" id="prepareRelistButton">再出品</button>
-          <button class="text-button detail-secondary-action" type="button" id="copyMercariUrlButton">メルカリURLコピー</button>
           <button class="text-button detail-secondary-action" type="button" id="copyDetailTitleButton">タイトルコピー</button>
           <button class="text-button detail-secondary-action" type="button" id="copyDetailDescriptionButton">説明文コピー</button>
+          <details class="detail-more-action-menu">
+            <summary aria-label="その他の操作">その他</summary>
+            <div class="detail-more-action-panel">
+              <button class="text-button detail-secondary-action" type="button" id="copyGooglePhotoIdButton">GoogleフォトIDコピー</button>
+              <button class="text-button detail-secondary-action" type="button" id="copyGooglePhotoTagButton">Googleフォト用タグコピー</button>
+              <button class="text-button detail-secondary-action" type="button" id="changeDetailLocalPhotoButton">ローカル画像追加/変更</button>
+              <button class="text-button detail-secondary-action" type="button" id="removeDetailLocalPhotoButton">ローカル画像削除</button>
+              <button class="text-button" type="button" id="prepareRelistButton">再出品</button>
+              <button class="text-button detail-secondary-action" type="button" id="copyMercariUrlButton">メルカリURLコピー</button>
+              <button class="danger-button" type="button" id="deleteDetailItemButton">削除</button>
+            </div>
+          </details>
         </div>
       </div>
     </div>
@@ -1341,6 +1348,6 @@
       </div>
     </div>
 
-    <script src="app.js?v=stability-guard-20260628"></script>
+    <script src="app.js?v=cloud-source-sync-20260628"></script>
   </body>
 </html>
