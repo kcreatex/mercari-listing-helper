@@ -9,6 +9,9 @@ const CLOUD_APP_STATE_LOCAL_ID = "__app_state__";
 const CLOUD_APP_STATE_RECORD_TYPE = "app_state";
 const ITEM_SEQUENCE_KEY = "mercari-listing-helper-item-sequence";
 const LOCAL_IMAGE_REFS_KEY = "mercari-listing-helper-local-image-refs";
+const LOCAL_IMAGE_DB_NAME = "mercari-listing-helper-images";
+const LOCAL_IMAGE_DB_VERSION = 1;
+const LOCAL_IMAGE_STORE_NAME = "images";
 const SUPABASE_URL = "https://pkbgvfurouxmghujlscs.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_pJVEFb8bDDTrdOaCYU3BRQ_jUnbesuv";
 
@@ -364,6 +367,8 @@ let currentSortingDetailItem = null;
 let openMonthlyProfitKey = "";
 let currentImageData = "";
 let currentSortingImageData = "";
+let localImageDbPromise = null;
+const localImageCache = new Map();
 let pendingFormItemCode = "";
 let isImageProcessing = false;
 let lastSavedShortcut = null;
@@ -977,6 +982,18 @@ function saveSettings() {
   });
 }
 
+function stripImageDataForStorage(item) {
+  const { imageData, ...rest } = item || {};
+  return {
+    ...rest,
+    imageRefs: normalizeImageRefs(rest.imageRefs),
+  };
+}
+
+function serializeItemsForLocalStorage(sourceItems) {
+  return sourceItems.map(stripImageDataForStorage);
+}
+
 function saveTemplates() {
   localStorage.setItem(TEMPLATES_KEY, JSON.stringify(descriptionTemplates));
   syncAppStateToSupabase().catch((error) => {
@@ -985,7 +1002,7 @@ function saveTemplates() {
 }
 
 function saveSortingItems() {
-  localStorage.setItem(SORTING_STORAGE_KEY, JSON.stringify(sortingItems));
+  localStorage.setItem(SORTING_STORAGE_KEY, JSON.stringify(serializeItemsForLocalStorage(sortingItems)));
   syncAppStateToSupabase().catch((error) => {
     handleCloudSaveError(error);
   });
@@ -994,10 +1011,10 @@ function saveSortingItems() {
 function saveItemsToLocalStorage() {
   ensureItemCodes(items);
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeItemsForLocalStorage(items)));
     return true;
   } catch {
-    showErrorMessage("画像または商品数が多く、ブラウザに保存できませんでした。小さめの画像を選び直してください。");
+    showErrorMessage("商品データを保存できませんでした。端末容量を確認してください。");
     return false;
   }
 }
@@ -1411,7 +1428,7 @@ async function loadItemsFromSupabase() {
 
   applyCloudAppState(appStateRow?.data || null);
   const didAddItemCodes = ensureItemCodes(items);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeItemsForLocalStorage(items)));
   hasCloudSaveWarning = false;
 
   if (itemRows.length === 0) {
@@ -1514,7 +1531,7 @@ function applyCloudAppState(appStateData) {
 
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
     localStorage.setItem(TEMPLATES_KEY, JSON.stringify(descriptionTemplates));
-    localStorage.setItem(SORTING_STORAGE_KEY, JSON.stringify(sortingItems));
+    localStorage.setItem(SORTING_STORAGE_KEY, JSON.stringify(serializeItemsForLocalStorage(sortingItems)));
 
     refreshCategoryOptions(categoryInput.value);
     refreshStorageLocationOptions(storageLocationInput.value);
@@ -1533,7 +1550,7 @@ function createCloudAppStateData() {
     version: 1,
     settings,
     descriptionTemplates,
-    sortingItems,
+    sortingItems: serializeItemsForLocalStorage(sortingItems),
     updatedAt: new Date().toISOString(),
   };
 }
@@ -1735,7 +1752,7 @@ async function migrateLocalItemsToSupabase() {
 
     await syncAppStateToSupabase();
     items = localItems;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeItemsForLocalStorage(items)));
     hasCloudSaveWarning = false;
     markCloudSynced();
     render();
@@ -1790,7 +1807,183 @@ function getItemCode(item) {
 }
 
 function getLocalItemImage(item) {
-  return String(item?.imageData || "");
+  const refs = normalizeImageRefs(item?.imageRefs);
+  return String(item?.imageData || (refs.localImageId ? localImageCache.get(refs.localImageId) : "") || "");
+}
+
+function getDataUrlByteSize(value) {
+  const dataUrl = String(value || "");
+  const base64 = dataUrl.includes(",") ? dataUrl.split(",").pop() : dataUrl;
+  return Math.ceil((base64.length * 3) / 4);
+}
+
+function formatMegabytes(bytes) {
+  return `${(bytes / 1024 / 1024).toFixed(2)}MB`;
+}
+
+function getLocalStorageUsageBytes() {
+  return Object.keys(localStorage).reduce((total, key) => {
+    const value = localStorage.getItem(key) || "";
+    return total + ((key.length + value.length) * 2);
+  }, 0);
+}
+
+async function logBrowserStorageEstimate(context = "画像保存") {
+  if (!navigator.storage?.estimate) {
+    console.log(`${context}容量見積：取得不可`);
+    return;
+  }
+
+  try {
+    const estimate = await navigator.storage.estimate();
+    console.log(`${context}容量見積：使用 ${formatMegabytes(estimate.usage || 0)} / 上限 ${formatMegabytes(estimate.quota || 0)}`);
+  } catch (error) {
+    console.warn(`${context}容量見積エラー:`, error);
+  }
+}
+
+function openLocalImageDb() {
+  if (!("indexedDB" in window)) {
+    return Promise.reject(new Error("IndexedDBが利用できません"));
+  }
+
+  if (localImageDbPromise) {
+    return localImageDbPromise;
+  }
+
+  localImageDbPromise = new Promise((resolve, reject) => {
+    const request = indexedDB.open(LOCAL_IMAGE_DB_NAME, LOCAL_IMAGE_DB_VERSION);
+
+    request.addEventListener("upgradeneeded", () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(LOCAL_IMAGE_STORE_NAME)) {
+        db.createObjectStore(LOCAL_IMAGE_STORE_NAME, { keyPath: "id" });
+      }
+    });
+
+    request.addEventListener("success", () => resolve(request.result));
+    request.addEventListener("error", () => reject(request.error || new Error("IndexedDBを開けませんでした")));
+    request.addEventListener("blocked", () => reject(new Error("IndexedDBが他のタブでブロックされています")));
+  });
+
+  return localImageDbPromise;
+}
+
+function runImageStoreTransaction(mode, callback) {
+  return openLocalImageDb().then((db) => new Promise((resolve, reject) => {
+    const transaction = db.transaction(LOCAL_IMAGE_STORE_NAME, mode);
+    const store = transaction.objectStore(LOCAL_IMAGE_STORE_NAME);
+    const request = callback(store);
+
+    request.addEventListener("success", () => resolve(request.result));
+    request.addEventListener("error", () => reject(request.error || transaction.error || new Error("画像保存先エラー")));
+    transaction.addEventListener("error", () => reject(transaction.error || new Error("画像保存先エラー")));
+  }));
+}
+
+async function saveImageToIndexedDb(id, dataUrl) {
+  await runImageStoreTransaction("readwrite", (store) => store.put({
+    id,
+    dataUrl,
+    updatedAt: new Date().toISOString(),
+    bytes: getDataUrlByteSize(dataUrl),
+  }));
+  localImageCache.set(id, dataUrl);
+}
+
+async function deleteImageFromIndexedDb(id) {
+  if (!id) {
+    return;
+  }
+
+  await runImageStoreTransaction("readwrite", (store) => store.delete(id));
+  localImageCache.delete(id);
+}
+
+async function hydrateLocalImagesFromIndexedDb() {
+  if (!("indexedDB" in window)) {
+    console.warn("画像保存先：IndexedDB未対応。画像本体は保存できません。");
+    return;
+  }
+
+  try {
+    await logBrowserStorageEstimate("IndexedDB復元前");
+    const records = await runImageStoreTransaction("readonly", (store) => store.getAll());
+    localImageCache.clear();
+    (Array.isArray(records) ? records : []).forEach((record) => {
+      if (record?.id && record?.dataUrl) {
+        localImageCache.set(record.id, record.dataUrl);
+      }
+    });
+    console.log(`画像保存先：IndexedDB / 復元画像数：${localImageCache.size}件`);
+    await migrateLegacyLocalImagesToIndexedDb();
+  } catch (error) {
+    console.warn("IndexedDB画像復元エラー:", error);
+  }
+}
+
+async function migrateLegacyLocalImagesToIndexedDb() {
+  if (!("indexedDB" in window)) {
+    return;
+  }
+
+  const migrateCollection = async (targetItems, storageKey, label) => {
+    let migratedCount = 0;
+
+    for (const item of targetItems) {
+      const imageData = String(item?.imageData || "");
+      if (!imageData) {
+        continue;
+      }
+
+      const refs = normalizeImageRefs(item.imageRefs);
+      const localImageId = refs.localImageId || createLocalImageId(item);
+
+      try {
+        console.log(`${label}既存画像移行：${getDataUrlByteSize(imageData)} bytes / 保存先 IndexedDB`);
+        await saveImageToIndexedDb(localImageId, imageData);
+        item.imageRefs = normalizeImageRefs({
+          ...refs,
+          provider: refs.provider || "local",
+          localImageId,
+        });
+        item.imageData = "";
+        saveLocalImageRefsForItem(item, { localImageId });
+        migratedCount += 1;
+      } catch (error) {
+        console.error(`${label}既存画像移行失敗:`, {
+          reason: classifyImageStorageError(error),
+          storage: "IndexedDB",
+          imageSize: formatMegabytes(getDataUrlByteSize(imageData)),
+          error,
+        });
+      }
+    }
+
+    if (migratedCount > 0) {
+      localStorage.setItem(storageKey, JSON.stringify(serializeItemsForLocalStorage(targetItems)));
+      console.log(`${label}既存画像移行完了：${migratedCount}件 / localStorage画像本体を削除`);
+    }
+  };
+
+  await migrateCollection(items, STORAGE_KEY, "商品");
+  await migrateCollection(sortingItems, SORTING_STORAGE_KEY, "仕分け");
+  console.log(`localStorage使用量：${formatMegabytes(getLocalStorageUsageBytes())}`);
+}
+
+function classifyImageStorageError(error) {
+  const name = String(error?.name || "");
+  const message = String(error?.message || "");
+
+  if (name.includes("Quota") || message.includes("quota") || message.includes("容量")) {
+    return "容量不足";
+  }
+
+  if (name.includes("Security") || message.includes("permission") || message.includes("権限")) {
+    return "権限エラー";
+  }
+
+  return "保存先エラー";
 }
 
 function getImageRefsFromForm(existingRefs = {}) {
@@ -1855,38 +2048,57 @@ function updateSortingImageReferenceMode() {
   }
 }
 
-function saveLocalItemImage(item, imageData, collection = "items") {
+async function saveLocalItemImage(item, imageData, collection = "items") {
   if (!item) {
-    return false;
+    throw new Error("保存先エラー：対象データがありません");
   }
 
   const previousImage = item.imageData || "";
   const previousRefs = normalizeImageRefs(item.imageRefs);
-  item.imageData = imageData || "";
   const nextLocalImageId = imageData ? (previousRefs.localImageId || createLocalImageId(item)) : "";
-  item.imageRefs = normalizeImageRefs({
-    ...previousRefs,
-    provider: imageData && previousRefs.provider !== "google_photos" ? "local" : previousRefs.provider,
-    localImageId: nextLocalImageId,
-  });
-  saveLocalImageRefsForItem(item, { localImageId: nextLocalImageId });
+  const imageBytes = getDataUrlByteSize(imageData);
 
   try {
+    console.log(`画像保存先：IndexedDB`);
+    console.log(`保存前画像サイズ：${formatMegabytes(imageBytes)} (${imageBytes} bytes)`);
+    console.log(`localStorage使用量：${formatMegabytes(getLocalStorageUsageBytes())}`);
+    await logBrowserStorageEstimate("画像保存前");
+
+    if (imageData) {
+      await saveImageToIndexedDb(nextLocalImageId, imageData);
+    } else {
+      await deleteImageFromIndexedDb(previousRefs.localImageId);
+    }
+
+    item.imageData = imageData || "";
+    item.imageRefs = normalizeImageRefs({
+      ...previousRefs,
+      provider: imageData && previousRefs.provider !== "google_photos" ? "local" : previousRefs.provider,
+      localImageId: nextLocalImageId,
+    });
+    saveLocalImageRefsForItem(item, { localImageId: nextLocalImageId });
+
     if (collection === "sorting") {
-      localStorage.setItem(SORTING_STORAGE_KEY, JSON.stringify(sortingItems));
+      localStorage.setItem(SORTING_STORAGE_KEY, JSON.stringify(serializeItemsForLocalStorage(sortingItems)));
       syncAppStateToSupabase().catch((error) => {
         handleCloudSaveError(error);
       });
     } else {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeItemsForLocalStorage(items)));
     }
-    return true;
   } catch (error) {
     item.imageData = previousImage;
     item.imageRefs = previousRefs;
     saveLocalImageRefsForItem(item, { localImageId: previousRefs.localImageId });
-    console.warn("ローカル画像保存エラー:", error);
-    return false;
+    const reason = classifyImageStorageError(error);
+    console.error("画像保存失敗:", {
+      reason,
+      storage: "IndexedDB",
+      imageSize: formatMegabytes(imageBytes),
+      localStorageUsage: formatMegabytes(getLocalStorageUsageBytes()),
+      error,
+    });
+    throw new Error(`${reason}：この端末へ画像を保存できませんでした`);
   }
 }
 
@@ -4568,7 +4780,8 @@ function readImageFile(file) {
       const image = new Image();
 
       image.addEventListener("load", () => {
-        const maxSize = 1200;
+        const originalBytes = file.size || 0;
+        const maxSize = 1000;
         const scale = Math.min(1, maxSize / Math.max(image.width, image.height));
         const canvas = document.createElement("canvas");
         canvas.width = Math.round(image.width * scale);
@@ -4576,7 +4789,12 @@ function readImageFile(file) {
 
         const context = canvas.getContext("2d");
         context.drawImage(image, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL("image/jpeg", 0.85));
+        const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.72);
+        const compressedBytes = getDataUrlByteSize(compressedDataUrl);
+        console.log(`保存前画像サイズ：${formatMegabytes(originalBytes)} (${originalBytes} bytes)`);
+        console.log(`圧縮後画像サイズ：${formatMegabytes(compressedBytes)} (${compressedBytes} bytes)`);
+        console.log(`画像保存先：IndexedDB`);
+        resolve(compressedDataUrl);
       });
 
       image.addEventListener("error", () => reject(new Error("画像を読み込めませんでした")));
@@ -4614,8 +4832,10 @@ async function removeLocalPhoto(item, collection = "items") {
     return;
   }
 
-  if (!saveLocalItemImage(item, "", collection)) {
-    showToast("写真を削除できませんでした", "error");
+  try {
+    await saveLocalItemImage(item, "", collection);
+  } catch (error) {
+    showToast(error.message || "写真を削除できませんでした", "error");
     return;
   }
 
@@ -7992,7 +8212,7 @@ inventoryDisplaySection?.querySelector("summary")?.addEventListener("click", (ev
   inventoryDisplaySection.open = true;
 });
 
-form.addEventListener("submit", (event) => {
+form.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   if (isImageProcessing) {
@@ -8070,6 +8290,16 @@ form.addEventListener("submit", (event) => {
     items[editingIndex] = formItem;
   } else {
     items.unshift(formItem);
+  }
+
+  try {
+    if (formItem.imageData) {
+      await saveLocalItemImage(formItem, formItem.imageData, "items");
+    }
+  } catch (error) {
+    items = previousItems;
+    showToast(error.message || "画像を保存できませんでした", "error");
+    return;
   }
 
   if (!saveItems()) {
@@ -8722,9 +8952,7 @@ listPhotoInput.addEventListener("change", async () => {
   try {
     const imageData = await readImageFile(file);
 
-	    if (!saveLocalItemImage(targetItem, imageData, pendingPhotoCollection)) {
-	      throw new Error("この端末へ写真を保存できませんでした");
-	    }
+	    await saveLocalItemImage(targetItem, imageData, pendingPhotoCollection);
 
 	    showToast("この端末へ写真を保存しました", "success");
 	    if (pendingPhotoCollection === "sorting") {
@@ -8938,7 +9166,7 @@ togglePackingListButton.addEventListener("click", () => {
   togglePackingListButton.textContent = isHidden ? "箱詰めリストを見る" : "箱詰めリストを閉じる";
 });
 sortingCancelButton.addEventListener("click", resetSortingForm);
-sortingForm.addEventListener("submit", (event) => {
+sortingForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   const formItem = createSortingFormItem();
@@ -8949,10 +9177,22 @@ sortingForm.addEventListener("submit", (event) => {
 
   const editingIndex = sortingItems.findIndex((item) => item.id === formItem.id);
 
+  const previousSortingItems = [...sortingItems];
+
   if (editingIndex >= 0) {
     sortingItems[editingIndex] = formItem;
   } else {
     sortingItems.unshift(formItem);
+  }
+
+  try {
+    if (formItem.imageData) {
+      await saveLocalItemImage(formItem, formItem.imageData, "sorting");
+    }
+  } catch (error) {
+    sortingItems = previousSortingItems;
+    showToast(error.message || "画像を保存できませんでした", "error");
+    return;
   }
 
   saveSortingItems();
@@ -9650,4 +9890,6 @@ collapseCloudPanelOnMobile();
 collapseSortingExtrasOnMobile();
 restoreInventoryOptionsOpenState();
 setActiveNavigation("form");
-initializeCloud();
+hydrateLocalImagesFromIndexedDb().finally(() => {
+  initializeCloud();
+});
