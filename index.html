@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>メルカリ出品補助室</title>
-    <link rel="stylesheet" href="styles.css?v=image-indexeddb-20260628">
+    <link rel="stylesheet" href="styles.css?v=list-settings-fix-2-20260629">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
   <body class="work-view work-tab-form">
@@ -1291,6 +1291,15 @@
               <p class="cloud-sync-time" id="cloudLastSync">最終同期 -</p>
               <p class="cloud-fetch-count" id="cloudFetchCount">取得商品数：-</p>
               <button class="ghost-button cloud-reload-button hidden" type="button" id="cloudReloadButton">クラウドから再読み込み</button>
+              <div class="data-recovery-panel" aria-label="売却先仕分けデータ復旧">
+                <strong>売却先仕分けデータ復旧</strong>
+                <p>消えた仕分けデータの候補を探します。見つかっても自動復元はしません。</p>
+                <div class="data-recovery-actions">
+                  <button class="ghost-button" type="button" id="detectLocalSortingDataButton">旧ローカルデータ検出</button>
+                  <button class="ghost-button" type="button" id="detectCloudSortingDataButton">旧クラウドデータ検出</button>
+                </div>
+                <div class="data-recovery-results" id="dataRecoveryResults" aria-live="polite"></div>
+              </div>
               <div class="cloud-household-tools hidden" id="cloudHouseholdTools">
                 <label>
                   共有グループID
@@ -1399,6 +1408,6 @@
       </div>
     </div>
 
-    <script src="app.js?v=image-indexeddb-20260628"></script>
+    <script src="app.js?v=list-settings-fix-2-20260629"></script>
   </body>
 </html>

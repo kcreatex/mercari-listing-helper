@@ -98,6 +98,9 @@ const cloudLastSync = document.querySelector("#cloudLastSync");
 const cloudSyncState = document.querySelector("#cloudSyncState");
 const cloudReloadButton = document.querySelector("#cloudReloadButton");
 const cloudFetchCount = document.querySelector("#cloudFetchCount");
+const detectLocalSortingDataButton = document.querySelector("#detectLocalSortingDataButton");
+const detectCloudSortingDataButton = document.querySelector("#detectCloudSortingDataButton");
+const dataRecoveryResults = document.querySelector("#dataRecoveryResults");
 const cloudHouseholdTools = document.querySelector("#cloudHouseholdTools");
 const cloudHouseholdInput = document.querySelector("#cloudHouseholdInput");
 const cloudCopyHouseholdButton = document.querySelector("#cloudCopyHouseholdButton");
@@ -388,6 +391,7 @@ let isCloudReady = false;
 let hasCloudSaveWarning = false;
 let isApplyingCloudSnapshot = false;
 let lastCloudReloadRequestAt = 0;
+let sortingRecoveryCandidates = [];
 let isSettingsDirty = false;
 let toastTimer = null;
 let isSortingShippingMode = false;
@@ -794,6 +798,264 @@ function normalizeSortingItem(item) {
     createdAt: item.createdAt || new Date().toISOString(),
     updatedAt: item.updatedAt || new Date().toISOString(),
   };
+}
+
+function looksLikeSortingItem(item) {
+  if (!item || typeof item !== "object") {
+    return false;
+  }
+
+  return Boolean(
+    item.destination
+      || item.shippingStatus
+      || item.boxNumber
+      || item.mercariPrice !== undefined
+      || item.surugayaPrice !== undefined
+      || item.yahooPrice !== undefined
+      || item.ecoRingPrice !== undefined
+      || item.clothesPrice !== undefined
+      || item.mandarakePrice !== undefined,
+  );
+}
+
+function normalizeSortingRecoveryItems(value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const likelyItems = value.filter(looksLikeSortingItem);
+  if (likelyItems.length === 0) {
+    return [];
+  }
+
+  return likelyItems.map(normalizeSortingItem);
+}
+
+function collectSortingArraysFromObject(value, path = "root", results = []) {
+  if (!value || typeof value !== "object") {
+    return results;
+  }
+
+  if (Array.isArray(value)) {
+    const itemsFromArray = normalizeSortingRecoveryItems(value);
+    if (itemsFromArray.length > 0) {
+      results.push({ path, items: itemsFromArray });
+    }
+    value.slice(0, 25).forEach((child, index) => {
+      collectSortingArraysFromObject(child, `${path}[${index}]`, results);
+    });
+    return results;
+  }
+
+  Object.entries(value).forEach(([key, child]) => {
+    const childPath = path === "root" ? key : `${path}.${key}`;
+    collectSortingArraysFromObject(child, childPath, results);
+  });
+
+  return results;
+}
+
+function createSortingRecoveryCandidate({ source, key = "", path = "", householdId = "", updatedAt = "", items: candidateItems }) {
+  const normalizedItems = normalizeSortingRecoveryItems(candidateItems);
+  if (normalizedItems.length === 0) {
+    return null;
+  }
+
+  return {
+    id: createId(),
+    source,
+    key,
+    path,
+    householdId,
+    updatedAt,
+    count: normalizedItems.length,
+    items: normalizedItems,
+  };
+}
+
+function dedupeSortingRecoveryCandidates(candidates) {
+  const seen = new Set();
+  return candidates.filter((candidate) => {
+    const signature = JSON.stringify(candidate.items.map((item) => [
+      item.id,
+      item.name,
+      item.destination,
+      item.storageLocation,
+      item.updatedAt,
+    ]));
+    if (seen.has(signature)) {
+      return false;
+    }
+    seen.add(signature);
+    return true;
+  });
+}
+
+function renderSortingRecoveryCandidates(candidates, message = "") {
+  if (!dataRecoveryResults) {
+    return;
+  }
+
+  dataRecoveryResults.replaceChildren();
+
+  if (!candidates.length) {
+    const paragraph = document.createElement("p");
+    paragraph.className = "muted";
+    paragraph.textContent = message || "復元候補は見つかりませんでした。";
+    dataRecoveryResults.append(paragraph);
+    return;
+  }
+
+  candidates.forEach((candidate, index) => {
+    const sourceLabel = [
+      candidate.source,
+      candidate.key ? `キー：${candidate.key}` : "",
+      candidate.householdId ? `グループ：${candidate.householdId}` : "",
+      candidate.updatedAt ? `更新：${formatDateTime(candidate.updatedAt)}` : "",
+    ].filter(Boolean).join(" / ");
+
+    const candidateElement = document.createElement("div");
+    candidateElement.className = "data-recovery-candidate";
+
+    const textBlock = document.createElement("div");
+    const title = document.createElement("strong");
+    title.textContent = `${candidate.count}件の復元候補`;
+    const source = document.createElement("small");
+    source.textContent = sourceLabel;
+    const path = document.createElement("small");
+    path.textContent = candidate.path || "";
+    textBlock.append(title, source, path);
+
+    const restoreButton = document.createElement("button");
+    restoreButton.className = "ghost-button";
+    restoreButton.type = "button";
+    restoreButton.dataset.recoverSortingIndex = String(index);
+    restoreButton.textContent = "この候補を復元";
+
+    candidateElement.append(textBlock, restoreButton);
+    dataRecoveryResults.append(candidateElement);
+  });
+}
+
+async function detectLocalSortingRecoveryData() {
+  const candidates = [];
+
+  Object.keys(localStorage).forEach((key) => {
+    const rawValue = localStorage.getItem(key);
+    if (!rawValue) {
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(rawValue);
+      collectSortingArraysFromObject(parsed, key).forEach((result) => {
+        const candidate = createSortingRecoveryCandidate({
+          source: "localStorage",
+          key,
+          path: result.path,
+          items: result.items,
+        });
+        if (candidate) {
+          candidates.push(candidate);
+        }
+      });
+    } catch {
+      // JSON以外のlocalStorageは復旧候補対象外。
+    }
+  });
+
+  let indexedImageCount = 0;
+  if ("indexedDB" in window) {
+    try {
+      const records = await runImageStoreTransaction("readonly", (store) => store.getAll());
+      indexedImageCount = Array.isArray(records) ? records.length : 0;
+    } catch (error) {
+      console.warn("IndexedDB復旧確認エラー:", error);
+    }
+  }
+
+  sortingRecoveryCandidates = dedupeSortingRecoveryCandidates(candidates);
+  renderSortingRecoveryCandidates(
+    sortingRecoveryCandidates,
+    `localStorage内に仕分け復元候補はありませんでした。IndexedDB画像レコード：${indexedImageCount}件`,
+  );
+  showSuccessMessage(`ローカル復元候補：${sortingRecoveryCandidates.length}件 / IndexedDB画像：${indexedImageCount}件`);
+}
+
+async function detectCloudSortingRecoveryData() {
+  if (!supabaseClient || !cloudUser) {
+    showErrorMessage("先にクラウドへログインしてください");
+    return;
+  }
+
+  await loadCloudHousehold();
+  const householdIds = cloudUserHouseholdIds.length ? cloudUserHouseholdIds : [cloudHouseholdId].filter(Boolean);
+
+  if (!householdIds.length) {
+    showErrorMessage("共有グループが見つかりません");
+    return;
+  }
+
+  const { data, error } = await supabaseClient
+    .from("items")
+    .select("household_id,local_id,data,updated_at")
+    .in("household_id", householdIds)
+    .order("updated_at", { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  const candidates = [];
+  (Array.isArray(data) ? data : []).forEach((row) => {
+    collectSortingArraysFromObject(row.data || {}, row.local_id || "cloud.data").forEach((result) => {
+      const candidate = createSortingRecoveryCandidate({
+        source: "Supabase",
+        key: row.local_id || "",
+        path: result.path,
+        householdId: row.household_id || "",
+        updatedAt: row.updated_at || row.data?.updatedAt || "",
+        items: result.items,
+      });
+      if (candidate) {
+        candidates.push(candidate);
+      }
+    });
+  });
+
+  sortingRecoveryCandidates = dedupeSortingRecoveryCandidates(candidates);
+  renderSortingRecoveryCandidates(sortingRecoveryCandidates, "Supabase内に仕分け復元候補はありませんでした。");
+  showSuccessMessage(`クラウド復元候補：${sortingRecoveryCandidates.length}件`);
+}
+
+async function restoreSortingRecoveryCandidate(index) {
+  const candidate = sortingRecoveryCandidates[index];
+  if (!candidate) {
+    showErrorMessage("復元候補が見つかりません");
+    return;
+  }
+
+  const shouldRestore = await showAppDialog({
+    title: "売却先仕分けデータの復元",
+    message: `現在の売却先仕分け：${sortingItems.length}件\n復元候補：${candidate.count}件\n\n現在のローカルデータが上書きされる可能性があります。\n売却先仕分けデータも対象です。\n\n復元前に現在データを退避してから、候補データで上書きします。続けますか？`,
+    confirmText: "復元する",
+    danger: true,
+  });
+
+  if (!shouldRestore) {
+    return;
+  }
+
+  const backupKey = `${SORTING_STORAGE_KEY}-recovery-backup-${Date.now()}`;
+  localStorage.setItem(backupKey, JSON.stringify(serializeItemsForLocalStorage(sortingItems)));
+  sortingItems = candidate.items.map(normalizeSortingItem);
+  saveSortingItems();
+  resetSortingForm();
+  renderSorting();
+  render();
+  renderAnalysis();
+  renderSortingRecoveryCandidates([candidate], `復元後：${sortingItems.length}件 / 復元前バックアップ：${backupKey}`);
+  showSuccessMessage(`売却先仕分けを${sortingItems.length}件に復元しました`);
 }
 
 function normalizeSettings(value) {
@@ -1254,6 +1516,15 @@ function renderCloudAuthState() {
   updateCloudFetchCount(null);
 }
 
+function confirmCloudOverwriteAction(actionName) {
+  return showAppDialog({
+    title: `${actionName}の確認`,
+    message: `${actionName}を実行すると、クラウド側の内容でこの端末の表示データを更新します。\n\n現在のローカルデータが上書きされる可能性があります。\n売却先仕分けデータも対象です。\n\n不安な場合は先に「旧ローカルデータ検出」を実行してください。続けますか？`,
+    confirmText: "続ける",
+    danger: true,
+  });
+}
+
 function collapseCloudPanelOnMobile() {
   if (cloudPanel && window.matchMedia("(max-width: 700px)").matches) {
     cloudPanel.removeAttribute("open");
@@ -1426,7 +1697,11 @@ async function loadItemsFromSupabase() {
     })
     .filter((item) => item.id);
 
-  applyCloudAppState(appStateRow?.data || null);
+  if (appStateRow?.data) {
+    applyCloudAppState(appStateRow.data);
+  } else {
+    console.warn("Supabaseにapp_stateが見つかりません。売却先仕分け・設定・テンプレートのローカルデータは保持します。");
+  }
   const didAddItemCodes = ensureItemCodes(items);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeItemsForLocalStorage(items)));
   hasCloudSaveWarning = false;
@@ -7410,7 +7685,7 @@ function createMasterSettingsRow(masterKey, values, index, options = {}) {
   });
 
   row.innerHTML = `
-    <button class="master-drag-handle" type="button" draggable="true" data-action="drag-handle" aria-label="ドラッグで並び替え" title="ドラッグで並び替え">≡</button>
+    <button class="master-drag-handle" type="button" draggable="false" data-action="drag-handle" aria-label="並び替え位置" title="並び替え位置">≡</button>
     <div class="master-setting-fields ${contentClass}">
       <div class="settings-row-main">
         ${primaryField ? createMasterFieldControl(primaryField) : ""}
@@ -7802,22 +8077,19 @@ function getDragInsertTarget(list, pointerY) {
 function bindMasterSettingsDrag(list) {
   list.addEventListener("pointerdown", (event) => {
     if (event.target.closest(".master-drag-handle")) {
+      event.preventDefault();
       event.stopPropagation();
     }
   });
 
   list.addEventListener("dragstart", (event) => {
-    const row = event.target.closest(".master-setting-row");
-
-    if (!row || !event.target.closest(".master-drag-handle")) {
+    if (event.target.closest(".master-drag-handle")) {
       event.preventDefault();
+      event.stopPropagation();
       return;
     }
 
-    event.stopPropagation();
-    row.classList.add("is-dragging");
-    event.dataTransfer.effectAllowed = "move";
-    event.dataTransfer.setData("text/plain", row.dataset.index || "");
+    event.preventDefault();
   });
 
   list.addEventListener("dragover", (event) => {
@@ -8350,26 +8622,35 @@ function positionItemActionMenu(menu) {
   panel.style.setProperty("--action-menu-left", "12px");
   panel.style.setProperty("--action-menu-top", "12px");
 
-  const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 390;
-  const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 700;
+  const visualViewport = window.visualViewport;
+  const viewportLeft = visualViewport?.offsetLeft || 0;
+  const viewportTop = visualViewport?.offsetTop || 0;
+  const viewportWidth = visualViewport?.width || window.innerWidth || document.documentElement.clientWidth || 390;
+  const viewportHeight = visualViewport?.height || window.innerHeight || document.documentElement.clientHeight || 700;
   const margin = 12;
   const gap = 6;
   const summaryRect = summary.getBoundingClientRect();
-  const panelRect = panel.getBoundingClientRect();
-  const panelWidth = Math.min(panelRect.width || 220, viewportWidth - margin * 2);
-  const panelHeight = Math.min(panelRect.height || panel.scrollHeight || 280, viewportHeight - margin * 2);
+  const panelWidth = Math.min(panel.scrollWidth || panel.offsetWidth || 260, viewportWidth - margin * 2);
+  const panelHeight = Math.min(panel.scrollHeight || panel.offsetHeight || 320, viewportHeight - margin * 2);
+  const minLeft = viewportLeft + margin;
+  const maxLeft = viewportLeft + viewportWidth - panelWidth - margin;
+  const minTop = viewportTop + margin;
+  const maxTop = viewportTop + viewportHeight - panelHeight - margin;
   const preferredLeft = summaryRect.right - panelWidth;
-  const left = Math.max(margin, Math.min(preferredLeft, viewportWidth - panelWidth - margin));
+  const left = Math.max(minLeft, Math.min(preferredLeft, maxLeft));
   const belowTop = summaryRect.bottom + gap;
   const aboveTop = summaryRect.top - panelHeight - gap;
-  const canOpenBelow = belowTop + panelHeight <= viewportHeight - margin;
+  const canOpenBelow = belowTop + panelHeight <= viewportTop + viewportHeight - margin;
+  const canOpenAbove = aboveTop >= minTop;
   const top = Math.max(
-    margin,
-    Math.min(canOpenBelow ? belowTop : aboveTop, viewportHeight - panelHeight - margin),
+    minTop,
+    Math.min(canOpenBelow ? belowTop : (canOpenAbove ? aboveTop : maxTop), maxTop),
   );
 
   panel.style.setProperty("--action-menu-left", `${left}px`);
   panel.style.setProperty("--action-menu-top", `${top}px`);
+  panel.style.setProperty("--action-menu-width", `${panelWidth}px`);
+  panel.style.setProperty("--action-menu-max-height", `${panelHeight}px`);
 }
 
 function positionOpenItemActionMenus() {
@@ -8882,7 +9163,12 @@ cloudLogoutButton.addEventListener("click", async () => {
 
 migrateToSupabaseButton.addEventListener("click", migrateLocalItemsToSupabase);
 
-cloudReloadButton?.addEventListener("click", () => {
+cloudReloadButton?.addEventListener("click", async () => {
+  const shouldReload = await confirmCloudOverwriteAction("クラウドから再読み込み");
+  if (!shouldReload) {
+    return;
+  }
+
   cloudReloadButton.disabled = true;
   reloadCloudData({ reason: "手動同期", showToast: true, force: true })
     .catch((error) => {
@@ -8894,6 +9180,39 @@ cloudReloadButton?.addEventListener("click", () => {
     });
 });
 
+detectLocalSortingDataButton?.addEventListener("click", () => {
+  detectLocalSortingRecoveryData().catch((error) => {
+    console.warn("ローカル復旧候補検出エラー:", error);
+    showErrorMessage("旧ローカルデータを検出できませんでした");
+  });
+});
+
+detectCloudSortingDataButton?.addEventListener("click", () => {
+  detectCloudSortingDataButton.disabled = true;
+  detectCloudSortingRecoveryData()
+    .catch((error) => {
+      console.warn("クラウド復旧候補検出エラー:", error);
+      showErrorMessage("旧クラウドデータを検出できませんでした");
+    })
+    .finally(() => {
+      detectCloudSortingDataButton.disabled = false;
+    });
+});
+
+dataRecoveryResults?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-recover-sorting-index]");
+  if (!button) {
+    return;
+  }
+
+  event.preventDefault();
+  event.stopPropagation();
+  restoreSortingRecoveryCandidate(Number(button.dataset.recoverSortingIndex)).catch((error) => {
+    console.warn("売却先仕分け復元エラー:", error);
+    showErrorMessage("売却先仕分けデータを復元できませんでした");
+  });
+});
+
 cloudCopyHouseholdButton?.addEventListener("click", () => {
   if (!cloudHouseholdId) {
     showErrorMessage("共有グループIDがありません");
@@ -8903,7 +9222,12 @@ cloudCopyHouseholdButton?.addEventListener("click", () => {
   copyText(cloudHouseholdId, "共有グループIDをコピーしました");
 });
 
-cloudJoinHouseholdButton?.addEventListener("click", () => {
+cloudJoinHouseholdButton?.addEventListener("click", async () => {
+  const shouldJoin = await confirmCloudOverwriteAction("共有グループ変更");
+  if (!shouldJoin) {
+    return;
+  }
+
   cloudJoinHouseholdButton.disabled = true;
   joinCloudHousehold(cloudHouseholdInput?.value || "")
     .catch((error) => {
@@ -8916,7 +9240,12 @@ cloudJoinHouseholdButton?.addEventListener("click", () => {
     });
 });
 
-cloudCreateHouseholdButton?.addEventListener("click", () => {
+cloudCreateHouseholdButton?.addEventListener("click", async () => {
+  const shouldCreate = await confirmCloudOverwriteAction("新しい共有グループ作成");
+  if (!shouldCreate) {
+    return;
+  }
+
   cloudCreateHouseholdButton.disabled = true;
   createCloudHousehold()
     .catch((error) => {

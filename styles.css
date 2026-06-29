@@ -17,6 +17,101 @@
   --control-height: 44px;
 }
 
+/* Final override: template editor must stay editable and horizontal on mobile. */
+body.settings-view .template-setting-row .template-edit-fields,
+body.settings-view .template-setting-row .master-setting-fields.template-edit-fields {
+  grid-area: fields !important;
+  grid-column: 2 !important;
+  grid-row: 1 / span 2 !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 8px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+body.settings-view .template-setting-row .template-edit-fields .settings-row-main {
+  grid-area: auto !important;
+  grid-column: 1 / -1 !important;
+  grid-row: auto !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+body.settings-view .template-setting-row .template-edit-fields input,
+body.settings-view .template-setting-row .template-edit-fields textarea {
+  grid-area: auto !important;
+  grid-column: 1 / -1 !important;
+  grid-row: auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+}
+
+body.work-tab-list .inventory-display-section .inventory-target-toggle,
+body.work-tab-list .inventory-display-section .storage-view-toggle,
+body.work-tab-list .inventory-display-section .view-toggle {
+  display: flex !important;
+  grid-template-columns: none !important;
+  align-items: stretch !important;
+  gap: 8px !important;
+  width: 100% !important;
+}
+
+body.work-tab-list .inventory-display-section .inventory-target-toggle > button,
+body.work-tab-list .inventory-display-section .storage-view-toggle > button,
+body.work-tab-list .inventory-display-section .view-toggle > button {
+  flex: 1 1 0 !important;
+  width: 50% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+}
+
+/* Final override: inventory option toggles are equal-width pairs. */
+body.work-tab-list .inventory-display-section .inventory-target-toggle,
+body.work-tab-list .inventory-display-section .storage-view-toggle,
+body.work-tab-list .inventory-display-section .view-toggle {
+  display: flex !important;
+  grid-template-columns: none !important;
+  align-items: stretch !important;
+  gap: 8px !important;
+  width: 100% !important;
+}
+
+body.work-tab-list .inventory-display-section .inventory-target-toggle > button,
+body.work-tab-list .inventory-display-section .storage-view-toggle > button,
+body.work-tab-list .inventory-display-section .view-toggle > button {
+  flex: 1 1 0 !important;
+  width: 50% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+}
+
+/* Final override: inventory option toggles are equal-width pairs. */
+body.work-tab-list .inventory-display-section .inventory-target-toggle,
+body.work-tab-list .inventory-display-section .storage-view-toggle,
+body.work-tab-list .inventory-display-section .view-toggle {
+  display: flex !important;
+  grid-template-columns: none !important;
+  align-items: stretch !important;
+  gap: 8px !important;
+  width: 100% !important;
+}
+
+body.work-tab-list .inventory-display-section .inventory-target-toggle > button,
+body.work-tab-list .inventory-display-section .storage-view-toggle > button,
+body.work-tab-list .inventory-display-section .view-toggle > button {
+  flex: 1 1 0 !important;
+  width: 50% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -13841,20 +13936,21 @@ body.work-tab-list .inventory-setting-grid {
 body.work-tab-list .inventory-control-group.view-toggle,
 body.work-tab-list .inventory-control-group.storage-view-toggle,
 body.work-tab-list .inventory-control-group.inventory-target-toggle {
-  display: grid !important;
-  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  gap: 5px !important;
+  display: flex !important;
+  grid-template-columns: none !important;
+  gap: 8px !important;
   width: 100% !important;
 }
 
 body.work-tab-list .inventory-control-group.view-toggle > button,
 body.work-tab-list .inventory-control-group.storage-view-toggle > button,
 body.work-tab-list .inventory-control-group.inventory-target-toggle > button {
-  width: 100% !important;
+  flex: 1 1 0 !important;
+  width: 50% !important;
   min-width: 0 !important;
-  height: 38px !important;
-  min-height: 38px !important;
-  padding: 4px 6px !important;
+  height: 42px !important;
+  min-height: 42px !important;
+  padding: 0 10px !important;
   box-sizing: border-box !important;
 }
 
@@ -19050,6 +19146,32 @@ body.work-tab-list .inventory-control-group button {
   line-height: 1.2 !important;
 }
 
+body.work-tab-list .inventory-display-section .inventory-control-group,
+body.work-tab-list .inventory-display-section .view-toggle {
+  display: flex !important;
+  grid-template-columns: none !important;
+  gap: 8px !important;
+  width: 100% !important;
+}
+
+body.work-tab-list .inventory-display-section .inventory-control-group button,
+body.work-tab-list .inventory-display-section .view-toggle button,
+body.work-tab-list .inventory-display-section select {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 42px !important;
+  min-height: 42px !important;
+  padding: 0 10px !important;
+  border-radius: 10px !important;
+  font-size: 13px !important;
+  line-height: 1.2 !important;
+  box-sizing: border-box !important;
+  flex: 1 1 0 !important;
+}
+
 body.work-tab-list .inventory-control-group {
   display: grid !important;
   gap: 6px !important;
@@ -20475,7 +20597,240 @@ body.settings-view .master-drag-handle {
   border-radius: 8px;
 }
 
+.data-recovery-panel {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #eaded8;
+  border-radius: 12px;
+  background: #fffdfc;
+}
+
+.data-recovery-panel strong {
+  font-size: 13px;
+}
+
+.data-recovery-panel p {
+  margin: 0;
+  color: #6f6661;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.data-recovery-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.data-recovery-actions button,
+.data-recovery-candidate button {
+  min-height: 40px;
+  height: 40px;
+}
+
+.data-recovery-results {
+  display: grid;
+  gap: 8px;
+}
+
+.data-recovery-candidate {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid #efe6e1;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.data-recovery-candidate small {
+  display: block;
+  margin-top: 3px;
+  color: #7b716b;
+  font-size: 11px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+/* Final list/settings repair: viewport-safe menus, plain accordion arrows, and editable templates. */
+body.work-tab-list .row-action-menu[open] {
+  z-index: 2147483000 !important;
+}
+
+body.work-tab-list .row-action-menu[open] .actions {
+  position: fixed !important;
+  top: var(--action-menu-top, 12px) !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: var(--action-menu-left, 12px) !important;
+  z-index: 2147483001 !important;
+  width: var(--action-menu-width, min(260px, calc(100vw - 24px))) !important;
+  max-width: calc(100vw - 24px) !important;
+  max-height: var(--action-menu-max-height, min(68vh, 420px)) !important;
+  overflow: auto !important;
+  transform: none !important;
+  clip-path: none !important;
+}
+
+body.work-tab-list .inventory-toolbar-section > summary {
+  grid-template-columns: 22px minmax(0, 1fr) !important;
+}
+
+body.work-tab-list .inventory-toolbar-section > summary::before {
+  content: "▶" !important;
+  display: block !important;
+  width: 22px !important;
+  min-width: 22px !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #7a716d !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+  text-align: center !important;
+  transform: none !important;
+}
+
+body.work-tab-list .inventory-toolbar-section[open] > summary::before {
+  content: "▼" !important;
+}
+
+body.work-tab-list .inventory-toolbar-section > summary::after,
+body.work-tab-list .inventory-toolbar-section > summary .section-icon {
+  display: none !important;
+  content: none !important;
+}
+
+body.work-tab-list .inventory-section-body {
+  display: grid !important;
+  gap: 10px !important;
+  padding: 10px !important;
+}
+
+body.work-tab-list .inventory-setting-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+  width: 100% !important;
+}
+
+body.work-tab-list .inventory-setting-group {
+  display: grid !important;
+  gap: 6px !important;
+  min-width: 0 !important;
+}
+
+body.work-tab-list .inventory-setting-wide {
+  grid-column: span 1 !important;
+}
+
+body.work-tab-list .inventory-control-group {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+  width: 100% !important;
+}
+
+body.work-tab-list .inventory-setting-group select,
+body.work-tab-list .inventory-control-group button {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 42px !important;
+  min-height: 42px !important;
+  padding: 0 10px !important;
+  border-radius: 10px !important;
+  font-size: 13px !important;
+  line-height: 1.2 !important;
+}
+
+body.settings-view .template-setting-row,
+body.settings-view .template-setting-row * {
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+}
+
+body.settings-view .template-setting-row {
+  grid-template-columns: 36px minmax(0, 1fr) 58px !important;
+  grid-template-areas:
+    "drag fields delete"
+    ". fields ."
+    "up down ." !important;
+  gap: 8px !important;
+  align-items: start !important;
+}
+
+body.settings-view .template-setting-row .master-drag-handle {
+  grid-area: drag !important;
+  cursor: default !important;
+}
+
+body.settings-view .template-setting-row .template-edit-fields,
+body.settings-view .template-setting-row .master-setting-fields {
+  grid-area: fields !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 8px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+body.settings-view .template-setting-row .settings-row-main {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 6px !important;
+  min-width: 0 !important;
+}
+
+body.settings-view .template-setting-row .settings-usage-count {
+  display: none !important;
+}
+
+body.settings-view .template-setting-row input,
+body.settings-view .template-setting-row textarea {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  white-space: normal !important;
+}
+
+body.settings-view .template-setting-row textarea {
+  min-height: 112px !important;
+  resize: vertical !important;
+}
+
+body.settings-view .template-setting-row .compact-row-button[data-action="move-up"] {
+  grid-area: up !important;
+}
+
+body.settings-view .template-setting-row .compact-row-button[data-action="move-down"] {
+  grid-area: down !important;
+}
+
+body.settings-view .template-setting-row .danger-button {
+  grid-area: delete !important;
+  width: 100% !important;
+}
+
 @media (max-width: 700px) {
+  .data-recovery-actions,
+  .data-recovery-candidate {
+    grid-template-columns: 1fr;
+  }
+
+  body.work-tab-list .inventory-setting-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  body.settings-view .template-setting-row {
+    grid-template-columns: 34px minmax(0, 1fr) 54px !important;
+  }
+
   body.work-view.work-tab-sorting .sorting-form {
     padding-bottom: calc(96px + env(safe-area-inset-bottom)) !important;
   }
@@ -20512,4 +20867,40 @@ body.settings-view .master-drag-handle {
   body.work-view.work-tab-sorting .sorting-actions:has(#sortingCancelButton.hidden) {
     grid-template-columns: 1fr !important;
   }
+}
+
+/* Final override: template editor must stay editable and horizontal on mobile. */
+body.settings-view .template-setting-row .template-edit-fields,
+body.settings-view .template-setting-row .master-setting-fields.template-edit-fields {
+  grid-area: fields !important;
+  grid-column: 2 !important;
+  grid-row: 1 / span 2 !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 8px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+body.settings-view .template-setting-row .template-edit-fields .settings-row-main {
+  grid-area: auto !important;
+  grid-column: 1 / -1 !important;
+  grid-row: auto !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+body.settings-view .template-setting-row .template-edit-fields input,
+body.settings-view .template-setting-row .template-edit-fields textarea {
+  grid-area: auto !important;
+  grid-column: 1 / -1 !important;
+  grid-row: auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
 }
