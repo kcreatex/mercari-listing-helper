@@ -2049,11 +2049,20 @@ function findExistingDataForImageRecord(record) {
 
 function createRecoveredItemFromImageRecord(record, index) {
   const imageId = String(record.id || "");
+  const refsMap = loadLocalImageRefs();
+  const linkedRefKeys = getLocalImageRefEntriesForImageId(imageId, refsMap).map((entry) => entry.key);
+  const isSortingImage = imageId.startsWith("LOCAL-SORTING-") || linkedRefKeys.some((key) => key.startsWith("LOCAL-SORTING-"));
   const existingData = findExistingDataForImageRecord(record);
   const itemCode = existingData?.itemCode || parseItemCodeFromImageId(imageId) || "";
-  const title = getListingTitle(existingData) || `復元画像 ${String(index + 1).padStart(3, "0")}`;
+  const title = getListingTitle(existingData) || `復元候補 ${String(index + 1).padStart(3, "0")}`;
   const createdAt = record.createdAt || record.updatedAt || existingData?.createdAt || new Date().toISOString();
   const updatedAt = record.updatedAt || existingData?.updatedAt || createdAt;
+  const recoveryMemo = [
+    "復元候補",
+    isSortingImage ? "売却先仕分け由来の画像" : "商品画像由来",
+    imageId ? `画像ID:${imageId}` : "",
+    linkedRefKeys.length ? `参照キー:${linkedRefKeys.join(", ")}` : "",
+  ].filter(Boolean).join(" / ");
 
   return normalizeItem({
     ...(existingData || {}),
@@ -2064,7 +2073,8 @@ function createRecoveredItemFromImageRecord(record, index) {
     category: existingData?.category || "",
     condition: existingData?.condition || "",
     status: existingData?.status || "未出品",
-    storageLocation: existingData?.storageLocation || "",
+    storageLocation: existingData?.storageLocation || "未設定",
+    memo: existingData?.memo ? `${existingData.memo}\n${recoveryMemo}` : recoveryMemo,
     imageRefs: normalizeImageRefs({
       ...(existingData?.imageRefs || {}),
       provider: normalizeImageRefs(existingData?.imageRefs).provider || "local",
@@ -2077,25 +2087,36 @@ function createRecoveredItemFromImageRecord(record, index) {
 }
 
 function createRecoveredSortingItemFromRecoveredItem(item, record, index) {
+  const imageId = normalizeImageRefs(item.imageRefs).localImageId || String(record.id || "");
+  const refsMap = loadLocalImageRefs();
+  const linkedRefKeys = getLocalImageRefEntriesForImageId(imageId, refsMap).map((entry) => entry.key);
+  const isSortingImage = imageId.startsWith("LOCAL-SORTING-") || linkedRefKeys.some((key) => key.startsWith("LOCAL-SORTING-"));
   const existingSorting = sortingItems.find((sortingItem) => {
     const refs = normalizeImageRefs(sortingItem.imageRefs);
-    return sortingItem.sourceItemId === item.id || refs.localImageId === normalizeImageRefs(item.imageRefs).localImageId;
+    return sortingItem.sourceItemId === item.id || refs.localImageId === imageId;
   });
+  const recoveryMemo = [
+    "復元候補",
+    isSortingImage ? "売却先仕分け由来の画像" : "商品画像由来",
+    imageId ? `画像ID:${imageId}` : "",
+    linkedRefKeys.length ? `参照キー:${linkedRefKeys.join(", ")}` : "",
+  ].filter(Boolean).join(" / ");
 
   return normalizeSortingItem({
     ...(existingSorting || {}),
     id: existingSorting?.id || createId(),
     sourceItemId: item.id,
-    name: getListingTitle(item) || `復元画像 ${String(index + 1).padStart(3, "0")}`,
-    storageLocation: item.storageLocation || existingSorting?.storageLocation || "",
+    name: getListingTitle(item) || `復元候補 ${String(index + 1).padStart(3, "0")}`,
+    storageLocation: existingSorting?.storageLocation || item.storageLocation || "未設定",
     destination: existingSorting?.destination || SORTING_UNDECIDED_DESTINATION,
     status: existingSorting?.status || "未確認",
     shippingStatus: existingSorting?.shippingStatus || "未仕分け",
     imageRefs: normalizeImageRefs({
       ...(existingSorting?.imageRefs || {}),
       provider: "local",
-      localImageId: normalizeImageRefs(item.imageRefs).localImageId || String(record.id || ""),
+      localImageId: imageId,
     }),
+    memo: existingSorting?.memo ? `${existingSorting.memo}\n${recoveryMemo}` : recoveryMemo,
     createdAt: existingSorting?.createdAt || item.createdAt || record.updatedAt || new Date().toISOString(),
     updatedAt: existingSorting?.updatedAt || item.updatedAt || record.updatedAt || new Date().toISOString(),
   });
@@ -2224,17 +2245,11 @@ function renderIndexedImageRecoveryCandidate(candidate) {
   const actions = document.createElement("div");
   actions.className = "indexed-image-recovery-actions";
 
-  const replaceButton = document.createElement("button");
-  replaceButton.className = "ghost-button";
-  replaceButton.type = "button";
-  replaceButton.dataset.recoverIndexedImagesMode = "replace";
-  replaceButton.textContent = "この復元候補を現在の商品一覧へ復元";
-
   const mergeButton = document.createElement("button");
   mergeButton.className = "primary-button";
   mergeButton.type = "button";
   mergeButton.dataset.recoverIndexedImagesMode = "merge";
-  mergeButton.textContent = "現在の商品に追加統合して復元";
+  mergeButton.textContent = "画像付き復元候補を追加統合";
 
   const cancelButton = document.createElement("button");
   cancelButton.className = "ghost-button";
@@ -2242,7 +2257,7 @@ function renderIndexedImageRecoveryCandidate(candidate) {
   cancelButton.dataset.recoverIndexedImagesMode = "cancel";
   cancelButton.textContent = "復元しない";
 
-  actions.append(replaceButton, mergeButton, cancelButton);
+  actions.append(mergeButton, cancelButton);
   wrapper.append(heading, list, actions);
   dataRecoveryResults.append(wrapper);
 }
@@ -2263,16 +2278,13 @@ async function restoreIndexedImageRecoveryCandidate(mode = "merge") {
 
   const beforeItemCount = items.length;
   const beforeSortingCount = sortingItems.length;
-  const isMerge = mode !== "replace";
-  const confirmationMessage = isMerge
-    ? `IndexedDB内の旧データ${candidate.count}件を現在の商品一覧へ追加統合します。現在の${beforeItemCount}件は削除しません。よろしいですか？`
-    : `IndexedDB内の旧データ${candidate.count}件で現在の商品一覧を復元します。\n現在のローカルデータが上書きされる可能性があります。\n売却先仕分けデータも対象です。\nよろしいですか？`;
+  const confirmationMessage = `画像付き復元候補${candidate.count}件を商品一覧へ追加します。現在の商品${beforeItemCount}件は削除しません。よろしいですか？`;
 
   const shouldRestore = await showAppDialog({
     title: "IndexedDB画像から復元",
     message: confirmationMessage,
-    confirmText: isMerge ? "追加統合する" : "復元する",
-    danger: !isMerge,
+    confirmText: "追加統合する",
+    danger: false,
   });
 
   if (!shouldRestore) {
@@ -2304,23 +2316,14 @@ async function restoreIndexedImageRecoveryCandidate(mode = "merge") {
   let restoredCount = 0;
   let restoredSortingCount = 0;
 
-  if (isMerge) {
-    const itemMergeResult = mergeRecoveredItems(items, candidate.items);
-    const sortingMergeResult = mergeRecoveredSortingItems(sortingItems, candidate.sortingItems, itemMergeResult.addedItems);
-    items = itemMergeResult.mergedItems;
-    sortingItems = sortingMergeResult.mergedSortingItems;
-    restoredCount = itemMergeResult.addedItems.length;
-    restoredSortingCount = sortingMergeResult.addedSortingItems.length;
-  } else {
-    items = candidate.items.map(normalizeItem);
-    sortingItems = candidate.sortingItems.map(normalizeSortingItem);
-    restoredCount = items.length;
-    restoredSortingCount = sortingItems.length;
-  }
+  const itemMergeResult = mergeRecoveredItems(items, candidate.items);
+  const sortingMergeResult = mergeRecoveredSortingItems(sortingItems, candidate.sortingItems, itemMergeResult.addedItems);
+  items = itemMergeResult.mergedItems;
+  sortingItems = sortingMergeResult.mergedSortingItems;
+  restoredCount = itemMergeResult.addedItems.length;
+  restoredSortingCount = sortingMergeResult.addedSortingItems.length;
 
-  const restoredLocalImageItems = isMerge
-    ? items.filter((item) => candidate.items.some((candidateItem) => getRecoveredItemDedupKey(candidateItem) === getRecoveredItemDedupKey(item)))
-    : items;
+  const restoredLocalImageItems = items.filter((item) => candidate.items.some((candidateItem) => getRecoveredItemDedupKey(candidateItem) === getRecoveredItemDedupKey(item)));
   restoredLocalImageItems.forEach((item) => {
     const refs = normalizeImageRefs(item.imageRefs);
     if (refs.localImageId) {
@@ -2356,7 +2359,7 @@ async function restoreIndexedImageRecoveryCandidate(mode = "merge") {
   const persistedItemCount = loadItems().length;
   const persistedSortingCount = loadSortingItems().length;
   console.info("IndexedDB復元完了", {
-    mode: isMerge ? "追加統合" : "置き換え",
+    mode: "追加統合",
     beforeItemCount,
     restoredCount,
     afterItemCount: items.length,
