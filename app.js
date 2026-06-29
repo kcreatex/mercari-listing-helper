@@ -99,6 +99,7 @@ const cloudSyncState = document.querySelector("#cloudSyncState");
 const cloudReloadButton = document.querySelector("#cloudReloadButton");
 const cloudFetchCount = document.querySelector("#cloudFetchCount");
 const detectAllStorageDataButton = document.querySelector("#detectAllStorageDataButton");
+const analyzeIndexedImageStoreButton = document.querySelector("#analyzeIndexedImageStoreButton");
 const detectLocalSortingDataButton = document.querySelector("#detectLocalSortingDataButton");
 const detectCloudSortingDataButton = document.querySelector("#detectCloudSortingDataButton");
 const dataRecoveryResults = document.querySelector("#dataRecoveryResults");
@@ -1364,6 +1365,143 @@ async function detectAllStoredProductData() {
   } else {
     showErrorMessage("商品データ本体の候補は見つかりませんでした");
   }
+}
+
+function findImageRecordLinks(record) {
+  const imageId = String(record?.id || record?.localImageId || "");
+  const refsMap = loadLocalImageRefs();
+  const linkedRefEntries = Object.entries(refsMap)
+    .filter(([, refs]) => normalizeImageRefs(refs).localImageId === imageId)
+    .map(([key]) => key);
+  const linkedItems = items.filter((item) => {
+    const refs = normalizeImageRefs(item.imageRefs);
+    return refs.localImageId === imageId
+      || linkedRefEntries.includes(String(item.id))
+      || linkedRefEntries.includes(String(item.itemCode || ""));
+  });
+  const linkedSortingItems = sortingItems.filter((item) => {
+    const refs = normalizeImageRefs(item.imageRefs);
+    return refs.localImageId === imageId
+      || linkedRefEntries.includes(String(item.id))
+      || linkedRefEntries.includes(String(item.sourceItemId || ""));
+  });
+
+  return {
+    linkedRefEntries,
+    linkedItems,
+    linkedSortingItems,
+  };
+}
+
+function summarizeIndexedImageRecord(record, index) {
+  const fields = record && typeof record === "object" ? Object.keys(record) : [];
+  const imageId = String(record?.id || record?.localImageId || "");
+  const itemCode = parseItemCodeFromImageId(imageId)
+    || String(record?.itemCode || record?.productId || record?.itemId || record?.sourceItemId || "").trim();
+  const title = String(record?.title || record?.itemTitle || record?.name || record?.metadata?.title || record?.metadata?.itemTitle || "").trim();
+  const metadata = record?.metadata && typeof record.metadata === "object" ? record.metadata : null;
+  const links = findImageRecordLinks(record);
+  const linkedTitle = links.linkedItems.map(getListingTitle).find(Boolean)
+    || links.linkedSortingItems.map((item) => item.name).find(Boolean)
+    || "";
+
+  return {
+    index,
+    id: imageId,
+    fields,
+    itemCode,
+    title,
+    linkedTitle,
+    hasDataUrl: hasMeaningfulText(record?.dataUrl),
+    hasMetadata: Boolean(metadata),
+    metadataFields: metadata ? Object.keys(metadata) : [],
+    bytes: record?.bytes || (record?.dataUrl ? getDataUrlByteSize(record.dataUrl) : ""),
+    updatedAt: record?.updatedAt || record?.createdAt || "",
+    linkedRefCount: links.linkedRefEntries.length,
+    linkedItemCount: links.linkedItems.length,
+    linkedSortingCount: links.linkedSortingItems.length,
+  };
+}
+
+function renderIndexedImageStoreAnalysis(records) {
+  if (!dataRecoveryResults) {
+    return;
+  }
+
+  dataRecoveryResults.replaceChildren();
+  const summaries = records.map(summarizeIndexedImageRecord);
+  const allFieldNames = Array.from(new Set(summaries.flatMap((summary) => summary.fields))).sort((a, b) => a.localeCompare(b, "ja"));
+  const linkedCount = summaries.filter((summary) => summary.itemCode || summary.title || summary.linkedTitle || summary.linkedItemCount || summary.linkedSortingCount || summary.linkedRefCount).length;
+  const imageOnlyCount = summaries.length - linkedCount;
+
+  const panel = document.createElement("section");
+  panel.className = "indexed-store-analysis";
+  panel.innerHTML = `
+    <div class="indexed-store-analysis-heading">
+      <strong>IndexedDB画像Store解析</strong>
+      <small>DB：${LOCAL_IMAGE_DB_NAME} / Store：${LOCAL_IMAGE_STORE_NAME}</small>
+      <small>画像レコード：${summaries.length}件 / 商品情報への参照候補：${linkedCount}件 / 画像のみ候補：${imageOnlyCount}件</small>
+      <small>保存されている項目：${allFieldNames.length ? allFieldNames.join(" / ") : "なし"}</small>
+    </div>
+  `;
+
+  const table = document.createElement("div");
+  table.className = "indexed-store-analysis-table";
+  table.innerHTML = `
+    <div class="indexed-store-analysis-head">#</div>
+    <div class="indexed-store-analysis-head">保存項目</div>
+    <div class="indexed-store-analysis-head">ID / 商品参照</div>
+    <div class="indexed-store-analysis-head">判定</div>
+  `;
+
+  summaries.forEach((summary) => {
+    const fieldText = [
+      summary.fields.join(" / ") || "-",
+      summary.hasMetadata ? `metadata: ${summary.metadataFields.join(" / ") || "あり"}` : "",
+      summary.hasDataUrl ? "dataUrl: あり" : "dataUrl: なし",
+      summary.bytes ? `bytes: ${summary.bytes}` : "",
+      summary.updatedAt ? `updatedAt: ${formatDateTime(summary.updatedAt)}` : "",
+    ].filter(Boolean).join("\n");
+    const linkText = [
+      summary.id ? `id: ${summary.id}` : "",
+      summary.itemCode ? `商品ID候補: ${summary.itemCode}` : "",
+      summary.title ? `タイトル候補: ${summary.title}` : "",
+      summary.linkedTitle ? `既存データ照合: ${summary.linkedTitle}` : "",
+      summary.linkedRefCount ? `localImageRefs照合: ${summary.linkedRefCount}件` : "",
+    ].filter(Boolean).join("\n") || "-";
+    const resultText = summary.linkedItemCount || summary.linkedSortingCount
+      ? `既存商品/仕分けと紐づきあり\n商品 ${summary.linkedItemCount}件 / 仕分け ${summary.linkedSortingCount}件`
+      : summary.itemCode || summary.title
+        ? "商品情報への参照候補あり"
+        : "画像データのみ";
+
+    const indexCell = document.createElement("div");
+    indexCell.textContent = String(summary.index + 1);
+    const fieldCell = document.createElement("div");
+    fieldCell.textContent = fieldText;
+    const linkCell = document.createElement("div");
+    linkCell.textContent = linkText;
+    const resultCell = document.createElement("div");
+    resultCell.className = resultText === "画像データのみ" ? "indexed-store-image-only" : "indexed-store-linked";
+    resultCell.textContent = resultText;
+    table.append(indexCell, fieldCell, linkCell, resultCell);
+  });
+
+  panel.append(table);
+  dataRecoveryResults.append(panel);
+  console.info("IndexedDB画像Store解析", {
+    database: LOCAL_IMAGE_DB_NAME,
+    store: LOCAL_IMAGE_STORE_NAME,
+    recordCount: records.length,
+    fields: allFieldNames,
+    summaries,
+  });
+}
+
+async function analyzeIndexedImageStore() {
+  const records = await getIndexedDbImageRecords();
+  renderIndexedImageStoreAnalysis(records);
+  showSuccessMessage(`IndexedDB画像解析：${records.length}件`);
 }
 
 async function detectLocalSortingRecoveryData() {
@@ -10050,6 +10188,18 @@ detectAllStorageDataButton?.addEventListener("click", () => {
     })
     .finally(() => {
       detectAllStorageDataButton.disabled = false;
+    });
+});
+
+analyzeIndexedImageStoreButton?.addEventListener("click", () => {
+  analyzeIndexedImageStoreButton.disabled = true;
+  analyzeIndexedImageStore()
+    .catch((error) => {
+      console.warn("IndexedDB画像Store解析エラー:", error);
+      showErrorMessage("IndexedDB画像Storeを解析できませんでした");
+    })
+    .finally(() => {
+      analyzeIndexedImageStoreButton.disabled = false;
     });
 });
 

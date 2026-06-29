@@ -20812,6 +20812,70 @@ body.settings-view .master-drag-handle {
   font-weight: 800;
 }
 
+.indexed-store-analysis {
+  display: grid;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid #efe6e1;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.indexed-store-analysis-heading {
+  display: grid;
+  gap: 4px;
+}
+
+.indexed-store-analysis-heading strong {
+  color: #2f3a45;
+  font-size: 13px;
+}
+
+.indexed-store-analysis-heading small {
+  color: #756b64;
+  font-size: 11px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.indexed-store-analysis-table {
+  display: grid;
+  grid-template-columns: 34px minmax(96px, 1fr) minmax(104px, 1.1fr) minmax(88px, 0.9fr);
+  overflow: hidden;
+  border: 1px solid #efe6e1;
+  border-radius: 8px;
+  font-size: 11px;
+}
+
+.indexed-store-analysis-table > div {
+  min-width: 0;
+  padding: 7px 6px;
+  border-bottom: 1px solid #efe6e1;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.indexed-store-analysis-table > div:nth-last-child(-n + 4) {
+  border-bottom: 0;
+}
+
+.indexed-store-analysis-head {
+  background: #faf7f5;
+  color: #6b625c;
+  font-weight: 900;
+  white-space: normal !important;
+}
+
+.indexed-store-linked {
+  color: #166534;
+  font-weight: 900;
+}
+
+.indexed-store-image-only {
+  color: #526070;
+  font-weight: 800;
+}
+
 /* Final list/settings repair: viewport-safe menus, plain accordion arrows, and editable templates. */
 body.work-tab-list .row-action-menu[open] {
   z-index: 2147483000 !important;
