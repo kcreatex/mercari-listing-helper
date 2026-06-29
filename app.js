@@ -397,6 +397,7 @@ let isApplyingCloudSnapshot = false;
 let lastCloudReloadRequestAt = 0;
 let sortingRecoveryCandidates = [];
 let indexedImageRecoveryCandidate = null;
+let localImageRefsRecoveryCandidate = null;
 let isSettingsDirty = false;
 let toastTimer = null;
 let isSortingShippingMode = false;
@@ -1679,6 +1680,7 @@ function renderLocalImageRefsAnalysis(records, refsMap) {
   const refKeys = Object.keys(refsMap);
   const linkedCount = summaries.filter((summary) => summary.refEntries.length || summary.itemMatches.length || summary.sortingMatches.length || summary.destinationSortingMatches.length).length;
   const localStyleSummary = getLocalStyleIdSummary();
+  localImageRefsRecoveryCandidate = createLocalImageRefsRecoveryCandidate(records, refsMap);
 
   const panel = document.createElement("section");
   panel.className = "local-image-ref-analysis";
@@ -1697,6 +1699,20 @@ function renderLocalImageRefsAnalysis(records, refsMap) {
     <strong>${entry.label}</strong>
     <small>${entry.ids.length ? entry.ids.join(" / ") : "LOCAL-SORTING- / LOCAL- 形式のIDなし"}</small>
   `).join("");
+
+  const recoveryActions = document.createElement("div");
+  recoveryActions.className = "indexed-image-recovery-actions local-image-ref-recovery-actions";
+  const restoreButton = document.createElement("button");
+  restoreButton.type = "button";
+  restoreButton.className = "primary-button";
+  restoreButton.dataset.createLocalImageRefsRecovery = "true";
+  restoreButton.disabled = localImageRefsRecoveryCandidate.count === 0;
+  restoreButton.textContent = localImageRefsRecoveryCandidate.count
+    ? `localImageRefsの${localImageRefsRecoveryCandidate.count}件を追加統合`
+    : "localImageRefs復元候補なし";
+  const restoreNote = document.createElement("small");
+  restoreNote.textContent = "既存商品は削除せず、画像付きの仮商品として追加します。";
+  recoveryActions.append(restoreButton, restoreNote);
 
   const table = document.createElement("div");
   table.className = "local-image-ref-table";
@@ -1748,7 +1764,7 @@ function renderLocalImageRefsAnalysis(records, refsMap) {
     table.append(indexCell, refCell, itemCell, sortingCell);
   });
 
-  panel.append(localStyleList, table);
+  panel.append(localStyleList, recoveryActions, table);
   dataRecoveryResults.append(panel);
   console.info("localImageRefs解析", {
     localImageRefsExists: localStorage.getItem(LOCAL_IMAGE_REFS_KEY) !== null,
@@ -2149,6 +2165,98 @@ function getRecoveredItemDedupKey(item) {
   return `fallback:${getListingTitle(item)}|${item.storageLocation || ""}`;
 }
 
+function createLocalImageRefsRecoveredItem(record, index, refsMap) {
+  const imageId = String(record?.id || "");
+  const linkedRefKeys = getLocalImageRefEntriesForImageId(imageId, refsMap).map((entry) => entry.key);
+  const isSortingImage = imageId.startsWith("LOCAL-SORTING-") || linkedRefKeys.some((key) => key.startsWith("LOCAL-SORTING-"));
+  const title = `復元候補 ${String(index + 1).padStart(3, "0")}`;
+  const createdAt = record?.createdAt || record?.updatedAt || new Date().toISOString();
+  const updatedAt = record?.updatedAt || createdAt;
+  const recoveryMemo = [
+    "復元候補",
+    "画像由来",
+    "要確認",
+    isSortingImage ? "売却先仕分け由来" : "",
+    imageId ? `画像ID:${imageId}` : "",
+    linkedRefKeys.length ? `参照キー:${linkedRefKeys.join(", ")}` : "",
+  ].filter(Boolean).join(" / ");
+
+  return normalizeItem({
+    id: createId(),
+    itemCode: "",
+    name: title,
+    listingTitle: title,
+    category: "",
+    condition: "",
+    status: "未出品",
+    storageLocation: "未設定",
+    memo: recoveryMemo,
+    imageRefs: normalizeImageRefs({
+      provider: "local",
+      localImageId: imageId,
+    }),
+    imageData: "",
+    createdAt,
+    updatedAt,
+  });
+}
+
+function createLocalImageRefsRecoveredSortingItem(item, record, index, refsMap) {
+  const imageId = normalizeImageRefs(item.imageRefs).localImageId || String(record?.id || "");
+  const linkedRefKeys = getLocalImageRefEntriesForImageId(imageId, refsMap).map((entry) => entry.key);
+  const isSortingImage = imageId.startsWith("LOCAL-SORTING-") || linkedRefKeys.some((key) => key.startsWith("LOCAL-SORTING-"));
+  const recoveryMemo = [
+    "復元候補",
+    "画像由来",
+    "要確認",
+    isSortingImage ? "売却先仕分け由来" : "",
+    imageId ? `画像ID:${imageId}` : "",
+    linkedRefKeys.length ? `参照キー:${linkedRefKeys.join(", ")}` : "",
+  ].filter(Boolean).join(" / ");
+
+  return normalizeSortingItem({
+    id: createId(),
+    sourceItemId: item.id,
+    name: getListingTitle(item) || `復元候補 ${String(index + 1).padStart(3, "0")}`,
+    storageLocation: "未設定",
+    destination: SORTING_UNDECIDED_DESTINATION,
+    status: "未確認",
+    shippingStatus: "未仕分け",
+    imageRefs: normalizeImageRefs({
+      provider: "local",
+      localImageId: imageId,
+    }),
+    memo: recoveryMemo,
+    createdAt: item.createdAt || record?.updatedAt || new Date().toISOString(),
+    updatedAt: item.updatedAt || record?.updatedAt || new Date().toISOString(),
+  });
+}
+
+function createLocalImageRefsRecoveryCandidate(records, refsMap) {
+  const matchedRecords = records.filter((record) => getLocalImageRefEntriesForImageId(String(record?.id || ""), refsMap).length > 0);
+  const recoveredItems = matchedRecords.map((record, index) => createLocalImageRefsRecoveredItem(record, index, refsMap));
+  const recoveredSortingItems = recoveredItems.map((item, index) => createLocalImageRefsRecoveredSortingItem(item, matchedRecords[index], index, refsMap));
+
+  return {
+    id: createId(),
+    source: "localImageRefs解析",
+    count: recoveredItems.length,
+    records: matchedRecords,
+    items: recoveredItems,
+    sortingItems: recoveredSortingItems,
+    confirmationLabel: "localImageRefs解析結果",
+  };
+}
+
+function getRecoveredSortingDedupKeys(item) {
+  const refs = normalizeImageRefs(item.imageRefs);
+  return [
+    item.sourceItemId ? `source:${item.sourceItemId}` : "",
+    refs.localImageId ? `image:${refs.localImageId}` : "",
+    `fallback:${item.name}|${item.storageLocation}`,
+  ].filter(Boolean);
+}
+
 function mergeRecoveredItems(currentItems, recoveredItems) {
   const existingKeys = new Set(currentItems.map(getRecoveredItemDedupKey));
   const mergedItems = [...currentItems];
@@ -2170,16 +2278,7 @@ function mergeRecoveredItems(currentItems, recoveredItems) {
 
 function mergeRecoveredSortingItems(currentSortingItems, recoveredSortingItems, addedItems) {
   const addedItemIds = new Set(addedItems.map((item) => item.id));
-  const existingKeys = new Set(currentSortingItems.map((item) => {
-    const refs = normalizeImageRefs(item.imageRefs);
-    if (item.sourceItemId) {
-      return `source:${item.sourceItemId}`;
-    }
-    if (refs.localImageId) {
-      return `image:${refs.localImageId}`;
-    }
-    return `fallback:${item.name}|${item.storageLocation}`;
-  }));
+  const existingKeys = new Set(currentSortingItems.flatMap(getRecoveredSortingDedupKeys));
   const mergedSortingItems = [...currentSortingItems];
   const addedSortingItems = [];
 
@@ -2188,17 +2287,12 @@ function mergeRecoveredSortingItems(currentSortingItems, recoveredSortingItems, 
       return;
     }
 
-    const refs = normalizeImageRefs(item.imageRefs);
-    const key = item.sourceItemId
-      ? `source:${item.sourceItemId}`
-      : refs.localImageId
-        ? `image:${refs.localImageId}`
-        : `fallback:${item.name}|${item.storageLocation}`;
-    if (existingKeys.has(key)) {
+    const keys = getRecoveredSortingDedupKeys(item);
+    if (keys.some((key) => existingKeys.has(key))) {
       return;
     }
 
-    existingKeys.add(key);
+    keys.forEach((key) => existingKeys.add(key));
     mergedSortingItems.push(item);
     addedSortingItems.push(item);
   });
@@ -2216,7 +2310,7 @@ function renderIndexedImageRecoveryCandidate(candidate) {
 
   const heading = document.createElement("div");
   heading.className = "indexed-image-recovery-heading";
-  heading.innerHTML = `<strong>IndexedDB画像 ${candidate.count}件</strong><small>画像レコードから商品一覧・売却先仕分けへ復元できます</small>`;
+  heading.innerHTML = `<strong>${candidate.source || "IndexedDB画像"} ${candidate.count}件</strong><small>画像レコードから商品一覧・売却先仕分けへ復元できます</small>`;
 
   const list = document.createElement("div");
   list.className = "indexed-image-recovery-list";
@@ -2278,7 +2372,8 @@ async function restoreIndexedImageRecoveryCandidate(mode = "merge") {
 
   const beforeItemCount = items.length;
   const beforeSortingCount = sortingItems.length;
-  const confirmationMessage = `画像付き復元候補${candidate.count}件を商品一覧へ追加します。現在の商品${beforeItemCount}件は削除しません。よろしいですか？`;
+  const sourceLabel = candidate.confirmationLabel || candidate.source || "IndexedDB画像";
+  const confirmationMessage = `${sourceLabel}の画像付き復元候補${candidate.count}件を商品一覧へ追加します。現在の商品${beforeItemCount}件は削除しません。よろしいですか？`;
 
   const shouldRestore = await showAppDialog({
     title: "IndexedDB画像から復元",
@@ -2383,6 +2478,7 @@ async function restoreIndexedImageRecoveryCandidate(mode = "merge") {
     persistedSortingCount,
   });
   indexedImageRecoveryCandidate = null;
+  localImageRefsRecoveryCandidate = null;
 
   if (isCloudReady && supabaseClient && cloudUser) {
     const shouldSync = await showAppDialog({
@@ -10611,6 +10707,22 @@ detectCloudSortingDataButton?.addEventListener("click", () => {
 });
 
 dataRecoveryResults?.addEventListener("click", (event) => {
+  const localImageRefsButton = event.target.closest("[data-create-local-image-refs-recovery]");
+  if (localImageRefsButton) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!localImageRefsRecoveryCandidate?.items?.length) {
+      showErrorMessage("localImageRefsの復元候補がありません");
+      return;
+    }
+    indexedImageRecoveryCandidate = localImageRefsRecoveryCandidate;
+    restoreIndexedImageRecoveryCandidate("merge").catch((error) => {
+      console.warn("localImageRefs復元エラー:", error);
+      showErrorMessage("localImageRefsから復元できませんでした");
+    });
+    return;
+  }
+
   const indexedImageButton = event.target.closest("[data-recover-indexed-images-mode]");
   if (indexedImageButton) {
     event.preventDefault();
