@@ -1843,6 +1843,81 @@ input[readonly] {
   background: #fff;
 }
 
+.backup-restore-mode {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0;
+  padding: 8px;
+  border: 1px solid #eaded8;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.backup-restore-mode label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 32px;
+  color: #4d4540;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.backup-danger-note {
+  margin: 0;
+  padding: 7px 8px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #991b1b;
+  font-size: 11px;
+  line-height: 1.4;
+  background: #fff5f5;
+}
+
+.backup-list {
+  display: grid;
+  gap: 8px;
+}
+
+.backup-list-row {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #eaded8;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.backup-list-row strong,
+.backup-list-row small {
+  display: block;
+}
+
+.backup-list-row strong {
+  color: #2f3a45;
+  font-size: 12px;
+}
+
+.backup-list-row small {
+  margin-top: 3px;
+  color: #756b64;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.backup-list-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.backup-list-actions button {
+  min-height: 36px;
+  height: 36px;
+  padding: 4px 6px;
+  font-size: 11px;
+}
+
 .quick-search-panel {
   display: grid;
   gap: 10px;
@@ -5572,6 +5647,10 @@ button:disabled {
   body.analysis-view .storage-report-card {
     padding: 4px !important;
   }
+}
+
+body.settings-view .settings-backup-group {
+  display: grid !important;
 }
 
 /* Shared product information order: name, profit, status, storage. */
@@ -15383,8 +15462,7 @@ body.work-tab-sorting #sortingTableWrap .sorting-action-panel {
     line-height: 1.35 !important;
   }
 
-  body.settings-view .settings-operations-summary,
-  body.settings-view .settings-backup-group {
+  body.settings-view .settings-operations-summary {
     display: none !important;
   }
 
@@ -17719,8 +17797,7 @@ body.settings-view .settings-summary-metrics,
 body.settings-view .settings-summary-count,
 body.settings-view .settings-usage-count,
 body.settings-view .settings-insight-box,
-body.settings-view .settings-operations-summary,
-body.settings-view .settings-backup-group {
+body.settings-view .settings-operations-summary {
   display: none !important;
 }
 

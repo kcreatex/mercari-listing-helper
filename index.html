@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>メルカリ出品補助室</title>
-    <link rel="stylesheet" href="styles.css?v=recovered-info-diagnosis-20260629">
+    <link rel="stylesheet" href="styles.css?v=auto-backup-restore-20260629">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
   <body class="work-view work-tab-form">
@@ -1259,17 +1259,24 @@
         <details class="settings-backup-group settings-accordion app-accordion">
           <summary>
               <span class="settings-summary-label">
-              <span class="settings-title-line"><span class="settings-section-icon" aria-hidden="true">💾</span>バックアップ</span>
-              <small>JSONの書き出し・読み込み</small>
+              <span class="settings-title-line"><span class="settings-section-icon" aria-hidden="true">💾</span>バックアップ・復元</span>
+              <small>データ保護と復元</small>
             </span>
           </summary>
           <div class="settings-backup-content">
-            <p class="muted">Supabase化や端末変更の前に、JSONを書き出して保存してください。</p>
+            <p class="muted">重要操作の前に自動バックアップを残します。手動でJSON保存・復元もできます。</p>
             <div class="backup-controls backup-controls-top" aria-label="バックアップ操作">
-              <strong>localStorageバックアップ</strong>
-              <button class="ghost-button" type="button" id="exportButtonTop">JSONエクスポート</button>
-              <button class="ghost-button" type="button" id="importButtonTop">JSONインポート</button>
+              <strong>バックアップ操作</strong>
+              <button class="primary-button" type="button" id="createManualBackupButton">バックアップ作成</button>
+              <button class="ghost-button" type="button" id="exportButtonTop">JSONを書き出し</button>
+              <button class="ghost-button" type="button" id="importButtonTop">JSONを読み込み</button>
             </div>
+            <div class="backup-restore-mode" aria-label="復元方式">
+              <label><input type="radio" name="backupRestoreMode" value="merge" checked> 現在のデータに追加統合</label>
+              <label><input type="radio" name="backupRestoreMode" value="replace"> バックアップで上書き復元</label>
+              <p class="backup-danger-note">上書き復元は現在のデータを置き換えます。通常は追加統合を使ってください。</p>
+            </div>
+            <div class="backup-list" id="backupList" aria-live="polite"></div>
             <input class="hidden" id="importFileInput" type="file" accept="application/json,.json">
           </div>
         </details>
@@ -1413,6 +1420,6 @@
       </div>
     </div>
 
-    <script src="app.js?v=recovered-info-diagnosis-20260629"></script>
+    <script src="app.js?v=auto-backup-restore-20260629"></script>
   </body>
 </html>

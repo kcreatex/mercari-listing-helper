@@ -12,6 +12,8 @@ const LOCAL_IMAGE_REFS_KEY = "mercari-listing-helper-local-image-refs";
 const LOCAL_IMAGE_DB_NAME = "mercari-listing-helper-images";
 const LOCAL_IMAGE_DB_VERSION = 1;
 const LOCAL_IMAGE_STORE_NAME = "images";
+const AUTO_BACKUP_STORAGE_KEY = "mercari-listing-helper-auto-backups";
+const AUTO_BACKUP_MAX_GENERATIONS = 10;
 const SUPABASE_URL = "https://pkbgvfurouxmghujlscs.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_pJVEFb8bDDTrdOaCYU3BRQ_jUnbesuv";
 
@@ -137,6 +139,8 @@ const exportButton = document.querySelector("#exportButton");
 const importButton = document.querySelector("#importButton");
 const exportButtonTop = document.querySelector("#exportButtonTop");
 const importButtonTop = document.querySelector("#importButtonTop");
+const createManualBackupButton = document.querySelector("#createManualBackupButton");
+const backupList = document.querySelector("#backupList");
 const itemCsvExportButton = document.querySelector("#itemCsvExportButton");
 const backupControlsTop = document.querySelector(".backup-controls-top");
 const importFileInput = document.querySelector("#importFileInput");
@@ -400,6 +404,7 @@ let sortingRecoveryCandidates = [];
 let indexedImageRecoveryCandidate = null;
 let localImageRefsRecoveryCandidate = null;
 let recoveredImageCandidateDiagnostics = [];
+let lastCloudSaveBackupAt = 0;
 let isSettingsDirty = false;
 let toastTimer = null;
 let isSortingShippingMode = false;
@@ -2580,6 +2585,7 @@ async function restoreSortingRecoveryCandidate(index) {
     return;
   }
 
+  await createStoredBackup("復元前", { toast: true });
   const backupKey = `${SORTING_STORAGE_KEY}-recovery-backup-${Date.now()}`;
   localStorage.setItem(backupKey, JSON.stringify(serializeItemsForLocalStorage(sortingItems)));
   sortingItems = candidate.items.map(normalizeSortingItem);
@@ -2974,6 +2980,7 @@ async function restoreIndexedImageRecoveryCandidate(mode = "merge") {
   const previousSortingItems = [...sortingItems];
   const previousLocalImageRefs = loadLocalImageRefs();
   try {
+    await createStoredBackup("復元前", { toast: true });
     localStorage.setItem(`${STORAGE_KEY}-indexeddb-recovery-backup-${backupSuffix}`, JSON.stringify(serializeItemsForLocalStorage(previousItems)));
     localStorage.setItem(`${SORTING_STORAGE_KEY}-indexeddb-recovery-backup-${backupSuffix}`, JSON.stringify(serializeItemsForLocalStorage(previousSortingItems)));
   } catch (error) {
@@ -3877,6 +3884,7 @@ async function syncAppStateToSupabase() {
     return;
   }
 
+  await createCloudSaveAutoBackup();
   const { error } = await supabaseClient
     .from("items")
     .upsert([{
@@ -3985,6 +3993,7 @@ async function syncItemsToSupabase() {
     return;
   }
 
+  await createCloudSaveAutoBackup();
   const rows = createSupabaseItemRows(items);
 
   if (rows.length === 0) {
@@ -4462,7 +4471,328 @@ function createBackupFileName() {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
-  return `mercari-listing-helper-backup-${year}-${month}-${day}.json`;
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `mercari-listing-helper-backup-${year}-${month}-${day}-${hours}${minutes}.json`;
+}
+
+async function getIndexedDbImageMetadataForBackup() {
+  try {
+    const records = await getIndexedDbImageRecords();
+    return records.map((record) => ({
+      id: record.id || record.localImageId || "",
+      localImageId: record.localImageId || record.id || "",
+      updatedAt: record.updatedAt || "",
+      createdAt: record.createdAt || "",
+      bytes: record.bytes || (record.dataUrl ? getDataUrlByteSize(record.dataUrl) : ""),
+      hasDataUrl: Boolean(record.dataUrl),
+      fields: record && typeof record === "object" ? Object.keys(record) : [],
+    }));
+  } catch (error) {
+    console.warn("IndexedDB画像メタ情報バックアップ取得エラー:", error);
+    return [];
+  }
+}
+
+async function createBackupPayload(kind = "手動") {
+  const exportedAt = new Date().toISOString();
+  const localImageRefs = loadLocalImageRefs();
+  const indexedDbImages = await getIndexedDbImageMetadataForBackup();
+
+  return {
+    appName: "メルカリ出品補助室",
+    version: BACKUP_VERSION,
+    backupKind: kind,
+    exportedAt,
+    storageKeys: {
+      items: STORAGE_KEY,
+      settings: SETTINGS_KEY,
+      templates: TEMPLATES_KEY,
+      sortingItems: SORTING_STORAGE_KEY,
+      localImageRefs: LOCAL_IMAGE_REFS_KEY,
+      autoBackups: AUTO_BACKUP_STORAGE_KEY,
+    },
+    metadata: {
+      itemCount: items.length,
+      sortingItemCount: sortingItems.length,
+      templateCount: descriptionTemplates.length,
+      localImageRefCount: Object.keys(localImageRefs).length,
+      indexedDbImageCount: indexedDbImages.length,
+      cloudHouseholdId,
+    },
+    data: {
+      items: serializeItemsForLocalStorage(items),
+      sortingItems: serializeItemsForLocalStorage(sortingItems),
+      settings,
+      descriptionTemplates,
+      templates: descriptionTemplates,
+      localImageRefs,
+      imageRefs: localImageRefs,
+      cloudHouseholdId,
+      indexedDbImages,
+    },
+  };
+}
+
+function getBackupSummary(backup) {
+  const data = backup?.data && typeof backup.data === "object" ? backup.data : backup || {};
+  return {
+    itemCount: Array.isArray(data.items) ? data.items.length : 0,
+    sortingItemCount: Array.isArray(data.sortingItems || data.destinationSortingItems) ? (data.sortingItems || data.destinationSortingItems).length : 0,
+    templateCount: Array.isArray(data.descriptionTemplates || data.templates) ? (data.descriptionTemplates || data.templates).length : 0,
+  };
+}
+
+function loadStoredBackups() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(AUTO_BACKUP_STORAGE_KEY) || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveStoredBackups(backups) {
+  const normalized = backups
+    .filter((entry) => entry?.backup)
+    .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+    .slice(0, AUTO_BACKUP_MAX_GENERATIONS);
+  try {
+    localStorage.setItem(AUTO_BACKUP_STORAGE_KEY, JSON.stringify(normalized));
+    renderBackupList();
+  } catch (error) {
+    console.warn("バックアップ保存エラー:", error);
+    showErrorMessage("バックアップを保存できませんでした。端末容量を確認してください");
+  }
+}
+
+async function createStoredBackup(kind = "自動", { toast = false } = {}) {
+  const backup = await createBackupPayload(kind);
+  const summary = getBackupSummary(backup);
+  const entry = {
+    id: createId(),
+    kind,
+    createdAt: backup.exportedAt,
+    summary,
+    backup,
+  };
+  saveStoredBackups([entry, ...loadStoredBackups()]);
+  if (toast) {
+    showSuccessMessage(`${kind}バックアップを作成しました`);
+  }
+  return entry;
+}
+
+async function createCloudSaveAutoBackup() {
+  const now = Date.now();
+  if (now - lastCloudSaveBackupAt < 5000) {
+    return;
+  }
+  lastCloudSaveBackupAt = now;
+  await createStoredBackup("クラウド保存前");
+}
+
+function downloadJsonFile(fileName, data) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function getSelectedBackupRestoreMode() {
+  return document.querySelector('input[name="backupRestoreMode"]:checked')?.value || "merge";
+}
+
+function mergeBackupItemsByKey(currentItems, incomingItems) {
+  const merged = [...currentItems];
+  const existingKeys = new Set(currentItems.map(getRecoveredItemDedupKey));
+  incomingItems.forEach((item) => {
+    const normalized = normalizeItem(item);
+    const key = getRecoveredItemDedupKey(normalized);
+    if (existingKeys.has(key)) {
+      return;
+    }
+    existingKeys.add(key);
+    merged.push(normalized);
+  });
+  return merged;
+}
+
+function mergeBackupSortingItemsByKey(currentSortingItems, incomingSortingItems) {
+  const merged = [...currentSortingItems];
+  const existingKeys = new Set(currentSortingItems.flatMap(getRecoveredSortingDedupKeys));
+  incomingSortingItems.forEach((item) => {
+    const normalized = normalizeSortingItem(item);
+    const keys = getRecoveredSortingDedupKeys(normalized);
+    if (keys.some((key) => existingKeys.has(key))) {
+      return;
+    }
+    keys.forEach((key) => existingKeys.add(key));
+    merged.push(normalized);
+  });
+  return merged;
+}
+
+function normalizeBackupPayload(rawBackup) {
+  const backupData = rawBackup?.data && typeof rawBackup.data === "object" ? rawBackup.data : rawBackup;
+  const importedItems = Array.isArray(rawBackup) ? rawBackup : backupData?.items;
+  if (!Array.isArray(importedItems)) {
+    throw new Error("商品データが見つかりませんでした。");
+  }
+
+  return {
+    items: importedItems,
+    settings: backupData.settings,
+    descriptionTemplates: backupData.descriptionTemplates || backupData.templates,
+    sortingItems: backupData.sortingItems || backupData.destinationSortingItems || [],
+    localImageRefs: backupData.localImageRefs || backupData.imageRefs || {},
+    cloudHouseholdId: backupData.cloudHouseholdId || "",
+  };
+}
+
+function applyLocalImageRefsFromBackup(localImageRefs, mode) {
+  if (!localImageRefs || typeof localImageRefs !== "object") {
+    return;
+  }
+
+  if (mode === "replace") {
+    saveLocalImageRefs(localImageRefs);
+    return;
+  }
+
+  saveLocalImageRefs({
+    ...loadLocalImageRefs(),
+    ...localImageRefs,
+  });
+}
+
+function persistRestoredBackupData() {
+  if (!saveItemsToLocalStorage()) {
+    return false;
+  }
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  localStorage.setItem(TEMPLATES_KEY, JSON.stringify(descriptionTemplates));
+  localStorage.setItem(SORTING_STORAGE_KEY, JSON.stringify(serializeItemsForLocalStorage(sortingItems)));
+  return true;
+}
+
+async function applyBackupPayload(rawBackup, mode = "merge") {
+  const importedData = normalizeBackupPayload(rawBackup);
+  await createStoredBackup("復元前", { toast: true });
+
+  if (mode === "replace") {
+    items = importedData.items.map(normalizeItem);
+    sortingItems = Array.isArray(importedData.sortingItems) ? importedData.sortingItems.map(normalizeSortingItem) : [];
+    settings = normalizeSettings(importedData.settings || settings);
+    descriptionTemplates = normalizeTemplates(importedData.descriptionTemplates, descriptionTemplates);
+  } else {
+    items = mergeBackupItemsByKey(items, importedData.items);
+    sortingItems = mergeBackupSortingItemsByKey(sortingItems, importedData.sortingItems || []);
+    settings = normalizeSettings(importedData.settings || settings);
+    descriptionTemplates = normalizeTemplates([
+      ...descriptionTemplates,
+      ...(Array.isArray(importedData.descriptionTemplates) ? importedData.descriptionTemplates : []),
+    ], descriptionTemplates);
+  }
+
+  applyLocalImageRefsFromBackup(importedData.localImageRefs, mode);
+  if (importedData.cloudHouseholdId && !cloudHouseholdId) {
+    cloudHouseholdId = importedData.cloudHouseholdId;
+    localStorage.setItem(CLOUD_SELECTED_HOUSEHOLD_KEY, cloudHouseholdId);
+  }
+
+  if (!persistRestoredBackupData()) {
+    throw new Error("復元データを保存できませんでした。");
+  }
+
+  refreshCategoryOptions();
+  refreshStorageLocationOptions();
+  refreshShippingMethodOptions();
+  refreshTemplateOptions();
+  renderSettings();
+  resetForm();
+  resetSortingForm();
+  render();
+  renderSorting();
+}
+
+async function confirmAndApplyBackup(rawBackup, mode = getSelectedBackupRestoreMode()) {
+  const summary = getBackupSummary(rawBackup);
+  const isReplace = mode === "replace";
+  const shouldRestore = await showAppDialog({
+    title: isReplace ? "上書き復元の確認" : "追加統合復元の確認",
+    message: `${summary.itemCount}件の商品、${summary.sortingItemCount}件の売却先仕分けを${isReplace ? "現在のデータへ上書き復元" : "現在のデータへ追加統合"}します。\n${isReplace ? "現在のデータが置き換わります。十分注意してください。" : "現在のデータは削除しません。"}\n続けますか？`,
+    confirmText: isReplace ? "上書き復元する" : "追加統合する",
+    danger: isReplace,
+  });
+
+  if (!shouldRestore) {
+    return;
+  }
+
+  await applyBackupPayload(rawBackup, mode);
+  showSuccessMessage(isReplace ? "バックアップで上書き復元しました" : "バックアップを追加統合しました");
+
+  if (isCloudReady && supabaseClient && cloudUser) {
+    const shouldSync = await showAppDialog({
+      title: "クラウドへ保存しますか？",
+      message: "復元後のデータをクラウドへ保存しますか？\n勝手にクラウド上書きはしません。",
+      confirmText: "クラウドへ保存",
+      cancelText: "あとで",
+    });
+    if (shouldSync) {
+      await createStoredBackup("クラウド保存前", { toast: true });
+      await syncItemsToSupabase();
+      await syncAppStateToSupabase();
+      showSuccessMessage("復元データをクラウドへ保存しました");
+    }
+  }
+}
+
+function renderBackupList() {
+  if (!backupList) {
+    return;
+  }
+
+  const backups = loadStoredBackups();
+  backupList.replaceChildren();
+  if (!backups.length) {
+    const empty = document.createElement("p");
+    empty.className = "muted";
+    empty.textContent = "保存済みバックアップはまだありません。";
+    backupList.append(empty);
+    return;
+  }
+
+  backups.forEach((entry) => {
+    const summary = entry.summary || getBackupSummary(entry.backup);
+    const row = document.createElement("div");
+    row.className = "backup-list-row";
+    row.innerHTML = `
+      <div>
+        <strong></strong>
+        <small></small>
+        <small></small>
+      </div>
+      <div class="backup-list-actions">
+        <button class="ghost-button" type="button" data-restore-backup-id="">復元</button>
+        <button class="ghost-button" type="button" data-export-backup-id="">JSONを書き出し</button>
+        <button class="danger-button" type="button" data-delete-backup-id="">削除</button>
+      </div>
+    `;
+    row.querySelector("strong").textContent = `${entry.kind || "バックアップ"} / ${formatDateTime(entry.createdAt)}`;
+    row.querySelectorAll("small")[0].textContent = `商品 ${summary.itemCount}件 / 売却先仕分け ${summary.sortingItemCount}件 / テンプレート ${summary.templateCount}件`;
+    row.querySelectorAll("small")[1].textContent = `バックアップ種別：${entry.kind || "-"}`;
+    row.querySelector("[data-restore-backup-id]").dataset.restoreBackupId = entry.id;
+    row.querySelector("[data-export-backup-id]").dataset.exportBackupId = entry.id;
+    row.querySelector("[data-delete-backup-id]").dataset.deleteBackupId = entry.id;
+    backupList.append(row);
+  });
 }
 
 function formatDateInputValue(date = new Date()) {
@@ -6140,34 +6470,10 @@ async function copyText(text, successMessage) {
   }
 }
 
-function exportBackup() {
+async function exportBackup() {
   const fileName = createBackupFileName();
-  const backup = {
-    appName: "メルカリ出品補助室",
-    version: BACKUP_VERSION,
-    exportedAt: new Date().toISOString(),
-    storageKeys: {
-      items: STORAGE_KEY,
-      settings: SETTINGS_KEY,
-      templates: TEMPLATES_KEY,
-      sortingItems: SORTING_STORAGE_KEY,
-    },
-    data: {
-      items,
-      settings,
-      descriptionTemplates,
-      sortingItems,
-    },
-  };
-  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = fileName;
-  document.body.append(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
+  const backup = await createBackupPayload("手動");
+  downloadJsonFile(fileName, backup);
   showSuccessMessage("バックアップを書き出しました");
 }
 
@@ -6316,21 +6622,7 @@ function readBackupFile(file) {
 
     reader.addEventListener("load", () => {
       try {
-        const parsed = JSON.parse(reader.result);
-        const backupData = parsed.data && typeof parsed.data === "object" ? parsed.data : parsed;
-        const importedItems = Array.isArray(parsed) ? parsed : backupData.items;
-
-        if (!Array.isArray(importedItems)) {
-          reject(new Error("商品データが見つかりませんでした。"));
-          return;
-        }
-
-        resolve({
-          items: importedItems,
-          settings: backupData.settings,
-          descriptionTemplates: backupData.descriptionTemplates || backupData.templates,
-          sortingItems: backupData.sortingItems || backupData.destinationSortingItems,
-        });
+        resolve(JSON.parse(reader.result));
       } catch {
         reject(new Error("JSONファイルを読み込めませんでした。"));
       }
@@ -6346,60 +6638,9 @@ async function importBackup(file) {
     return;
   }
 
-  const shouldImport = await showAppDialog({
-    title: "読み込み確認",
-    message: "バックアップを読み込むと、現在このブラウザに保存されている商品・設定・テンプレート・売却先仕分けデータは上書きされます。続けますか？",
-    confirmText: "読み込む",
-  });
-
-  if (!shouldImport) {
-    importFileInput.value = "";
-    return;
-  }
-
   try {
-    const importedData = await readBackupFile(file);
-    const previousItems = [...items];
-    const previousSettings = { ...settings, categories: [...settings.categories], shippingMethods: settings.shippingMethods.map((method) => ({ ...method })) };
-    const previousTemplates = descriptionTemplates.map((template) => ({ ...template }));
-    const previousSortingItems = sortingItems.map((item) => ({ ...item }));
-
-    try {
-      items = importedData.items;
-      settings = normalizeSettings(importedData.settings || settings);
-      descriptionTemplates = normalizeTemplates(importedData.descriptionTemplates, descriptionTemplates);
-      sortingItems = Array.isArray(importedData.sortingItems)
-        ? importedData.sortingItems.map(normalizeSortingItem)
-        : sortingItems;
-
-      if (!saveItemsToLocalStorage()) {
-        throw new Error("商品データを保存できませんでした。");
-      }
-
-      saveSettings();
-      saveTemplates();
-      saveSortingItems();
-    } catch (saveError) {
-      items = previousItems;
-      settings = previousSettings;
-      descriptionTemplates = previousTemplates;
-      sortingItems = previousSortingItems;
-      saveItemsToLocalStorage();
-      saveSettings();
-      saveTemplates();
-      saveSortingItems();
-      throw saveError;
-    }
-
-    refreshCategoryOptions();
-    refreshShippingMethodOptions();
-    refreshTemplateOptions();
-    renderSettings();
-    resetForm();
-    resetSortingForm();
-    render();
-    renderSorting();
-    showSuccessMessage("バックアップを読み込みました。画面を更新してください");
+    const backup = await readBackupFile(file);
+    await confirmAndApplyBackup(backup, getSelectedBackupRestoreMode());
   } catch (error) {
     showErrorMessage(`バックアップを読み込めませんでした。${error.message}`);
   } finally {
@@ -9596,6 +9837,7 @@ function renderSettings() {
     templateSettingsList.append(createTemplateSettingsRow(template, index));
   });
 
+  renderBackupList();
   isSettingsDirty = false;
   updateSettingsSaveButtonVisibility();
 }
@@ -9984,6 +10226,7 @@ async function resetCategoriesToDefault(event) {
     return;
   }
 
+  await createStoredBackup("実行前", { toast: true });
   settings = normalizeSettings({
     ...settings,
     categories: DEFAULT_SETTINGS.categories,
@@ -10008,6 +10251,7 @@ async function resetStorageToDefault(event) {
     return;
   }
 
+  await createStoredBackup("実行前", { toast: true });
   settings = normalizeSettings({
     ...settings,
     storageLocations: DEFAULT_SETTINGS.storageLocations,
@@ -10032,6 +10276,7 @@ async function resetShippingToDefault(event) {
     return;
   }
 
+  await createStoredBackup("実行前", { toast: true });
   settings = normalizeSettings({
     ...settings,
     shippingMethods: DEFAULT_SETTINGS.shippingMethods,
@@ -10056,6 +10301,7 @@ async function resetAppraisalToDefault(event) {
     return;
   }
 
+  await createStoredBackup("実行前", { toast: true });
   settings = normalizeSettings({
     ...settings,
     appraisalSources: DEFAULT_SETTINGS.appraisalSources,
@@ -10080,6 +10326,7 @@ async function resetTemplatesToDefault(event) {
     return;
   }
 
+  await createStoredBackup("実行前", { toast: true });
   descriptionTemplates = normalizeTemplates(DEFAULT_TEMPLATES, []);
   saveTemplates();
   refreshTemplateOptions();
@@ -12102,8 +12349,24 @@ monthlyProfitList.addEventListener("keydown", (event) => {
   openMonthlyProfitKey = openMonthlyProfitKey === item.dataset.monthKey ? "" : item.dataset.monthKey;
   renderMonthlyProfitList(items.filter((currentItem) => getItemStatus(currentItem) === "売却済み"));
 });
-exportButton?.addEventListener("click", exportBackup);
-exportButtonTop?.addEventListener("click", exportBackup);
+createManualBackupButton?.addEventListener("click", () => {
+  createStoredBackup("手動", { toast: true }).catch((error) => {
+    console.warn("手動バックアップ作成エラー:", error);
+    showErrorMessage("バックアップを作成できませんでした");
+  });
+});
+exportButton?.addEventListener("click", () => {
+  exportBackup().catch((error) => {
+    console.warn("バックアップ書き出しエラー:", error);
+    showErrorMessage("バックアップを書き出せませんでした");
+  });
+});
+exportButtonTop?.addEventListener("click", () => {
+  exportBackup().catch((error) => {
+    console.warn("バックアップ書き出しエラー:", error);
+    showErrorMessage("バックアップを書き出せませんでした");
+  });
+});
 itemCsvExportButton?.addEventListener("click", exportSelectedItemCsv);
 importButton?.addEventListener("click", () => {
   importFileInput.click();
@@ -12113,6 +12376,57 @@ importButtonTop?.addEventListener("click", () => {
 });
 importFileInput.addEventListener("change", () => {
   importBackup(importFileInput.files[0]);
+});
+backupList?.addEventListener("click", async (event) => {
+  try {
+    const restoreButton = event.target.closest("[data-restore-backup-id]");
+    const exportStoredButton = event.target.closest("[data-export-backup-id]");
+    const deleteButton = event.target.closest("[data-delete-backup-id]");
+    const backups = loadStoredBackups();
+
+    if (restoreButton) {
+      const entry = backups.find((backup) => backup.id === restoreButton.dataset.restoreBackupId);
+      if (!entry) {
+        showErrorMessage("バックアップが見つかりません");
+        return;
+      }
+      await confirmAndApplyBackup(entry.backup, getSelectedBackupRestoreMode());
+      return;
+    }
+
+    if (exportStoredButton) {
+      const entry = backups.find((backup) => backup.id === exportStoredButton.dataset.exportBackupId);
+      if (!entry) {
+        showErrorMessage("バックアップが見つかりません");
+        return;
+      }
+      downloadJsonFile(createBackupFileName(), entry.backup);
+      showSuccessMessage("バックアップを書き出しました");
+      return;
+    }
+
+    if (deleteButton) {
+      const entry = backups.find((backup) => backup.id === deleteButton.dataset.deleteBackupId);
+      if (!entry) {
+        showErrorMessage("バックアップが見つかりません");
+        return;
+      }
+      const shouldDelete = await showAppDialog({
+        title: "バックアップを削除しますか？",
+        message: `${formatDateTime(entry.createdAt)} のバックアップを削除します。元に戻せません。`,
+        confirmText: "削除する",
+        danger: true,
+      });
+      if (!shouldDelete) {
+        return;
+      }
+      saveStoredBackups(backups.filter((backup) => backup.id !== entry.id));
+      showSuccessMessage("バックアップを削除しました");
+    }
+  } catch (error) {
+    console.warn("バックアップ操作エラー:", error);
+    showErrorMessage(`バックアップ操作に失敗しました。${error.message || ""}`);
+  }
 });
 quickSearchInput.addEventListener("input", renderQuickSearchResults);
 quickSearchResults.addEventListener("click", (event) => {
