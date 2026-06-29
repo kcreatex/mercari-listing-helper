@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>メルカリ出品補助室</title>
-    <link rel="stylesheet" href="styles.css?v=local-image-refs-restore-20260629">
+    <link rel="stylesheet" href="styles.css?v=recovered-info-diagnosis-20260629">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
   <body class="work-view work-tab-form">
@@ -1295,12 +1295,13 @@
                 <strong>売却先仕分けデータ復旧</strong>
                 <p>消えた仕分けデータの候補を探します。見つかっても自動復元はしません。</p>
                 <div class="data-recovery-actions">
-                  <button class="ghost-button" type="button" id="detectAllStorageDataButton">商品データ全探索</button>
-                  <button class="ghost-button" type="button" id="analyzeIndexedImageStoreButton">IndexedDB画像解析</button>
-                  <button class="ghost-button" type="button" id="analyzeLocalImageRefsButton">localImageRefs解析</button>
-                  <button class="ghost-button" type="button" id="diagnoseCloudAppStateButton">__app_state__診断</button>
-                  <button class="ghost-button" type="button" id="detectLocalSortingDataButton">旧ローカルデータ検出</button>
-                  <button class="ghost-button" type="button" id="detectCloudSortingDataButton">旧クラウドデータ検出</button>
+                <button class="ghost-button" type="button" id="detectAllStorageDataButton">商品データ全探索</button>
+                <button class="ghost-button" type="button" id="analyzeIndexedImageStoreButton">IndexedDB画像解析</button>
+                <button class="ghost-button" type="button" id="analyzeLocalImageRefsButton">localImageRefs解析</button>
+                <button class="ghost-button" type="button" id="diagnoseRecoveredImageCandidatesButton">復元候補の情報診断</button>
+                <button class="ghost-button" type="button" id="diagnoseCloudAppStateButton">__app_state__診断</button>
+                <button class="ghost-button" type="button" id="detectLocalSortingDataButton">旧ローカルデータ検出</button>
+                <button class="ghost-button" type="button" id="detectCloudSortingDataButton">旧クラウドデータ検出</button>
                 </div>
                 <div class="data-recovery-results" id="dataRecoveryResults" aria-live="polite"></div>
               </div>
@@ -1412,6 +1413,6 @@
       </div>
     </div>
 
-    <script src="app.js?v=local-image-refs-restore-20260629"></script>
+    <script src="app.js?v=recovered-info-diagnosis-20260629"></script>
   </body>
 </html>

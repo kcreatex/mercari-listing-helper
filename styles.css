@@ -20947,6 +20947,130 @@ body.settings-view .master-drag-handle {
   font-weight: 900;
 }
 
+.recovered-image-diagnostics {
+  display: grid;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid #efe6e1;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.recovered-image-diagnostics-heading {
+  display: grid;
+  gap: 4px;
+}
+
+.recovered-image-diagnostics-heading strong {
+  color: #2f3a45;
+  font-size: 13px;
+}
+
+.recovered-image-diagnostics-heading small {
+  color: #756b64;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.recovered-image-diagnostic-list {
+  display: grid;
+  gap: 10px;
+}
+
+.recovered-image-diagnostic-card {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 10px;
+  border: 1px solid #efe6e1;
+  border-left: 3px solid #cbd5e1;
+  border-radius: 10px;
+  background: #fffdfc;
+}
+
+.recovered-image-diagnostic-card.confidence-高 {
+  border-left-color: #16a34a;
+}
+
+.recovered-image-diagnostic-card.confidence-中 {
+  border-left-color: #2563eb;
+}
+
+.recovered-image-diagnostic-card.confidence-低 {
+  border-left-color: #94a3b8;
+}
+
+.recovered-image-diagnostic-thumb {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border: 1px solid #eaded8;
+  border-radius: 8px;
+  background: #faf7f5;
+  color: #8a7f78;
+  font-size: 10px;
+  overflow: hidden;
+}
+
+.recovered-image-diagnostic-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.recovered-image-diagnostic-body {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.recovered-image-diagnostic-body > strong {
+  min-width: 0;
+  color: #2f3a45;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.recovered-image-diagnostic-grid {
+  display: grid;
+  gap: 5px;
+}
+
+.recovered-image-diagnostic-grid > div {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: 6px;
+  align-items: start;
+}
+
+.recovered-image-diagnostic-grid span {
+  color: #7b716b;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.recovered-image-diagnostic-grid small {
+  min-width: 0;
+  color: #3f3a36;
+  font-size: 11px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.recovered-image-diagnostic-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.recovered-image-diagnostic-actions button {
+  min-height: 40px;
+  height: 40px;
+}
+
 /* Final list/settings repair: viewport-safe menus, plain accordion arrows, and editable templates. */
 body.work-tab-list .row-action-menu[open] {
   z-index: 2147483000 !important;

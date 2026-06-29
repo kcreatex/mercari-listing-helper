@@ -101,6 +101,7 @@ const cloudFetchCount = document.querySelector("#cloudFetchCount");
 const detectAllStorageDataButton = document.querySelector("#detectAllStorageDataButton");
 const analyzeIndexedImageStoreButton = document.querySelector("#analyzeIndexedImageStoreButton");
 const analyzeLocalImageRefsButton = document.querySelector("#analyzeLocalImageRefsButton");
+const diagnoseRecoveredImageCandidatesButton = document.querySelector("#diagnoseRecoveredImageCandidatesButton");
 const diagnoseCloudAppStateButton = document.querySelector("#diagnoseCloudAppStateButton");
 const detectLocalSortingDataButton = document.querySelector("#detectLocalSortingDataButton");
 const detectCloudSortingDataButton = document.querySelector("#detectCloudSortingDataButton");
@@ -398,6 +399,7 @@ let lastCloudReloadRequestAt = 0;
 let sortingRecoveryCandidates = [];
 let indexedImageRecoveryCandidate = null;
 let localImageRefsRecoveryCandidate = null;
+let recoveredImageCandidateDiagnostics = [];
 let isSettingsDirty = false;
 let toastTimer = null;
 let isSortingShippingMode = false;
@@ -1614,6 +1616,587 @@ function collectStorageMatchesForTargets(targets) {
     matches.push({ key, paths: paths.slice(0, 8) });
   });
   return matches;
+}
+
+function isRecoveredPlaceholderTitle(value) {
+  return /^復元候補\s*\d{3}$/.test(String(value || "").trim());
+}
+
+function getNestedValue(source, paths) {
+  if (!source || typeof source !== "object") {
+    return "";
+  }
+
+  for (const path of paths) {
+    const keys = path.split(".");
+    let value = source;
+    for (const key of keys) {
+      if (!value || typeof value !== "object" || !(key in value)) {
+        value = undefined;
+        break;
+      }
+      value = value[key];
+    }
+    if (hasMeaningfulText(value) || typeof value === "number") {
+      return value;
+    }
+  }
+
+  return "";
+}
+
+function getAnyTitleCandidate(value) {
+  const title = getNestedValue(value, ["listingTitle", "name", "title", "itemTitle", "data.listingTitle", "data.name", "data.title"]);
+  return isRecoveredPlaceholderTitle(title) ? "" : String(title || "").trim();
+}
+
+function getAnyStorageCandidate(value) {
+  const storage = getNestedValue(value, ["storageLocation", "storage_location", "location", "data.storageLocation", "data.storage_location"]);
+  const normalized = String(storage || "").trim();
+  return normalized === "未設定" ? "" : normalized;
+}
+
+function getAnyDestinationCandidate(value) {
+  const destination = getNestedValue(value, ["destination", "finalDestination", "sellingDestination", "sellDestination", "data.destination"]);
+  const normalized = String(destination || "").trim();
+  return normalized === SORTING_UNDECIDED_DESTINATION ? "" : normalized;
+}
+
+function getAnyMemoCandidate(value) {
+  const memo = getNestedValue(value, ["memo", "soldMemo", "note", "data.memo", "data.soldMemo"]);
+  const normalized = String(memo || "").trim();
+  return normalized.includes("復元候補") && normalized.includes("画像由来") ? "" : normalized;
+}
+
+function getAnyAppraisalCandidates(value) {
+  if (!value || typeof value !== "object") {
+    return [];
+  }
+
+  const sources = [
+    ...getAppraisalSources().map((source) => ({
+      label: getAppraisalFieldLabel(source),
+      field: getAppraisalFieldName(source),
+    })),
+    { label: "メルカリ", field: "mercariPrice" },
+    { label: "ヤフオク", field: "yahooPrice" },
+    { label: "駿河屋", field: "surugayaPrice" },
+    { label: "良盤", field: "ryobanPrice" },
+    { label: "エコリング", field: "ecoRingPrice" },
+    { label: "服買取", field: "clothesPrice" },
+    { label: "その他", field: "otherPrice" },
+    { label: "予定買取額", field: "plannedPrice" },
+    { label: "予定買取額", field: "planned_price" },
+  ];
+  const seen = new Set();
+
+  return sources
+    .map(({ label, field }) => {
+      const rawValue = getNestedValue(value, [field, `data.${field}`]);
+      const price = parseMoney(rawValue);
+      if (price === "") {
+        return null;
+      }
+      const key = `${label}:${price}`;
+      if (seen.has(key)) {
+        return null;
+      }
+      seen.add(key);
+      return { label, field, value: price };
+    })
+    .filter(Boolean);
+}
+
+function objectContainsAnyTarget(value, targets) {
+  if (!targets.length || value === null || value === undefined) {
+    return false;
+  }
+
+  if (typeof value !== "object") {
+    return valueContainsAnyTarget(value, targets);
+  }
+
+  return valueContainsAnyTarget(JSON.stringify(value), targets);
+}
+
+function isPotentialProductInfoObject(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+
+  return Boolean(
+    getAnyTitleCandidate(value)
+    || getAnyStorageCandidate(value)
+    || getAnyDestinationCandidate(value)
+    || getAnyMemoCandidate(value)
+    || getAnyAppraisalCandidates(value).length
+    || normalizeImageRefs(value.imageRefs || value.data?.imageRefs).localImageId
+  );
+}
+
+function collectProductInfoObjectsForTargets(value, targets, sourceLabel) {
+  const matches = [];
+  const seen = new WeakSet();
+
+  const walk = (currentValue, path) => {
+    if (!currentValue || typeof currentValue !== "object") {
+      return;
+    }
+    if (seen.has(currentValue)) {
+      return;
+    }
+    seen.add(currentValue);
+
+    if (objectContainsAnyTarget(currentValue, targets) && isPotentialProductInfoObject(currentValue)) {
+      matches.push({
+        source: sourceLabel,
+        path: path || sourceLabel,
+        value: currentValue,
+      });
+    }
+
+    if (Array.isArray(currentValue)) {
+      currentValue.forEach((item, index) => walk(item, `${path}[${index}]`));
+      return;
+    }
+
+    Object.entries(currentValue).forEach(([key, nestedValue]) => {
+      if (nestedValue && typeof nestedValue === "object") {
+        walk(nestedValue, path ? `${path}.${key}` : key);
+      }
+    });
+  };
+
+  walk(value, sourceLabel);
+  return matches;
+}
+
+function readAllLocalDiagnosticSources() {
+  const sources = [];
+  const appendStorageSources = (storage, area) => {
+    for (let index = 0; index < storage.length; index += 1) {
+      const key = storage.key(index);
+      const parsed = tryParseJsonValue(storage.getItem(key));
+      if (parsed.ok) {
+        sources.push({
+          source: `${area}:${key}`,
+          value: parsed.value,
+        });
+      }
+    }
+  };
+
+  appendStorageSources(localStorage, "localStorage");
+  appendStorageSources(sessionStorage, "sessionStorage");
+  sources.push({ source: "現在の商品一覧", value: items });
+  sources.push({ source: "現在の売却先仕分け", value: sortingItems });
+  return sources;
+}
+
+async function readSupabaseDiagnosticSources() {
+  if (!supabaseClient || !cloudUser) {
+    return [];
+  }
+
+  await loadCloudHousehold();
+  const householdIds = cloudUserHouseholdIds.length ? cloudUserHouseholdIds : [cloudHouseholdId].filter(Boolean);
+  if (!householdIds.length) {
+    return [];
+  }
+
+  const { data, error } = await supabaseClient
+    .from("items")
+    .select("household_id,local_id,title,status,category,storage_location,planned_price,data,updated_at")
+    .in("household_id", householdIds);
+
+  if (error) {
+    console.warn("Supabase復元候補診断エラー:", error);
+    return [];
+  }
+
+  return (data || []).map((row) => ({
+    source: `Supabase:${row.household_id || "-"}:${row.local_id || "-"}`,
+    value: row,
+  }));
+}
+
+function buildRecoveryCandidateTargets(item, refsMap) {
+  const refs = normalizeImageRefs(item.imageRefs);
+  const refEntries = getLocalImageRefEntriesForImageId(refs.localImageId, refsMap);
+  return Array.from(new Set([
+    item.id,
+    item.itemCode,
+    refs.localImageId,
+    refs.googlePhotoId,
+    refs.cloudImageId,
+    ...refEntries.map((entry) => entry.key),
+  ].filter(Boolean).map(String)));
+}
+
+function summarizeRecoveryMatch(match) {
+  const value = match.value;
+  return {
+    source: match.source,
+    path: match.path,
+    title: getAnyTitleCandidate(value),
+    storageLocation: getAnyStorageCandidate(value),
+    destination: getAnyDestinationCandidate(value),
+    memo: getAnyMemoCandidate(value),
+    appraisals: getAnyAppraisalCandidates(value),
+  };
+}
+
+function mergeDiagnosticCandidateValues(summaries) {
+  const uniqueValues = (values) => Array.from(new Set(values.filter(Boolean)));
+  const appraisals = [];
+  const appraisalKeys = new Set();
+
+  summaries.flatMap((summary) => summary.appraisals).forEach((entry) => {
+    const key = `${entry.field}:${entry.value}`;
+    if (appraisalKeys.has(key)) {
+      return;
+    }
+    appraisalKeys.add(key);
+    appraisals.push(entry);
+  });
+
+  return {
+    titles: uniqueValues(summaries.map((summary) => summary.title)),
+    storageLocations: uniqueValues(summaries.map((summary) => summary.storageLocation)),
+    destinations: uniqueValues(summaries.map((summary) => summary.destination)),
+    memos: uniqueValues(summaries.map((summary) => summary.memo)),
+    appraisals,
+    sourceKeys: uniqueValues(summaries.map((summary) => `${summary.source} ${summary.path}`)),
+  };
+}
+
+function getRecoveryConfidence(values) {
+  const score = [
+    values.titles.length,
+    values.storageLocations.length,
+    values.destinations.length,
+    values.appraisals.length,
+    values.memos.length,
+  ].filter(Boolean).length;
+
+  if (values.titles.length && score >= 3) {
+    return "高";
+  }
+  if (score >= 2) {
+    return "中";
+  }
+  if (score >= 1 || values.sourceKeys.length) {
+    return "低";
+  }
+  return "低";
+}
+
+async function buildRecoveredImageCandidateDiagnostics() {
+  const refsMap = loadLocalImageRefs();
+  const sources = [
+    ...readAllLocalDiagnosticSources(),
+    ...await readSupabaseDiagnosticSources(),
+  ];
+  const recoveredItems = items.filter((item) => {
+    const title = getListingTitle(item);
+    return isRecoveredPlaceholderTitle(title) || String(item.memo || "").includes("復元候補");
+  });
+
+  return recoveredItems.map((item, index) => {
+    const targets = buildRecoveryCandidateTargets(item, refsMap);
+    const matches = sources.flatMap((source) => collectProductInfoObjectsForTargets(source.value, targets, source.source));
+    const summaries = matches
+      .map(summarizeRecoveryMatch)
+      .filter((summary) => summary.title || summary.storageLocation || summary.destination || summary.memo || summary.appraisals.length);
+    const values = mergeDiagnosticCandidateValues(summaries);
+
+    return {
+      id: item.id,
+      index,
+      item,
+      targets,
+      values,
+      confidence: getRecoveryConfidence(values),
+    };
+  });
+}
+
+function formatAppraisalCandidateList(appraisals) {
+  return appraisals.length
+    ? appraisals.map((entry) => `${entry.label}: ${formatMoney(entry.value)}`).join(" / ")
+    : "-";
+}
+
+function getDiagnosticApplySummary(diagnostic) {
+  return [
+    diagnostic.values.titles[0] ? `商品名：${diagnostic.values.titles[0]}` : "",
+    diagnostic.values.storageLocations[0] ? `保管場所：${diagnostic.values.storageLocations[0]}` : "",
+    diagnostic.values.destinations[0] ? `売却先：${diagnostic.values.destinations[0]}` : "",
+    diagnostic.values.appraisals.length ? `査定額：${formatAppraisalCandidateList(diagnostic.values.appraisals)}` : "",
+    diagnostic.values.memos[0] ? "メモあり" : "",
+  ].filter(Boolean).join("\n") || "適用できる候補情報がありません";
+}
+
+function diagnosticHasApplyableValues(diagnostic) {
+  return Boolean(
+    diagnostic?.values?.titles?.length
+    || diagnostic?.values?.storageLocations?.length
+    || diagnostic?.values?.destinations?.length
+    || diagnostic?.values?.appraisals?.length
+    || diagnostic?.values?.memos?.length
+  );
+}
+
+function applyRecoveredImageDiagnosticValues(diagnostic) {
+  const item = items.find((currentItem) => currentItem.id === diagnostic.id);
+  if (!item || !diagnosticHasApplyableValues(diagnostic)) {
+    return false;
+  }
+
+  const title = diagnostic.values.titles[0] || "";
+  const storageLocation = diagnostic.values.storageLocations[0] || "";
+  const destination = diagnostic.values.destinations[0] || "";
+  const memo = diagnostic.values.memos[0] || "";
+  const updatedAt = new Date().toISOString();
+
+  if (title) {
+    item.name = title;
+    item.listingTitle = title;
+  }
+  if (storageLocation) {
+    item.storageLocation = storageLocation;
+  }
+  if (memo && !String(item.memo || "").includes(memo)) {
+    item.memo = [item.memo, memo].filter(Boolean).join("\n");
+  }
+  item.updatedAt = updatedAt;
+
+  const itemRefs = normalizeImageRefs(item.imageRefs);
+  const linkedSortingItems = sortingItems.filter((sortingItem) => {
+    const sortingRefs = normalizeImageRefs(sortingItem.imageRefs);
+    return sortingItem.sourceItemId === item.id || (itemRefs.localImageId && sortingRefs.localImageId === itemRefs.localImageId);
+  });
+  const targetSortingItems = linkedSortingItems.length ? linkedSortingItems : [createRecoveredSortingItemFromRecoveredItem(item, { id: itemRefs.localImageId }, diagnostic.index)];
+
+  targetSortingItems.forEach((sortingItem) => {
+    if (!sortingItems.includes(sortingItem)) {
+      sortingItems.push(sortingItem);
+    }
+    if (title) {
+      sortingItem.name = title;
+    }
+    if (storageLocation) {
+      sortingItem.storageLocation = storageLocation;
+    }
+    if (destination) {
+      sortingItem.destination = destination;
+    }
+    if (!sortingItem.status || sortingItem.status === "未確認") {
+      sortingItem.status = "未確認";
+    }
+    diagnostic.values.appraisals.forEach((entry) => {
+      sortingItem[entry.field] = entry.value;
+    });
+    if (memo && !String(sortingItem.memo || "").includes(memo)) {
+      sortingItem.memo = [sortingItem.memo, memo].filter(Boolean).join("\n");
+    }
+    sortingItem.updatedAt = updatedAt;
+  });
+
+  return true;
+}
+
+function saveRecoveryAppliedDataLocally() {
+  const didSaveItems = saveItemsToLocalStorage();
+  if (!didSaveItems) {
+    return false;
+  }
+
+  try {
+    localStorage.setItem(SORTING_STORAGE_KEY, JSON.stringify(serializeItemsForLocalStorage(sortingItems)));
+    return true;
+  } catch (error) {
+    console.warn("復元情報の仕分け保存エラー:", error);
+    showErrorMessage("売却先仕分けデータを保存できませんでした");
+    return false;
+  }
+}
+
+async function promptCloudSaveAfterRecoveryApply() {
+  if (!isCloudReady || !supabaseClient || !cloudUser) {
+    return;
+  }
+
+  const shouldSync = await showAppDialog({
+    title: "クラウドへ保存しますか？",
+    message: "適用した復元情報をSupabaseへ保存しますか？\n実行するとクラウド側の商品一覧・売却先仕分けデータが更新されます。",
+    confirmText: "クラウドへ保存",
+    cancelText: "あとで",
+  });
+
+  if (!shouldSync) {
+    return;
+  }
+
+  await syncItemsToSupabase();
+  await syncAppStateToSupabase();
+  showSuccessMessage("復元情報をクラウドへ保存しました");
+}
+
+async function applyRecoveredImageDiagnostic(index) {
+  const diagnostic = recoveredImageCandidateDiagnostics[index];
+  if (!diagnostic || !diagnosticHasApplyableValues(diagnostic)) {
+    showErrorMessage("適用できる候補情報がありません");
+    return;
+  }
+
+  const shouldApply = await showAppDialog({
+    title: "この候補を適用しますか？",
+    message: `「${getListingTitle(diagnostic.item)}」へ以下を適用します。\n\n${getDiagnosticApplySummary(diagnostic)}`,
+    confirmText: "適用する",
+  });
+
+  if (!shouldApply) {
+    return;
+  }
+
+  if (!applyRecoveredImageDiagnosticValues(diagnostic)) {
+    showErrorMessage("候補情報を適用できませんでした");
+    return;
+  }
+
+  if (!saveRecoveryAppliedDataLocally()) {
+    return;
+  }
+  renderSorting();
+  render();
+  showSuccessMessage("復元候補を適用しました");
+  await promptCloudSaveAfterRecoveryApply();
+}
+
+async function applyHighConfidenceRecoveredImageDiagnostics() {
+  const highConfidenceDiagnostics = recoveredImageCandidateDiagnostics.filter((diagnostic) => diagnostic.confidence === "高" && diagnosticHasApplyableValues(diagnostic));
+  if (!highConfidenceDiagnostics.length) {
+    showErrorMessage("高確度の適用候補がありません");
+    return;
+  }
+
+  const shouldApply = await showAppDialog({
+    title: "高確度だけ一括適用しますか？",
+    message: `高確度の復元候補 ${highConfidenceDiagnostics.length}件を現在の商品へ適用します。\n既存商品は削除しません。よろしいですか？`,
+    confirmText: "一括適用する",
+  });
+
+  if (!shouldApply) {
+    return;
+  }
+
+  const appliedCount = highConfidenceDiagnostics.filter(applyRecoveredImageDiagnosticValues).length;
+  if (!saveRecoveryAppliedDataLocally()) {
+    return;
+  }
+  renderSorting();
+  render();
+  showSuccessMessage(`高確度候補を${appliedCount}件適用しました`);
+  await promptCloudSaveAfterRecoveryApply();
+}
+
+function createRecoveredImageDiagnosticCard(diagnostic) {
+  const card = document.createElement("article");
+  card.className = `recovered-image-diagnostic-card confidence-${diagnostic.confidence}`;
+  const imageData = getLocalItemImage(diagnostic.item);
+  const imageBlock = document.createElement("div");
+  imageBlock.className = "recovered-image-diagnostic-thumb";
+  if (imageData) {
+    const image = document.createElement("img");
+    image.src = imageData;
+    image.alt = "";
+    imageBlock.append(image);
+  } else {
+    imageBlock.textContent = "画像なし";
+  }
+
+  const body = document.createElement("div");
+  body.className = "recovered-image-diagnostic-body";
+  const title = document.createElement("strong");
+  title.textContent = `${diagnostic.index + 1}. ${getListingTitle(diagnostic.item) || "-"}`;
+  const grid = document.createElement("div");
+  grid.className = "recovered-image-diagnostic-grid";
+  [
+    ["現在の商品名", getListingTitle(diagnostic.item) || "-"],
+    ["商品名候補", diagnostic.values.titles.join(" / ") || "-"],
+    ["保管場所候補", diagnostic.values.storageLocations.join(" / ") || "-"],
+    ["売却先候補", diagnostic.values.destinations.join(" / ") || "-"],
+    ["査定額候補", formatAppraisalCandidateList(diagnostic.values.appraisals)],
+    ["メモ候補", diagnostic.values.memos.join(" / ") || "-"],
+    ["参照元キー", diagnostic.values.sourceKeys.slice(0, 6).join(" / ") || "-"],
+    ["復元確度", diagnostic.confidence],
+  ].forEach(([label, value]) => {
+    const row = document.createElement("div");
+    row.innerHTML = "<span></span><small></small>";
+    row.querySelector("span").textContent = label;
+    row.querySelector("small").textContent = value;
+    grid.append(row);
+  });
+
+  const actions = document.createElement("div");
+  actions.className = "recovered-image-diagnostic-actions";
+  const applyButton = document.createElement("button");
+  applyButton.type = "button";
+  applyButton.className = "ghost-button";
+  applyButton.dataset.applyRecoveredImageDiagnostic = String(diagnostic.index);
+  applyButton.disabled = !diagnosticHasApplyableValues(diagnostic);
+  applyButton.textContent = "この候補を適用";
+  actions.append(applyButton);
+
+  body.append(title, grid, actions);
+  card.append(imageBlock, body);
+  return card;
+}
+
+function renderRecoveredImageCandidateDiagnostics(diagnostics) {
+  if (!dataRecoveryResults) {
+    return;
+  }
+
+  dataRecoveryResults.replaceChildren();
+  const panel = document.createElement("section");
+  panel.className = "recovered-image-diagnostics";
+  const highCount = diagnostics.filter((diagnostic) => diagnostic.confidence === "高" && diagnosticHasApplyableValues(diagnostic)).length;
+  const applyableCount = diagnostics.filter(diagnosticHasApplyableValues).length;
+  panel.innerHTML = `
+    <div class="recovered-image-diagnostics-heading">
+      <strong>復元候補の情報診断</strong>
+      <small>対象：復元候補 ${diagnostics.length}件 / 情報候補あり ${applyableCount}件 / 高確度 ${highCount}件</small>
+      <small>自動上書きはしていません。必要な候補だけ適用できます。</small>
+    </div>
+  `;
+
+  const actions = document.createElement("div");
+  actions.className = "recovered-image-diagnostic-actions";
+  const bulkButton = document.createElement("button");
+  bulkButton.type = "button";
+  bulkButton.className = "primary-button";
+  bulkButton.dataset.applyHighConfidenceRecoveredImages = "true";
+  bulkButton.disabled = highCount === 0;
+  bulkButton.textContent = `高確度だけ一括適用（${highCount}件）`;
+  actions.append(bulkButton);
+
+  const list = document.createElement("div");
+  list.className = "recovered-image-diagnostic-list";
+  diagnostics.forEach((diagnostic) => {
+    list.append(createRecoveredImageDiagnosticCard(diagnostic));
+  });
+
+  panel.append(actions, list);
+  dataRecoveryResults.append(panel);
+  console.info("復元候補の情報診断", diagnostics);
+}
+
+async function diagnoseRecoveredImageCandidates() {
+  recoveredImageCandidateDiagnostics = await buildRecoveredImageCandidateDiagnostics();
+  renderRecoveredImageCandidateDiagnostics(recoveredImageCandidateDiagnostics);
+  showSuccessMessage(`復元候補診断：${recoveredImageCandidateDiagnostics.length}件`);
 }
 
 function summarizeLocalImageRefRecord(record, index, refsMap) {
@@ -10675,6 +11258,18 @@ analyzeLocalImageRefsButton?.addEventListener("click", () => {
     });
 });
 
+diagnoseRecoveredImageCandidatesButton?.addEventListener("click", () => {
+  diagnoseRecoveredImageCandidatesButton.disabled = true;
+  diagnoseRecoveredImageCandidates()
+    .catch((error) => {
+      console.warn("復元候補情報診断エラー:", error);
+      showErrorMessage("復元候補の情報診断に失敗しました");
+    })
+    .finally(() => {
+      diagnoseRecoveredImageCandidatesButton.disabled = false;
+    });
+});
+
 diagnoseCloudAppStateButton?.addEventListener("click", () => {
   diagnoseCloudAppStateButton.disabled = true;
   diagnoseCloudAppStateOnly()
@@ -10707,6 +11302,28 @@ detectCloudSortingDataButton?.addEventListener("click", () => {
 });
 
 dataRecoveryResults?.addEventListener("click", (event) => {
+  const applyHighConfidenceButton = event.target.closest("[data-apply-high-confidence-recovered-images]");
+  if (applyHighConfidenceButton) {
+    event.preventDefault();
+    event.stopPropagation();
+    applyHighConfidenceRecoveredImageDiagnostics().catch((error) => {
+      console.warn("高確度復元候補一括適用エラー:", error);
+      showErrorMessage("高確度候補を一括適用できませんでした");
+    });
+    return;
+  }
+
+  const applyDiagnosticButton = event.target.closest("[data-apply-recovered-image-diagnostic]");
+  if (applyDiagnosticButton) {
+    event.preventDefault();
+    event.stopPropagation();
+    applyRecoveredImageDiagnostic(Number(applyDiagnosticButton.dataset.applyRecoveredImageDiagnostic)).catch((error) => {
+      console.warn("復元候補適用エラー:", error);
+      showErrorMessage("復元候補を適用できませんでした");
+    });
+    return;
+  }
+
   const localImageRefsButton = event.target.closest("[data-create-local-image-refs-recovery]");
   if (localImageRefsButton) {
     event.preventDefault();
