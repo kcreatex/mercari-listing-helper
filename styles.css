@@ -72,6 +72,76 @@ body.work-tab-list .inventory-display-section .view-toggle > button {
   max-width: none !important;
 }
 
+.indexed-image-recovery-candidate,
+.indexed-image-recovery-complete {
+  display: grid;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid #eaded8;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.indexed-image-recovery-heading {
+  display: grid;
+  gap: 3px;
+}
+
+.indexed-image-recovery-heading small,
+.indexed-image-recovery-row small {
+  color: #756c67;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.indexed-image-recovery-list {
+  display: grid;
+  gap: 6px;
+  max-height: 260px;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.indexed-image-recovery-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 3px;
+  padding: 8px;
+  border: 1px solid #f0e7e2;
+  border-radius: 10px;
+  background: #fffdfc;
+}
+
+.indexed-image-recovery-row strong,
+.indexed-image-recovery-row span {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.indexed-image-recovery-row span {
+  color: #615954;
+  font-size: 12px;
+}
+
+.indexed-image-recovery-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.indexed-image-recovery-actions button {
+  width: 100%;
+  min-height: 42px;
+}
+
+.indexed-image-recovery-complete span {
+  color: #574f4a;
+  font-size: 13px;
+}
+
 /* Final override: inventory option toggles are equal-width pairs. */
 body.work-tab-list .inventory-display-section .inventory-target-toggle,
 body.work-tab-list .inventory-display-section .storage-view-toggle,
@@ -20621,7 +20691,7 @@ body.settings-view .master-drag-handle {
 
 .data-recovery-actions {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -20654,6 +20724,92 @@ body.settings-view .master-drag-handle {
   font-size: 11px;
   line-height: 1.35;
   overflow-wrap: anywhere;
+}
+
+.storage-scan-results {
+  display: grid;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid #efe6e1;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.storage-scan-heading,
+.storage-scan-key-list {
+  display: grid;
+  gap: 4px;
+}
+
+.storage-scan-heading strong {
+  color: #2f3a45;
+  font-size: 13px;
+}
+
+.storage-scan-heading small,
+.storage-scan-key-list small {
+  color: #756b64;
+  font-size: 11px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.storage-scan-key-list {
+  padding: 8px;
+  border-radius: 8px;
+  background: #faf7f5;
+}
+
+.storage-scan-key-list strong {
+  font-size: 12px;
+}
+
+.storage-scan-table {
+  display: grid;
+  grid-template-columns: minmax(74px, 0.7fr) minmax(120px, 1.6fr) minmax(78px, 0.8fr) minmax(44px, 0.45fr);
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid #efe6e1;
+  border-radius: 8px;
+  font-size: 11px;
+}
+
+.storage-scan-table > div {
+  min-width: 0;
+  padding: 7px 6px;
+  border-bottom: 1px solid #efe6e1;
+  overflow-wrap: anywhere;
+}
+
+.storage-scan-table > div:nth-last-child(-n + 4) {
+  border-bottom: 0;
+}
+
+.storage-scan-table-head {
+  background: #faf7f5;
+  color: #6b625c;
+  font-weight: 900;
+}
+
+.storage-scan-table strong,
+.storage-scan-table small {
+  display: block;
+}
+
+.storage-scan-table small {
+  margin-top: 2px;
+  color: #756b64;
+  line-height: 1.35;
+}
+
+.storage-scan-found {
+  color: #166534;
+  font-weight: 900;
+}
+
+.storage-scan-image {
+  color: #526070;
+  font-weight: 800;
 }
 
 /* Final list/settings repair: viewport-safe menus, plain accordion arrows, and editable templates. */

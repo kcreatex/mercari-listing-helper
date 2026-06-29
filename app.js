@@ -98,6 +98,7 @@ const cloudLastSync = document.querySelector("#cloudLastSync");
 const cloudSyncState = document.querySelector("#cloudSyncState");
 const cloudReloadButton = document.querySelector("#cloudReloadButton");
 const cloudFetchCount = document.querySelector("#cloudFetchCount");
+const detectAllStorageDataButton = document.querySelector("#detectAllStorageDataButton");
 const detectLocalSortingDataButton = document.querySelector("#detectLocalSortingDataButton");
 const detectCloudSortingDataButton = document.querySelector("#detectCloudSortingDataButton");
 const dataRecoveryResults = document.querySelector("#dataRecoveryResults");
@@ -392,6 +393,7 @@ let hasCloudSaveWarning = false;
 let isApplyingCloudSnapshot = false;
 let lastCloudReloadRequestAt = 0;
 let sortingRecoveryCandidates = [];
+let indexedImageRecoveryCandidate = null;
 let isSettingsDirty = false;
 let toastTimer = null;
 let isSortingShippingMode = false;
@@ -937,6 +939,433 @@ function renderSortingRecoveryCandidates(candidates, message = "") {
   });
 }
 
+function tryParseJsonValue(rawValue) {
+  try {
+    return { ok: true, value: JSON.parse(rawValue) };
+  } catch {
+    return { ok: false, value: rawValue };
+  }
+}
+
+function hasMeaningfulText(value) {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function hasMeaningfulNumber(value) {
+  return value !== "" && value !== null && value !== undefined && !Number.isNaN(Number(value));
+}
+
+function isImageOnlyObject(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+
+  return hasMeaningfulText(value.dataUrl)
+    && hasMeaningfulText(value.id)
+    && !hasMeaningfulText(value.name)
+    && !hasMeaningfulText(value.listingTitle)
+    && !hasMeaningfulText(value.storageLocation);
+}
+
+function isProductLikeObject(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+
+  const hasTitle = hasMeaningfulText(value.name)
+    || hasMeaningfulText(value.listingTitle)
+    || hasMeaningfulText(value.title);
+  const hasProductField = hasMeaningfulText(value.itemCode)
+    || hasMeaningfulText(value.category)
+    || hasMeaningfulText(value.condition)
+    || hasMeaningfulText(value.status)
+    || hasMeaningfulText(value.storageLocation)
+    || hasMeaningfulText(value.description)
+    || hasMeaningfulText(value.memo)
+    || hasMeaningfulNumber(value.plannedPrice)
+    || hasMeaningfulNumber(value.purchaseCost)
+    || hasMeaningfulNumber(value.shippingCost)
+    || hasMeaningfulNumber(value.minimumPrice);
+
+  return hasTitle && hasProductField;
+}
+
+function isSortingLikeObject(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+
+  const hasTitle = hasMeaningfulText(value.name)
+    || hasMeaningfulText(value.listingTitle)
+    || hasMeaningfulText(value.title);
+  const hasSortingField = hasMeaningfulText(value.destination)
+    || hasMeaningfulText(value.shippingStatus)
+    || hasMeaningfulText(value.boxNumber)
+    || hasMeaningfulNumber(value.mercariPrice)
+    || hasMeaningfulNumber(value.yahooPrice)
+    || hasMeaningfulNumber(value.surugayaPrice)
+    || hasMeaningfulNumber(value.ryobanPrice)
+    || hasMeaningfulNumber(value.ecoRingPrice)
+    || hasMeaningfulNumber(value.clothesPrice)
+    || hasMeaningfulNumber(value.otherPrice);
+
+  return hasTitle && hasSortingField;
+}
+
+function getMaxTimestampFromValue(value) {
+  let maxTime = 0;
+  const seen = new WeakSet();
+  const timestampKeys = new Set(["updatedAt", "updated_at", "createdAt", "created_at", "savedAt", "saved_at", "timestamp", "time", "date"]);
+
+  const walk = (currentValue) => {
+    if (!currentValue || typeof currentValue !== "object") {
+      return;
+    }
+
+    if (seen.has(currentValue)) {
+      return;
+    }
+    seen.add(currentValue);
+
+    Object.entries(currentValue).forEach(([key, nestedValue]) => {
+      if (timestampKeys.has(key)) {
+        const time = Date.parse(String(nestedValue || ""));
+        if (!Number.isNaN(time)) {
+          maxTime = Math.max(maxTime, time);
+        }
+      }
+
+      if (nestedValue && typeof nestedValue === "object") {
+        walk(nestedValue);
+      }
+    });
+  };
+
+  walk(value);
+  return maxTime ? new Date(maxTime).toISOString() : "";
+}
+
+function analyzeStoredValue(value, rootPath = "") {
+  const summary = {
+    count: 0,
+    productCount: 0,
+    sortingCount: 0,
+    imageOnlyCount: 0,
+    arrayPaths: [],
+    sampleTitles: [],
+    lastUpdatedAt: getMaxTimestampFromValue(value),
+  };
+  const seen = new WeakSet();
+
+  const addSampleTitle = (item) => {
+    const title = item?.listingTitle || item?.name || item?.title || "";
+    if (title && summary.sampleTitles.length < 5 && !summary.sampleTitles.includes(title)) {
+      summary.sampleTitles.push(title);
+    }
+  };
+
+  const walk = (currentValue, path) => {
+    if (!currentValue || typeof currentValue !== "object") {
+      return;
+    }
+
+    if (seen.has(currentValue)) {
+      return;
+    }
+    seen.add(currentValue);
+
+    if (Array.isArray(currentValue)) {
+      const productCount = currentValue.filter(isProductLikeObject).length;
+      const sortingCount = currentValue.filter(isSortingLikeObject).length;
+      const imageOnlyCount = currentValue.filter(isImageOnlyObject).length;
+      if (currentValue.length > 0) {
+        summary.arrayPaths.push({
+          path,
+          count: currentValue.length,
+          productCount,
+          sortingCount,
+          imageOnlyCount,
+        });
+      }
+      summary.count = Math.max(summary.count, currentValue.length);
+      summary.productCount += productCount;
+      summary.sortingCount += sortingCount;
+      summary.imageOnlyCount += imageOnlyCount;
+      currentValue.forEach((item, index) => {
+        if (isProductLikeObject(item) || isSortingLikeObject(item)) {
+          addSampleTitle(item);
+        }
+        if (item && typeof item === "object") {
+          walk(item, `${path}[${index}]`);
+        }
+      });
+      return;
+    }
+
+    if (isProductLikeObject(currentValue)) {
+      summary.productCount += 1;
+      summary.count = Math.max(summary.count, 1);
+      addSampleTitle(currentValue);
+    }
+    if (isSortingLikeObject(currentValue)) {
+      summary.sortingCount += 1;
+      summary.count = Math.max(summary.count, 1);
+      addSampleTitle(currentValue);
+    }
+    if (isImageOnlyObject(currentValue)) {
+      summary.imageOnlyCount += 1;
+      summary.count = Math.max(summary.count, 1);
+    }
+
+    Object.entries(currentValue).forEach(([key, nestedValue]) => {
+      if (nestedValue && typeof nestedValue === "object") {
+        walk(nestedValue, path ? `${path}.${key}` : key);
+      }
+    });
+  };
+
+  walk(value, rootPath);
+  return summary;
+}
+
+function createStorageScanRow({ area, key, parsed, value, error = "" }) {
+  const summary = parsed ? analyzeStoredValue(value, key) : {
+    count: 0,
+    productCount: 0,
+    sortingCount: 0,
+    imageOnlyCount: 0,
+    arrayPaths: [],
+    sampleTitles: [],
+    lastUpdatedAt: "",
+  };
+  const lowerKey = String(key || "").toLowerCase();
+  const nameHints = ["items", "sorting", "backup", "old", "temp", "history", "archive", "cache", "mercari", "listing", "destination", "restore", "recovery"];
+  const hasNameHint = nameHints.some((hint) => lowerKey.includes(hint));
+  const type = summary.productCount > 0
+    ? "商品データ"
+    : summary.sortingCount > 0
+      ? "売却先仕分け"
+      : summary.imageOnlyCount > 0
+        ? "画像だけ"
+        : parsed
+          ? "JSON/設定など"
+          : "JSON以外";
+
+  return {
+    area,
+    key,
+    count: summary.count,
+    type,
+    isProductData: summary.productCount > 0 || summary.sortingCount > 0,
+    isImageOnly: summary.imageOnlyCount > 0 && summary.productCount === 0 && summary.sortingCount === 0,
+    productCount: summary.productCount,
+    sortingCount: summary.sortingCount,
+    imageOnlyCount: summary.imageOnlyCount,
+    lastUpdatedAt: summary.lastUpdatedAt,
+    sampleTitles: summary.sampleTitles,
+    arrayPaths: summary.arrayPaths,
+    hasNameHint,
+    error,
+  };
+}
+
+function scanWebStorage(storage, area) {
+  const rows = [];
+  if (!storage) {
+    return rows;
+  }
+
+  for (let index = 0; index < storage.length; index += 1) {
+    const key = storage.key(index);
+    const rawValue = storage.getItem(key);
+    const parsedValue = tryParseJsonValue(rawValue);
+    rows.push(createStorageScanRow({
+      area,
+      key,
+      parsed: parsedValue.ok,
+      value: parsedValue.value,
+    }));
+  }
+
+  return rows.sort((a, b) => a.key.localeCompare(b.key, "ja"));
+}
+
+async function getIndexedDbDatabaseNames() {
+  if (!("indexedDB" in window)) {
+    return [];
+  }
+
+  if (typeof indexedDB.databases === "function") {
+    try {
+      const databases = await indexedDB.databases();
+      return databases.map((database) => database.name).filter(Boolean);
+    } catch (error) {
+      console.warn("IndexedDB一覧取得エラー:", error);
+    }
+  }
+
+  return [LOCAL_IMAGE_DB_NAME];
+}
+
+function openIndexedDbByName(name) {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(name);
+    request.addEventListener("success", () => resolve(request.result));
+    request.addEventListener("error", () => reject(request.error || new Error("IndexedDBを開けませんでした")));
+    request.addEventListener("blocked", () => reject(new Error("IndexedDBが他のタブでブロックされています")));
+  });
+}
+
+function readIndexedDbStore(db, storeName) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(storeName, "readonly");
+    const store = transaction.objectStore(storeName);
+    const request = store.getAll();
+    request.addEventListener("success", () => resolve(request.result || []));
+    request.addEventListener("error", () => reject(request.error || transaction.error || new Error("IndexedDBストアを読めませんでした")));
+    transaction.addEventListener("error", () => reject(transaction.error || new Error("IndexedDBストアを読めませんでした")));
+  });
+}
+
+async function scanIndexedDbStores() {
+  if (!("indexedDB" in window)) {
+    return [createStorageScanRow({
+      area: "IndexedDB",
+      key: "IndexedDB未対応",
+      parsed: false,
+      value: "",
+      error: "このブラウザではIndexedDBを利用できません",
+    })];
+  }
+
+  const rows = [];
+  const names = Array.from(new Set(await getIndexedDbDatabaseNames()));
+  for (const name of names) {
+    let db = null;
+    try {
+      db = await openIndexedDbByName(name);
+      const storeNames = Array.from(db.objectStoreNames || []);
+      for (const storeName of storeNames) {
+        try {
+          const records = await readIndexedDbStore(db, storeName);
+          rows.push(createStorageScanRow({
+            area: "IndexedDB",
+            key: `${name}/${storeName}`,
+            parsed: true,
+            value: records,
+          }));
+        } catch (error) {
+          rows.push(createStorageScanRow({
+            area: "IndexedDB",
+            key: `${name}/${storeName}`,
+            parsed: false,
+            value: "",
+            error: error.message || "読み込み失敗",
+          }));
+        }
+      }
+    } catch (error) {
+      rows.push(createStorageScanRow({
+        area: "IndexedDB",
+        key: name,
+        parsed: false,
+        value: "",
+        error: error.message || "DBを開けませんでした",
+      }));
+    } finally {
+      db?.close();
+    }
+  }
+
+  return rows;
+}
+
+function renderStorageScanResults(rows) {
+  if (!dataRecoveryResults) {
+    return;
+  }
+
+  dataRecoveryResults.replaceChildren();
+  const productRows = rows.filter((row) => row.isProductData);
+  const localStorageKeys = rows.filter((row) => row.area === "localStorage").map((row) => row.key);
+  const sessionStorageKeys = rows.filter((row) => row.area === "sessionStorage").map((row) => row.key);
+
+  const panel = document.createElement("section");
+  panel.className = "storage-scan-results";
+
+  const heading = document.createElement("div");
+  heading.className = "storage-scan-heading";
+  const foundText = productRows.length
+    ? `見つかりました：商品データ候補 ${productRows.length}箇所`
+    : "商品データ本体の候補は見つかりませんでした";
+  heading.innerHTML = `
+    <strong>${foundText}</strong>
+    <small>復元は実行していません。localStorage / sessionStorage / IndexedDB の全キーを調査しました。</small>
+  `;
+
+  const keyList = document.createElement("div");
+  keyList.className = "storage-scan-key-list";
+  keyList.innerHTML = `
+    <strong>localStorageキー一覧</strong>
+    <small>${localStorageKeys.length ? localStorageKeys.join(" / ") : "なし"}</small>
+    <strong>sessionStorageキー一覧</strong>
+    <small>${sessionStorageKeys.length ? sessionStorageKeys.join(" / ") : "なし"}</small>
+  `;
+
+  const table = document.createElement("div");
+  table.className = "storage-scan-table";
+  table.innerHTML = `
+    <div class="storage-scan-table-head">保存先</div>
+    <div class="storage-scan-table-head">キー / Store</div>
+    <div class="storage-scan-table-head">判定</div>
+    <div class="storage-scan-table-head">件数</div>
+  `;
+
+  rows.forEach((row) => {
+    const detail = [
+      row.productCount ? `商品 ${row.productCount}` : "",
+      row.sortingCount ? `仕分け ${row.sortingCount}` : "",
+      row.imageOnlyCount ? `画像 ${row.imageOnlyCount}` : "",
+      row.lastUpdatedAt ? `更新 ${formatDateTime(row.lastUpdatedAt)}` : "",
+      row.sampleTitles.length ? `例：${row.sampleTitles.join(" / ")}` : "",
+      row.error ? `エラー：${row.error}` : "",
+    ].filter(Boolean).join(" / ");
+
+    const areaCell = document.createElement("div");
+    areaCell.textContent = row.area;
+    const keyCell = document.createElement("div");
+    keyCell.innerHTML = `<strong></strong><small></small>`;
+    keyCell.querySelector("strong").textContent = row.key;
+    keyCell.querySelector("small").textContent = detail || (row.hasNameHint ? "名前に復元関連キーワードあり" : "-");
+    const typeCell = document.createElement("div");
+    typeCell.className = row.isProductData ? "storage-scan-found" : row.isImageOnly ? "storage-scan-image" : "";
+    typeCell.textContent = row.type;
+    const countCell = document.createElement("div");
+    countCell.textContent = `${row.count}件`;
+    table.append(areaCell, keyCell, typeCell, countCell);
+  });
+
+  panel.append(heading, keyList, table);
+  dataRecoveryResults.append(panel);
+}
+
+async function detectAllStoredProductData() {
+  const rows = [
+    ...scanWebStorage(localStorage, "localStorage"),
+    ...scanWebStorage(sessionStorage, "sessionStorage"),
+    ...await scanIndexedDbStores(),
+  ];
+
+  console.info("商品データ全探索結果", rows);
+  renderStorageScanResults(rows);
+  const foundCount = rows.filter((row) => row.isProductData).length;
+  if (foundCount) {
+    showSuccessMessage(`見つかりました：商品データ候補 ${foundCount}箇所`);
+  } else {
+    showErrorMessage("商品データ本体の候補は見つかりませんでした");
+  }
+}
+
 async function detectLocalSortingRecoveryData() {
   const candidates = [];
 
@@ -965,20 +1394,27 @@ async function detectLocalSortingRecoveryData() {
   });
 
   let indexedImageCount = 0;
+  let indexedImageRecords = [];
   if ("indexedDB" in window) {
     try {
-      const records = await runImageStoreTransaction("readonly", (store) => store.getAll());
-      indexedImageCount = Array.isArray(records) ? records.length : 0;
+      indexedImageRecords = await getIndexedDbImageRecords();
+      indexedImageCount = indexedImageRecords.length;
     } catch (error) {
       console.warn("IndexedDB復旧確認エラー:", error);
     }
   }
 
   sortingRecoveryCandidates = dedupeSortingRecoveryCandidates(candidates);
+  indexedImageRecoveryCandidate = indexedImageRecords.length
+    ? createIndexedImageRecoveryCandidate(indexedImageRecords)
+    : null;
   renderSortingRecoveryCandidates(
     sortingRecoveryCandidates,
     `localStorage内に仕分け復元候補はありませんでした。IndexedDB画像レコード：${indexedImageCount}件`,
   );
+  if (indexedImageRecoveryCandidate) {
+    renderIndexedImageRecoveryCandidate(indexedImageRecoveryCandidate);
+  }
   showSuccessMessage(`ローカル復元候補：${sortingRecoveryCandidates.length}件 / IndexedDB画像：${indexedImageCount}件`);
 }
 
@@ -1053,9 +1489,434 @@ async function restoreSortingRecoveryCandidate(index) {
   resetSortingForm();
   renderSorting();
   render();
-  renderAnalysis();
   renderSortingRecoveryCandidates([candidate], `復元後：${sortingItems.length}件 / 復元前バックアップ：${backupKey}`);
   showSuccessMessage(`売却先仕分けを${sortingItems.length}件に復元しました`);
+}
+
+async function getIndexedDbImageRecords() {
+  if (!("indexedDB" in window)) {
+    return [];
+  }
+
+  try {
+    const records = await runImageStoreTransaction("readonly", (store) => store.getAll());
+    const imageRecords = Array.isArray(records) ? records.filter((record) => record?.id) : [];
+    imageRecords.forEach((record) => {
+      if (record.id && record.dataUrl) {
+        localImageCache.set(record.id, record.dataUrl);
+      }
+    });
+    return imageRecords;
+  } catch (error) {
+    console.warn("IndexedDB画像レコード取得エラー:", error);
+    return [];
+  }
+}
+
+function parseItemCodeFromImageId(imageId) {
+  const match = String(imageId || "").match(/ITEM-\d{6}/);
+  return match ? match[0] : "";
+}
+
+function findExistingDataForImageRecord(record) {
+  const imageId = String(record?.id || "");
+  const refsMap = loadLocalImageRefs();
+  const linkedKeys = Object.entries(refsMap)
+    .filter(([, refs]) => normalizeImageRefs(refs).localImageId === imageId)
+    .map(([key]) => key);
+  const itemCode = parseItemCodeFromImageId(imageId);
+  const allCandidates = [
+    ...items,
+    ...sortingItems.map((sortingItem) => ({
+      id: sortingItem.sourceItemId || sortingItem.id,
+      itemCode: sortingItem.itemCode || itemCode,
+      listingTitle: sortingItem.name,
+      name: sortingItem.name,
+      storageLocation: sortingItem.storageLocation,
+      status: sortingItem.status,
+      imageRefs: sortingItem.imageRefs,
+      createdAt: sortingItem.createdAt,
+      updatedAt: sortingItem.updatedAt,
+    })),
+  ];
+
+  return allCandidates.find((item) => {
+    const refs = normalizeImageRefs(item.imageRefs);
+    return refs.localImageId === imageId
+      || linkedKeys.includes(String(item.id))
+      || (itemCode && String(item.itemCode || "") === itemCode);
+  }) || null;
+}
+
+function createRecoveredItemFromImageRecord(record, index) {
+  const imageId = String(record.id || "");
+  const existingData = findExistingDataForImageRecord(record);
+  const itemCode = existingData?.itemCode || parseItemCodeFromImageId(imageId) || "";
+  const title = getListingTitle(existingData) || `復元画像 ${String(index + 1).padStart(3, "0")}`;
+  const createdAt = record.createdAt || record.updatedAt || existingData?.createdAt || new Date().toISOString();
+  const updatedAt = record.updatedAt || existingData?.updatedAt || createdAt;
+
+  return normalizeItem({
+    ...(existingData || {}),
+    id: existingData?.id || createId(),
+    itemCode,
+    name: existingData?.name || title,
+    listingTitle: title,
+    category: existingData?.category || "",
+    condition: existingData?.condition || "",
+    status: existingData?.status || "未出品",
+    storageLocation: existingData?.storageLocation || "",
+    imageRefs: normalizeImageRefs({
+      ...(existingData?.imageRefs || {}),
+      provider: normalizeImageRefs(existingData?.imageRefs).provider || "local",
+      localImageId: imageId,
+    }),
+    imageData: "",
+    createdAt,
+    updatedAt,
+  });
+}
+
+function createRecoveredSortingItemFromRecoveredItem(item, record, index) {
+  const existingSorting = sortingItems.find((sortingItem) => {
+    const refs = normalizeImageRefs(sortingItem.imageRefs);
+    return sortingItem.sourceItemId === item.id || refs.localImageId === normalizeImageRefs(item.imageRefs).localImageId;
+  });
+
+  return normalizeSortingItem({
+    ...(existingSorting || {}),
+    id: existingSorting?.id || createId(),
+    sourceItemId: item.id,
+    name: getListingTitle(item) || `復元画像 ${String(index + 1).padStart(3, "0")}`,
+    storageLocation: item.storageLocation || existingSorting?.storageLocation || "",
+    destination: existingSorting?.destination || SORTING_UNDECIDED_DESTINATION,
+    status: existingSorting?.status || "未確認",
+    shippingStatus: existingSorting?.shippingStatus || "未仕分け",
+    imageRefs: normalizeImageRefs({
+      ...(existingSorting?.imageRefs || {}),
+      provider: "local",
+      localImageId: normalizeImageRefs(item.imageRefs).localImageId || String(record.id || ""),
+    }),
+    createdAt: existingSorting?.createdAt || item.createdAt || record.updatedAt || new Date().toISOString(),
+    updatedAt: existingSorting?.updatedAt || item.updatedAt || record.updatedAt || new Date().toISOString(),
+  });
+}
+
+function createIndexedImageRecoveryCandidate(records) {
+  const recoveredItems = records.map(createRecoveredItemFromImageRecord);
+  const recoveredSortingItems = recoveredItems.map((item, index) => createRecoveredSortingItemFromRecoveredItem(item, records[index], index));
+
+  return {
+    id: createId(),
+    source: "IndexedDB画像",
+    count: recoveredItems.length,
+    records,
+    items: recoveredItems,
+    sortingItems: recoveredSortingItems,
+  };
+}
+
+function getRecoveredItemDedupKey(item) {
+  const refs = normalizeImageRefs(item.imageRefs);
+  if (item.itemCode) {
+    return `code:${item.itemCode}`;
+  }
+
+  if (refs.localImageId) {
+    return `image:${refs.localImageId}`;
+  }
+
+  return `fallback:${getListingTitle(item)}|${item.storageLocation || ""}`;
+}
+
+function mergeRecoveredItems(currentItems, recoveredItems) {
+  const existingKeys = new Set(currentItems.map(getRecoveredItemDedupKey));
+  const mergedItems = [...currentItems];
+  const addedItems = [];
+
+  recoveredItems.forEach((item) => {
+    const key = getRecoveredItemDedupKey(item);
+    if (existingKeys.has(key)) {
+      return;
+    }
+
+    existingKeys.add(key);
+    mergedItems.push(item);
+    addedItems.push(item);
+  });
+
+  return { mergedItems, addedItems };
+}
+
+function mergeRecoveredSortingItems(currentSortingItems, recoveredSortingItems, addedItems) {
+  const addedItemIds = new Set(addedItems.map((item) => item.id));
+  const existingKeys = new Set(currentSortingItems.map((item) => {
+    const refs = normalizeImageRefs(item.imageRefs);
+    if (item.sourceItemId) {
+      return `source:${item.sourceItemId}`;
+    }
+    if (refs.localImageId) {
+      return `image:${refs.localImageId}`;
+    }
+    return `fallback:${item.name}|${item.storageLocation}`;
+  }));
+  const mergedSortingItems = [...currentSortingItems];
+  const addedSortingItems = [];
+
+  recoveredSortingItems.forEach((item) => {
+    if (item.sourceItemId && !addedItemIds.has(item.sourceItemId) && currentSortingItems.some((currentItem) => currentItem.sourceItemId === item.sourceItemId)) {
+      return;
+    }
+
+    const refs = normalizeImageRefs(item.imageRefs);
+    const key = item.sourceItemId
+      ? `source:${item.sourceItemId}`
+      : refs.localImageId
+        ? `image:${refs.localImageId}`
+        : `fallback:${item.name}|${item.storageLocation}`;
+    if (existingKeys.has(key)) {
+      return;
+    }
+
+    existingKeys.add(key);
+    mergedSortingItems.push(item);
+    addedSortingItems.push(item);
+  });
+
+  return { mergedSortingItems, addedSortingItems };
+}
+
+function renderIndexedImageRecoveryCandidate(candidate) {
+  if (!dataRecoveryResults || !candidate?.records?.length) {
+    return;
+  }
+
+  const wrapper = document.createElement("section");
+  wrapper.className = "indexed-image-recovery-candidate";
+
+  const heading = document.createElement("div");
+  heading.className = "indexed-image-recovery-heading";
+  heading.innerHTML = `<strong>IndexedDB画像 ${candidate.count}件</strong><small>画像レコードから商品一覧・売却先仕分けへ復元できます</small>`;
+
+  const list = document.createElement("div");
+  list.className = "indexed-image-recovery-list";
+  candidate.items.forEach((item, index) => {
+    const refs = normalizeImageRefs(item.imageRefs);
+    const record = candidate.records[index] || {};
+    const row = document.createElement("div");
+    row.className = "indexed-image-recovery-row";
+    row.innerHTML = `
+      <div>
+        <strong></strong>
+        <span></span>
+      </div>
+      <small></small>
+    `;
+    row.querySelector("strong").textContent = getListingTitle(item) || "-";
+    row.querySelector("span").textContent = [
+      `保管場所：${item.storageLocation || "未設定"}`,
+      `画像：${refs.localImageId ? "あり" : "なし"}`,
+      item.itemCode ? `商品ID：${item.itemCode}` : "",
+    ].filter(Boolean).join(" / ");
+    row.querySelector("small").textContent = `作成/更新：${formatDateTime(record.updatedAt || item.createdAt || item.updatedAt)}`;
+    list.append(row);
+  });
+
+  const actions = document.createElement("div");
+  actions.className = "indexed-image-recovery-actions";
+
+  const replaceButton = document.createElement("button");
+  replaceButton.className = "ghost-button";
+  replaceButton.type = "button";
+  replaceButton.dataset.recoverIndexedImagesMode = "replace";
+  replaceButton.textContent = "この復元候補を現在の商品一覧へ復元";
+
+  const mergeButton = document.createElement("button");
+  mergeButton.className = "primary-button";
+  mergeButton.type = "button";
+  mergeButton.dataset.recoverIndexedImagesMode = "merge";
+  mergeButton.textContent = "現在の商品に追加統合して復元";
+
+  const cancelButton = document.createElement("button");
+  cancelButton.className = "ghost-button";
+  cancelButton.type = "button";
+  cancelButton.dataset.recoverIndexedImagesMode = "cancel";
+  cancelButton.textContent = "復元しない";
+
+  actions.append(replaceButton, mergeButton, cancelButton);
+  wrapper.append(heading, list, actions);
+  dataRecoveryResults.append(wrapper);
+}
+
+async function restoreIndexedImageRecoveryCandidate(mode = "merge") {
+  const candidate = indexedImageRecoveryCandidate;
+  if (!candidate?.items?.length) {
+    showErrorMessage("IndexedDB画像の復元候補がありません");
+    return;
+  }
+
+  if (mode === "cancel") {
+    indexedImageRecoveryCandidate = null;
+    renderSortingRecoveryCandidates(sortingRecoveryCandidates, "IndexedDB画像の復元は行いませんでした。");
+    showSuccessMessage("復元をキャンセルしました");
+    return;
+  }
+
+  const beforeItemCount = items.length;
+  const beforeSortingCount = sortingItems.length;
+  const isMerge = mode !== "replace";
+  const confirmationMessage = isMerge
+    ? `IndexedDB内の旧データ${candidate.count}件を現在の商品一覧へ追加統合します。現在の${beforeItemCount}件は削除しません。よろしいですか？`
+    : `IndexedDB内の旧データ${candidate.count}件で現在の商品一覧を復元します。\n現在のローカルデータが上書きされる可能性があります。\n売却先仕分けデータも対象です。\nよろしいですか？`;
+
+  const shouldRestore = await showAppDialog({
+    title: "IndexedDB画像から復元",
+    message: confirmationMessage,
+    confirmText: isMerge ? "追加統合する" : "復元する",
+    danger: !isMerge,
+  });
+
+  if (!shouldRestore) {
+    return;
+  }
+
+  const backupSuffix = Date.now();
+  const previousItems = [...items];
+  const previousSortingItems = [...sortingItems];
+  const previousLocalImageRefs = loadLocalImageRefs();
+  try {
+    localStorage.setItem(`${STORAGE_KEY}-indexeddb-recovery-backup-${backupSuffix}`, JSON.stringify(serializeItemsForLocalStorage(previousItems)));
+    localStorage.setItem(`${SORTING_STORAGE_KEY}-indexeddb-recovery-backup-${backupSuffix}`, JSON.stringify(serializeItemsForLocalStorage(previousSortingItems)));
+  } catch (error) {
+    console.warn("復元前バックアップ保存エラー:", error);
+    const shouldContinueWithoutBackup = await showAppDialog({
+      title: "バックアップを保存できません",
+      message: "端末容量などの理由で復元前バックアップを保存できませんでした。このまま追加統合を続けますか？",
+      confirmText: "続ける",
+      cancelText: "中止",
+      danger: true,
+    });
+
+    if (!shouldContinueWithoutBackup) {
+      return;
+    }
+  }
+
+  let restoredCount = 0;
+  let restoredSortingCount = 0;
+
+  if (isMerge) {
+    const itemMergeResult = mergeRecoveredItems(items, candidate.items);
+    const sortingMergeResult = mergeRecoveredSortingItems(sortingItems, candidate.sortingItems, itemMergeResult.addedItems);
+    items = itemMergeResult.mergedItems;
+    sortingItems = sortingMergeResult.mergedSortingItems;
+    restoredCount = itemMergeResult.addedItems.length;
+    restoredSortingCount = sortingMergeResult.addedSortingItems.length;
+  } else {
+    items = candidate.items.map(normalizeItem);
+    sortingItems = candidate.sortingItems.map(normalizeSortingItem);
+    restoredCount = items.length;
+    restoredSortingCount = sortingItems.length;
+  }
+
+  const restoredLocalImageItems = isMerge
+    ? items.filter((item) => candidate.items.some((candidateItem) => getRecoveredItemDedupKey(candidateItem) === getRecoveredItemDedupKey(item)))
+    : items;
+  restoredLocalImageItems.forEach((item) => {
+    const refs = normalizeImageRefs(item.imageRefs);
+    if (refs.localImageId) {
+      saveLocalImageRefsForItem(item, refs);
+    }
+  });
+
+  const didSaveItems = saveItemsToLocalStorage();
+  if (!didSaveItems) {
+    items = previousItems;
+    sortingItems = previousSortingItems;
+    saveLocalImageRefs(previousLocalImageRefs);
+    render();
+    renderSorting();
+    return;
+  }
+
+  try {
+    localStorage.setItem(SORTING_STORAGE_KEY, JSON.stringify(serializeItemsForLocalStorage(sortingItems)));
+  } catch (error) {
+    items = previousItems;
+    sortingItems = previousSortingItems;
+    saveLocalImageRefs(previousLocalImageRefs);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeItemsForLocalStorage(previousItems)));
+    localStorage.setItem(SORTING_STORAGE_KEY, JSON.stringify(serializeItemsForLocalStorage(previousSortingItems)));
+    render();
+    renderSorting();
+    console.warn("売却先仕分け復元保存エラー:", error);
+    showErrorMessage("売却先仕分けデータを保存できませんでした。端末容量を確認してください。");
+    return;
+  }
+
+  const persistedItemCount = loadItems().length;
+  const persistedSortingCount = loadSortingItems().length;
+  console.info("IndexedDB復元完了", {
+    mode: isMerge ? "追加統合" : "置き換え",
+    beforeItemCount,
+    restoredCount,
+    afterItemCount: items.length,
+    persistedItemCount,
+    beforeSortingCount,
+    restoredSortingCount,
+    afterSortingCount: sortingItems.length,
+    persistedSortingCount,
+  });
+  resetSortingForm();
+  renderSorting();
+  render();
+  renderIndexedImageRecoveryCompletion({
+    beforeItemCount,
+    restoredCount,
+    afterItemCount: items.length,
+    persistedItemCount,
+    beforeSortingCount,
+    restoredSortingCount,
+    afterSortingCount: sortingItems.length,
+    persistedSortingCount,
+  });
+  indexedImageRecoveryCandidate = null;
+
+  if (isCloudReady && supabaseClient && cloudUser) {
+    const shouldSync = await showAppDialog({
+      title: "クラウドへ保存しますか？",
+      message: "復元したデータをクラウドへ保存しますか？\n実行するとクラウド側の商品一覧・売却先仕分けデータが更新されます。",
+      confirmText: "クラウドへ保存",
+    });
+
+    if (shouldSync) {
+      await syncItemsToSupabase();
+      await syncAppStateToSupabase();
+      showSuccessMessage("復元データをクラウドへ同期しました");
+      return;
+    }
+  }
+
+  showSuccessMessage(`復元完了：${restoredCount}件追加 / 現在${items.length}件`);
+}
+
+function renderIndexedImageRecoveryCompletion({ beforeItemCount, restoredCount, afterItemCount, persistedItemCount, beforeSortingCount, restoredSortingCount, afterSortingCount, persistedSortingCount }) {
+  if (!dataRecoveryResults) {
+    return;
+  }
+
+  dataRecoveryResults.replaceChildren();
+  const panel = document.createElement("div");
+  panel.className = "indexed-image-recovery-complete";
+  panel.innerHTML = `
+    <strong>復元完了</strong>
+    <span>復元前 ${beforeItemCount}件</span>
+    <span>IndexedDB復元 ${restoredCount}件</span>
+    <span>現在 ${afterItemCount}件</span>
+    <small>再読み込み確認：商品 ${persistedItemCount}件 / 売却先仕分け ${persistedSortingCount}件</small>
+    <small>仕分け：復元前 ${beforeSortingCount}件 / 復元 ${restoredSortingCount}件 / 現在 ${afterSortingCount}件</small>
+  `;
+  dataRecoveryResults.append(panel);
 }
 
 function normalizeSettings(value) {
@@ -9180,6 +10041,18 @@ cloudReloadButton?.addEventListener("click", async () => {
     });
 });
 
+detectAllStorageDataButton?.addEventListener("click", () => {
+  detectAllStorageDataButton.disabled = true;
+  detectAllStoredProductData()
+    .catch((error) => {
+      console.warn("商品データ全探索エラー:", error);
+      showErrorMessage("商品データ本体を全探索できませんでした");
+    })
+    .finally(() => {
+      detectAllStorageDataButton.disabled = false;
+    });
+});
+
 detectLocalSortingDataButton?.addEventListener("click", () => {
   detectLocalSortingRecoveryData().catch((error) => {
     console.warn("ローカル復旧候補検出エラー:", error);
@@ -9200,6 +10073,17 @@ detectCloudSortingDataButton?.addEventListener("click", () => {
 });
 
 dataRecoveryResults?.addEventListener("click", (event) => {
+  const indexedImageButton = event.target.closest("[data-recover-indexed-images-mode]");
+  if (indexedImageButton) {
+    event.preventDefault();
+    event.stopPropagation();
+    restoreIndexedImageRecoveryCandidate(indexedImageButton.dataset.recoverIndexedImagesMode).catch((error) => {
+      console.warn("IndexedDB画像復元エラー:", error);
+      showErrorMessage("IndexedDB画像から復元できませんでした");
+    });
+    return;
+  }
+
   const button = event.target.closest("[data-recover-sorting-index]");
   if (!button) {
     return;
