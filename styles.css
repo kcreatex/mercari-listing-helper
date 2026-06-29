@@ -20876,6 +20876,77 @@ body.settings-view .master-drag-handle {
   font-weight: 800;
 }
 
+.local-image-ref-analysis {
+  display: grid;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid #efe6e1;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.local-image-ref-heading,
+.local-image-ref-id-summary {
+  display: grid;
+  gap: 4px;
+}
+
+.local-image-ref-heading strong {
+  color: #2f3a45;
+  font-size: 13px;
+}
+
+.local-image-ref-heading small,
+.local-image-ref-id-summary small {
+  color: #756b64;
+  font-size: 11px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.local-image-ref-id-summary {
+  padding: 8px;
+  border-radius: 8px;
+  background: #faf7f5;
+}
+
+.local-image-ref-id-summary strong {
+  font-size: 12px;
+}
+
+.local-image-ref-table {
+  display: grid;
+  grid-template-columns: 34px minmax(104px, 1fr) minmax(96px, 0.9fr) minmax(112px, 1.1fr);
+  overflow: hidden;
+  border: 1px solid #efe6e1;
+  border-radius: 8px;
+  font-size: 11px;
+}
+
+.local-image-ref-table > div {
+  min-width: 0;
+  padding: 7px 6px;
+  border-bottom: 1px solid #efe6e1;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.local-image-ref-table > div:nth-last-child(-n + 4) {
+  border-bottom: 0;
+}
+
+.local-image-ref-head {
+  background: #faf7f5;
+  color: #6b625c;
+  font-weight: 900;
+  white-space: normal !important;
+}
+
+.local-image-ref-linked {
+  color: #166534;
+  font-weight: 900;
+}
+
 /* Final list/settings repair: viewport-safe menus, plain accordion arrows, and editable templates. */
 body.work-tab-list .row-action-menu[open] {
   z-index: 2147483000 !important;

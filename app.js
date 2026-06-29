@@ -100,6 +100,8 @@ const cloudReloadButton = document.querySelector("#cloudReloadButton");
 const cloudFetchCount = document.querySelector("#cloudFetchCount");
 const detectAllStorageDataButton = document.querySelector("#detectAllStorageDataButton");
 const analyzeIndexedImageStoreButton = document.querySelector("#analyzeIndexedImageStoreButton");
+const analyzeLocalImageRefsButton = document.querySelector("#analyzeLocalImageRefsButton");
+const diagnoseCloudAppStateButton = document.querySelector("#diagnoseCloudAppStateButton");
 const detectLocalSortingDataButton = document.querySelector("#detectLocalSortingDataButton");
 const detectCloudSortingDataButton = document.querySelector("#detectCloudSortingDataButton");
 const dataRecoveryResults = document.querySelector("#dataRecoveryResults");
@@ -1504,6 +1506,267 @@ async function analyzeIndexedImageStore() {
   showSuccessMessage(`IndexedDB画像解析：${records.length}件`);
 }
 
+function extractLocalStyleIdsFromText(text) {
+  return Array.from(new Set(String(text || "").match(/LOCAL-SORTING-[A-Za-z0-9_-]+|LOCAL-[A-Za-z0-9_-]+/g) || []));
+}
+
+function valueContainsAnyTarget(value, targets) {
+  if (!targets.length) {
+    return false;
+  }
+
+  return targets.some((target) => target && String(value || "").includes(target));
+}
+
+function collectTargetMatchesFromObject(value, targets, basePath = "") {
+  const matches = [];
+  const seen = new WeakSet();
+
+  const walk = (currentValue, path) => {
+    if (currentValue === null || currentValue === undefined) {
+      return;
+    }
+
+    if (typeof currentValue !== "object") {
+      if (valueContainsAnyTarget(currentValue, targets)) {
+        matches.push(path || "value");
+      }
+      return;
+    }
+
+    if (seen.has(currentValue)) {
+      return;
+    }
+    seen.add(currentValue);
+
+    if (Array.isArray(currentValue)) {
+      currentValue.forEach((item, index) => walk(item, `${path}[${index}]`));
+      return;
+    }
+
+    Object.entries(currentValue).forEach(([key, nestedValue]) => {
+      walk(nestedValue, path ? `${path}.${key}` : key);
+    });
+  };
+
+  walk(value, basePath);
+  return Array.from(new Set(matches));
+}
+
+function getParsedStorageValue(key) {
+  const rawValue = localStorage.getItem(key);
+  if (!rawValue) {
+    return null;
+  }
+
+  const parsed = tryParseJsonValue(rawValue);
+  return parsed.ok ? parsed.value : rawValue;
+}
+
+function getLocalImageRefEntriesForImageId(imageId, refsMap) {
+  return Object.entries(refsMap)
+    .filter(([, refs]) => normalizeImageRefs(refs).localImageId === imageId)
+    .map(([key, refs]) => ({ key, refs: normalizeImageRefs(refs) }));
+}
+
+function getCollectionImageMatches(collection, targets, label) {
+  return collection
+    .map((item, index) => {
+      const refs = normalizeImageRefs(item.imageRefs);
+      const searchObject = {
+        id: item.id,
+        itemCode: item.itemCode,
+        sourceItemId: item.sourceItemId,
+        name: item.name,
+        listingTitle: item.listingTitle,
+        storageLocation: item.storageLocation,
+        imageRefs: refs,
+      };
+      const paths = collectTargetMatchesFromObject(searchObject, targets, label);
+      if (!paths.length) {
+        return null;
+      }
+      return {
+        index,
+        id: item.id || "",
+        itemCode: item.itemCode || "",
+        title: getListingTitle(item) || item.name || "",
+        storageLocation: item.storageLocation || "",
+        paths,
+      };
+    })
+    .filter(Boolean);
+}
+
+function collectStorageMatchesForTargets(targets) {
+  const matches = [];
+  Object.keys(localStorage).forEach((key) => {
+    const rawValue = localStorage.getItem(key) || "";
+    if (!targets.some((target) => target && rawValue.includes(target))) {
+      return;
+    }
+
+    const parsed = tryParseJsonValue(rawValue);
+    const paths = parsed.ok
+      ? collectTargetMatchesFromObject(parsed.value, targets, key)
+      : targets.filter((target) => rawValue.includes(target)).map((target) => `${key}: ${target}`);
+    matches.push({ key, paths: paths.slice(0, 8) });
+  });
+  return matches;
+}
+
+function summarizeLocalImageRefRecord(record, index, refsMap) {
+  const imageId = String(record?.id || "");
+  const refEntries = getLocalImageRefEntriesForImageId(imageId, refsMap);
+  const refKeys = refEntries.map((entry) => entry.key);
+  const targets = Array.from(new Set([
+    imageId,
+    ...refKeys,
+    parseItemCodeFromImageId(imageId),
+  ].filter(Boolean)));
+  const itemMatches = getCollectionImageMatches(items, targets, "items");
+  const sortingMatches = getCollectionImageMatches(sortingItems, targets, "sortingItems");
+  const destinationSortingValue = getParsedStorageValue(SORTING_STORAGE_KEY);
+  const destinationSortingMatches = destinationSortingValue
+    ? collectTargetMatchesFromObject(destinationSortingValue, targets, "destinationSorting")
+    : [];
+  const localStorageMatches = collectStorageMatchesForTargets(targets);
+  const localStyleIds = Array.from(new Set([
+    ...extractLocalStyleIdsFromText(imageId),
+    ...refKeys.flatMap(extractLocalStyleIdsFromText),
+    ...itemMatches.flatMap((match) => extractLocalStyleIdsFromText(JSON.stringify(match))),
+    ...sortingMatches.flatMap((match) => extractLocalStyleIdsFromText(JSON.stringify(match))),
+  ]));
+
+  return {
+    index,
+    imageId,
+    refEntries,
+    refKeys,
+    itemCode: parseItemCodeFromImageId(imageId) || refKeys.find((key) => /^ITEM-\d{6}$/.test(key)) || "",
+    itemMatches,
+    sortingMatches,
+    destinationSortingMatches,
+    localStorageMatches,
+    localStyleIds,
+  };
+}
+
+function getLocalStyleIdSummary() {
+  const collections = [
+    { label: "items", value: items },
+    { label: "sortingItems", value: sortingItems },
+    { label: "destinationSorting", value: getParsedStorageValue(SORTING_STORAGE_KEY) || [] },
+  ];
+
+  return collections.map((collection) => {
+    const ids = extractLocalStyleIdsFromText(JSON.stringify(collection.value || ""));
+    return {
+      label: collection.label,
+      count: ids.length,
+      ids: ids.slice(0, 20),
+    };
+  });
+}
+
+function renderLocalImageRefsAnalysis(records, refsMap) {
+  if (!dataRecoveryResults) {
+    return;
+  }
+
+  dataRecoveryResults.replaceChildren();
+  const summaries = records.map((record, index) => summarizeLocalImageRefRecord(record, index, refsMap));
+  const refKeys = Object.keys(refsMap);
+  const linkedCount = summaries.filter((summary) => summary.refEntries.length || summary.itemMatches.length || summary.sortingMatches.length || summary.destinationSortingMatches.length).length;
+  const localStyleSummary = getLocalStyleIdSummary();
+
+  const panel = document.createElement("section");
+  panel.className = "local-image-ref-analysis";
+  panel.innerHTML = `
+    <div class="local-image-ref-heading">
+      <strong>localImageRefs解析</strong>
+      <small>localStorageキー：${LOCAL_IMAGE_REFS_KEY} / ${refKeys.length ? `${refKeys.length}件あり` : "存在しません、または空です"}</small>
+      <small>IndexedDB画像：${records.length}件 / 紐付け候補あり：${linkedCount}件 / 紐付け未確認：${records.length - linkedCount}件</small>
+      <small>LOCAL系ID：${localStyleSummary.map((entry) => `${entry.label} ${entry.count}件`).join(" / ")}</small>
+    </div>
+  `;
+
+  const localStyleList = document.createElement("div");
+  localStyleList.className = "local-image-ref-id-summary";
+  localStyleList.innerHTML = localStyleSummary.map((entry) => `
+    <strong>${entry.label}</strong>
+    <small>${entry.ids.length ? entry.ids.join(" / ") : "LOCAL-SORTING- / LOCAL- 形式のIDなし"}</small>
+  `).join("");
+
+  const table = document.createElement("div");
+  table.className = "local-image-ref-table";
+  table.innerHTML = `
+    <div class="local-image-ref-head">#</div>
+    <div class="local-image-ref-head">画像ID / 参照キー</div>
+    <div class="local-image-ref-head">items</div>
+    <div class="local-image-ref-head">sorting / destination</div>
+  `;
+
+  summaries.forEach((summary) => {
+    const refText = [
+      `画像ID: ${summary.imageId || "-"}`,
+      summary.refKeys.length ? `参照キー: ${summary.refKeys.join(" / ")}` : "参照キー: なし",
+      summary.itemCode ? `商品ID候補: ${summary.itemCode}` : "",
+      summary.localStyleIds.length ? `LOCAL系: ${summary.localStyleIds.join(" / ")}` : "",
+    ].filter(Boolean).join("\n");
+    const itemText = summary.itemMatches.length
+      ? summary.itemMatches.map((match) => [
+        match.title || match.id || "-",
+        match.itemCode ? `商品ID ${match.itemCode}` : "",
+        match.storageLocation ? `保管 ${match.storageLocation}` : "",
+        `位置 ${match.index + 1}`,
+      ].filter(Boolean).join(" / ")).join("\n")
+      : "items内の紐付けなし";
+    const sortingText = [
+      summary.sortingMatches.length
+        ? `sortingItems:\n${summary.sortingMatches.map((match) => [
+          match.title || match.id || "-",
+          match.storageLocation ? `保管 ${match.storageLocation}` : "",
+          `位置 ${match.index + 1}`,
+        ].filter(Boolean).join(" / ")).join("\n")}`
+        : "sortingItems: なし",
+      summary.destinationSortingMatches.length
+        ? `destinationSorting: ${summary.destinationSortingMatches.slice(0, 4).join(" / ")}`
+        : "destinationSorting: なし",
+    ].join("\n");
+
+    const indexCell = document.createElement("div");
+    indexCell.textContent = String(summary.index + 1);
+    const refCell = document.createElement("div");
+    refCell.textContent = refText;
+    const itemCell = document.createElement("div");
+    itemCell.className = summary.itemMatches.length ? "local-image-ref-linked" : "";
+    itemCell.textContent = itemText;
+    const sortingCell = document.createElement("div");
+    sortingCell.className = summary.sortingMatches.length || summary.destinationSortingMatches.length ? "local-image-ref-linked" : "";
+    sortingCell.textContent = sortingText;
+    table.append(indexCell, refCell, itemCell, sortingCell);
+  });
+
+  panel.append(localStyleList, table);
+  dataRecoveryResults.append(panel);
+  console.info("localImageRefs解析", {
+    localImageRefsExists: localStorage.getItem(LOCAL_IMAGE_REFS_KEY) !== null,
+    localImageRefsCount: refKeys.length,
+    indexedImageCount: records.length,
+    linkedCount,
+    localStyleSummary,
+    summaries,
+  });
+}
+
+async function analyzeLocalImageRefs() {
+  const refsMap = loadLocalImageRefs();
+  const records = await getIndexedDbImageRecords();
+  renderLocalImageRefsAnalysis(records, refsMap);
+  showSuccessMessage(`localImageRefs解析：画像${records.length}件 / 参照${Object.keys(refsMap).length}件`);
+}
+
 async function detectLocalSortingRecoveryData() {
   const candidates = [];
 
@@ -1600,6 +1863,104 @@ async function detectCloudSortingRecoveryData() {
   sortingRecoveryCandidates = dedupeSortingRecoveryCandidates(candidates);
   renderSortingRecoveryCandidates(sortingRecoveryCandidates, "Supabase内に仕分け復元候補はありませんでした。");
   showSuccessMessage(`クラウド復元候補：${sortingRecoveryCandidates.length}件`);
+}
+
+function renderCloudAppStateDiagnosis(rows) {
+  if (!dataRecoveryResults) {
+    return;
+  }
+
+  dataRecoveryResults.replaceChildren();
+  const panel = document.createElement("section");
+  panel.className = "data-recovery-candidate";
+  panel.style.gridTemplateColumns = "1fr";
+
+  const heading = document.createElement("div");
+  const title = document.createElement("strong");
+  title.textContent = "__app_state__診断結果";
+  const description = document.createElement("small");
+  description.textContent = rows.length
+    ? `Supabaseの__app_state__行：${rows.length}件`
+    : "Supabaseに__app_state__行は見つかりませんでした。";
+  heading.append(title, description);
+  panel.append(heading);
+
+  rows.forEach((row, index) => {
+    const data = row.data && typeof row.data === "object" ? row.data : {};
+    const sortingArray = Array.isArray(data.sortingItems) ? data.sortingItems : [];
+    const templateArray = Array.isArray(data.descriptionTemplates) ? data.descriptionTemplates : [];
+    const settingKeys = data.settings && typeof data.settings === "object" ? Object.keys(data.settings) : [];
+    const samples = sortingArray.slice(0, 8).map((item) => [
+      item.name || item.listingTitle || "商品名なし",
+      item.storageLocation ? `保管:${item.storageLocation}` : "",
+      item.destination ? `売却先:${item.destination}` : "",
+      item.mercariPrice !== undefined && item.mercariPrice !== "" ? `メルカリ:${item.mercariPrice}` : "",
+      item.surugayaPrice !== undefined && item.surugayaPrice !== "" ? `駿河屋:${item.surugayaPrice}` : "",
+      item.memo ? "メモあり" : "",
+    ].filter(Boolean).join(" / "));
+
+    const rowBlock = document.createElement("div");
+    rowBlock.className = "data-recovery-candidate";
+    rowBlock.style.gridTemplateColumns = "1fr";
+    rowBlock.innerHTML = `
+      <strong>${index + 1}. household_id: ${row.household_id || "-"}</strong>
+      <small>local_id: ${row.local_id || "-"}</small>
+      <small>updated_at: ${formatDateTime(row.updated_at)}</small>
+      <small>data.__recordType: ${data.__recordType || "-"}</small>
+      <small>dataキー: ${Object.keys(data).join(" / ") || "-"}</small>
+      <small>sortingItems: ${sortingArray.length}件</small>
+      <small>settingsキー: ${settingKeys.join(" / ") || "-"}</small>
+      <small>descriptionTemplates: ${templateArray.length}件</small>
+      <small>サンプル: ${samples.length ? samples.join(" ｜ ") : "-"}</small>
+    `;
+    panel.append(rowBlock);
+  });
+
+  dataRecoveryResults.append(panel);
+}
+
+async function diagnoseCloudAppStateOnly() {
+  if (!supabaseClient || !cloudUser) {
+    showErrorMessage("先にクラウドへログインしてください");
+    return;
+  }
+
+  await loadCloudHousehold();
+  const householdIds = cloudUserHouseholdIds.length ? cloudUserHouseholdIds : [cloudHouseholdId].filter(Boolean);
+
+  if (!householdIds.length) {
+    showErrorMessage("共有グループが見つかりません");
+    return;
+  }
+
+  const { data, error } = await supabaseClient
+    .from("items")
+    .select("household_id,local_id,data,updated_at")
+    .in("household_id", householdIds)
+    .eq("local_id", CLOUD_APP_STATE_LOCAL_ID)
+    .order("updated_at", { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  const rows = Array.isArray(data) ? data : [];
+  renderCloudAppStateDiagnosis(rows);
+  console.info("__app_state__診断", {
+    householdIds,
+    rowCount: rows.length,
+    rows: rows.map((row) => ({
+      household_id: row.household_id,
+      local_id: row.local_id,
+      updated_at: row.updated_at,
+      dataKeys: Object.keys(row.data || {}),
+      sortingItemsCount: Array.isArray(row.data?.sortingItems) ? row.data.sortingItems.length : 0,
+      settingsKeys: row.data?.settings && typeof row.data.settings === "object" ? Object.keys(row.data.settings) : [],
+      templateCount: Array.isArray(row.data?.descriptionTemplates) ? row.data.descriptionTemplates.length : 0,
+    })),
+  });
+  const totalSortingItems = rows.reduce((total, row) => total + (Array.isArray(row.data?.sortingItems) ? row.data.sortingItems.length : 0), 0);
+  showSuccessMessage(`__app_state__診断：${rows.length}行 / 仕分け${totalSortingItems}件`);
 }
 
 async function restoreSortingRecoveryCandidate(index) {
@@ -10200,6 +10561,30 @@ analyzeIndexedImageStoreButton?.addEventListener("click", () => {
     })
     .finally(() => {
       analyzeIndexedImageStoreButton.disabled = false;
+    });
+});
+
+analyzeLocalImageRefsButton?.addEventListener("click", () => {
+  analyzeLocalImageRefsButton.disabled = true;
+  analyzeLocalImageRefs()
+    .catch((error) => {
+      console.warn("localImageRefs解析エラー:", error);
+      showErrorMessage("localImageRefsを解析できませんでした");
+    })
+    .finally(() => {
+      analyzeLocalImageRefsButton.disabled = false;
+    });
+});
+
+diagnoseCloudAppStateButton?.addEventListener("click", () => {
+  diagnoseCloudAppStateButton.disabled = true;
+  diagnoseCloudAppStateOnly()
+    .catch((error) => {
+      console.warn("__app_state__診断エラー:", error);
+      showErrorMessage("__app_state__を診断できませんでした");
+    })
+    .finally(() => {
+      diagnoseCloudAppStateButton.disabled = false;
     });
 });
 
