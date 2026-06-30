@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>メルカリ出品補助室</title>
-    <link rel="stylesheet" href="styles.css?v=auto-backup-restore-20260629">
+    <link rel="stylesheet" href="styles.css?v=filter-counts-20260630">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
   <body class="work-view work-tab-form">
@@ -17,6 +17,7 @@
     <nav class="side-nav" aria-label="画面メニュー">
       <a href="#formTitle" data-view="form">商品登録</a>
       <a href="#listTitle" data-view="list">商品一覧</a>
+      <a href="#importTitle" data-view="import">取込</a>
       <a href="#sortingTitle" data-view="sorting">売却先仕分け</a>
       <a href="#analysisTitle" data-view="analysis">分析</a>
       <a href="#settingsTitle" data-view="settings">設定</a>
@@ -741,7 +742,16 @@
             <option>要捜索</option>
             <option value="highProfit">高利益候補</option>
           </select>
+          <label class="quick-filter-check">
+            <input id="inventoryImageOnlyFilter" type="checkbox">
+            <span>画像付きだけ</span>
+          </label>
+          <label class="quick-filter-check">
+            <input id="inventoryStorageUnsetFilter" type="checkbox">
+            <span>保管場所未設定だけ</span>
+          </label>
         </div>
+        <p class="filter-result-count" id="inventoryResultCount" aria-live="polite">表示中：0件 / 絞り込み前：0件</p>
         <input class="hidden" id="listPhotoInput" type="file" accept="image/*">
 
         <div class="empty-state" id="emptyState">
@@ -855,6 +865,92 @@
           </details>
         </div>
 
+      </section>
+
+      <section class="import-panel" aria-labelledby="importTitle">
+        <div class="panel-heading list-heading">
+          <div>
+            <h2 id="importTitle">商品データ取込センター</h2>
+            <p class="muted">駿河屋の商品一覧テキストを貼り付けて、既存商品との照合や登録候補作成を行います</p>
+          </div>
+        </div>
+
+        <div class="import-layout">
+          <section class="import-card" aria-labelledby="importInputTitle">
+            <div class="import-card-heading">
+              <h3 id="importInputTitle">取込テキスト</h3>
+              <span>解析だけでは保存しません</span>
+            </div>
+            <label>
+              取込元
+              <select id="importSource">
+                <option value="surugaya">駿河屋</option>
+                <option value="text">その他テキスト</option>
+              </select>
+            </label>
+            <label>
+              貼り付け欄
+              <textarea id="importText" rows="10" placeholder="JAN :&#10;機種：&#10;商品名：&#10;型番：&#10;発売日：&#10;メーカー：&#10;数量：&#10;コンディション:&#10;備考："></textarea>
+            </label>
+            <button class="primary-button" type="button" id="parseImportButton">解析開始</button>
+          </section>
+
+          <section class="import-card import-field-card" aria-labelledby="importFieldTitle">
+            <div class="import-card-heading">
+              <h3 id="importFieldTitle">既存商品へ反映する項目</h3>
+              <span>手作業情報は初期OFF</span>
+            </div>
+            <div class="import-field-grid">
+              <label><input type="checkbox" data-import-field="jan" checked>JAN</label>
+              <label><input type="checkbox" data-import-field="modelNumber" checked>型番</label>
+              <label><input type="checkbox" data-import-field="manufacturer" checked>メーカー</label>
+              <label><input type="checkbox" data-import-field="releaseDate" checked>発売日</label>
+              <label><input type="checkbox" data-import-field="platform" checked>機種</label>
+              <label><input type="checkbox" data-import-field="title">商品名</label>
+              <label><input type="checkbox" data-import-field="storageLocation">保管場所</label>
+              <label><input type="checkbox" data-import-field="memo">メモ</label>
+              <label><input type="checkbox" data-import-field="destination">売却先</label>
+              <label><input type="checkbox" data-import-field="price">価格</label>
+              <label><input type="checkbox" data-import-field="profit">利益</label>
+            </div>
+          </section>
+        </div>
+
+        <section class="import-result-panel" aria-labelledby="importResultTitle">
+          <div class="import-result-heading">
+            <div>
+              <h3 id="importResultTitle">解析結果</h3>
+              <p id="importResultSummary">まだ解析していません</p>
+              <p class="filter-result-count import-result-count" id="importVisibleCount" aria-live="polite">表示中：0件 / 絞り込み前：0件</p>
+            </div>
+            <div class="import-action-grid">
+              <button class="primary-button" type="button" id="fillBlankImportFieldsButton" disabled>空欄だけ補完（推奨）</button>
+              <button class="ghost-button" type="button" id="applyImportMatchesButton" disabled>選択分を反映</button>
+              <button class="ghost-button" type="button" id="registerImportNewItemsButton" disabled>新規候補を登録</button>
+              <button class="ghost-button" type="button" id="addImportSortingButton" disabled>仕分けへ追加</button>
+            </div>
+          </div>
+          <div class="import-result-list" id="importResultList"></div>
+        </section>
+
+        <details class="import-future-card app-accordion">
+          <summary>
+            <span class="section-icon" aria-hidden="true">候</span>
+            <span class="inventory-option-summary-copy">
+              <strong>将来候補：スクショOCR取込モード</strong>
+              <small>現時点の本命はテキストコピペ取込です</small>
+            </span>
+          </summary>
+          <div class="import-future-body">
+            <p>駿河屋・買取フォーム・査定結果画面のスクショから、商品名、JAN、型番、発売日、メーカー、数量、査定額を抽出する補助機能として検討します。</p>
+            <ul>
+              <li>OCR結果は必ず確認画面を挟む</li>
+              <li>JAN、型番、金額は誤読しやすいため強調確認する</li>
+              <li>スクショ1枚から複数商品を抽出できる設計にする</li>
+              <li>商品候補または売却先仕分け候補として登録できるようにする</li>
+            </ul>
+          </div>
+        </details>
       </section>
 
       <section class="sorting-panel" aria-labelledby="sortingTitle">
@@ -1026,7 +1122,16 @@
             <option value="newest">登録順</option>
           </select>
           <button class="ghost-button sorting-shipping-mode-button" type="button" id="sortingShippingModeButton" aria-pressed="false">発送モード（一覧）</button>
+          <label class="quick-filter-check">
+            <input id="sortingImageOnlyFilter" type="checkbox">
+            <span>画像付きだけ</span>
+          </label>
+          <label class="quick-filter-check">
+            <input id="sortingStorageUnsetFilter" type="checkbox">
+            <span>保管場所未設定だけ</span>
+          </label>
         </div>
+        <p class="filter-result-count" id="sortingResultCount" aria-live="polite">表示中：0件 / 絞り込み前：0件</p>
 
         <details class="sorting-filter-panel app-accordion">
           <summary>
@@ -1265,18 +1370,62 @@
           </summary>
           <div class="settings-backup-content">
             <p class="muted">重要操作の前に自動バックアップを残します。手動でJSON保存・復元もできます。</p>
-            <div class="backup-controls backup-controls-top" aria-label="バックアップ操作">
-              <strong>バックアップ操作</strong>
-              <button class="primary-button" type="button" id="createManualBackupButton">バックアップ作成</button>
-              <button class="ghost-button" type="button" id="exportButtonTop">JSONを書き出し</button>
-              <button class="ghost-button" type="button" id="importButtonTop">JSONを読み込み</button>
-            </div>
-            <div class="backup-restore-mode" aria-label="復元方式">
-              <label><input type="radio" name="backupRestoreMode" value="merge" checked> 現在のデータに追加統合</label>
-              <label><input type="radio" name="backupRestoreMode" value="replace"> バックアップで上書き復元</label>
-              <p class="backup-danger-note">上書き復元は現在のデータを置き換えます。通常は追加統合を使ってください。</p>
-            </div>
-            <div class="backup-list" id="backupList" aria-live="polite"></div>
+
+            <section class="backup-operation-section" aria-labelledby="backupCreateTitle">
+              <div class="backup-operation-heading">
+                <h3 id="backupCreateTitle">バックアップ</h3>
+                <p>現在のデータを保存します。</p>
+              </div>
+              <div class="backup-action-list">
+                <div class="backup-action-row">
+                  <div>
+                    <strong>バックアップ作成</strong>
+                    <small>現在のデータをアプリ内に保存します。</small>
+                  </div>
+                  <button class="primary-button" type="button" id="createManualBackupButton">作成</button>
+                </div>
+                <label class="backup-memo-field">
+                  バックアップメモ
+                  <input id="backupMemoInput" type="text" maxlength="80" placeholder="例：駿河屋取込前 / 大量編集前">
+                </label>
+                <div class="backup-action-row">
+                  <div>
+                    <strong>現在のデータを書き出し</strong>
+                    <small>バックアップをPCにファイル保存します。</small>
+                  </div>
+                  <button class="ghost-button" type="button" id="exportButtonTop">現在のデータを書き出し</button>
+                </div>
+              </div>
+            </section>
+
+            <section class="backup-operation-section backup-restore-section" aria-labelledby="backupRestoreTitle">
+              <div class="backup-operation-heading">
+                <h3 id="backupRestoreTitle">復元</h3>
+                <p>保存済みJSONからデータを復元します。</p>
+              </div>
+              <div class="backup-action-row">
+                <div>
+                  <strong>JSON読み込み</strong>
+                  <small>保存済みJSONからデータを復元します。</small>
+                </div>
+                <button class="ghost-button" type="button" id="importButtonTop">読み込み</button>
+              </div>
+              <div class="backup-restore-mode" aria-label="復元方式">
+                <strong>復元方法</strong>
+                <label class="backup-restore-safe"><input type="radio" name="backupRestoreMode" value="merge" checked> 現在のデータに追加統合（推奨）</label>
+                <label class="backup-restore-danger"><input type="radio" name="backupRestoreMode" value="replace"> バックアップで上書き復元（危険）</label>
+                <p class="backup-danger-note">上書き復元は現在のデータを置き換えます。通常は追加統合を使ってください。</p>
+              </div>
+            </section>
+
+            <section class="backup-operation-section backup-list-section" aria-labelledby="backupListTitle">
+              <div class="backup-operation-heading">
+                <h3 id="backupListTitle">バックアップ一覧</h3>
+                <p>保存済みバックアップから復元・書き出し・削除できます。</p>
+              </div>
+              <div class="backup-list" id="backupList" aria-live="polite"></div>
+            </section>
+
             <input class="hidden" id="importFileInput" type="file" accept="application/json,.json">
           </div>
         </details>
@@ -1420,6 +1569,6 @@
       </div>
     </div>
 
-    <script src="app.js?v=auto-backup-restore-20260629"></script>
+    <script src="app.js?v=filter-counts-20260630"></script>
   </body>
 </html>
