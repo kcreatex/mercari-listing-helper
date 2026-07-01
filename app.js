@@ -10427,12 +10427,14 @@ function createSortingWorkCard(item) {
     <div class="sorting-work-thumb"></div>
     <div class="sorting-work-card-body">
       <strong class="sorting-work-title"></strong>
+      <span class="sorting-work-code"></span>
       <b class="sorting-work-offer" data-action="quick-edit-appraisal" title="査定額を編集"></b>
       <span class="sorting-work-storage" data-action="quick-edit-storage" title="保管場所を編集"></span>
       <span class="sorting-work-status-line">
         <span class="sorting-work-status" data-action="quick-edit-status" title="状態を編集"></span>
         <span class="sorting-work-shipping" data-action="quick-edit-shipping" title="発送状態を編集"></span>
       </span>
+      <span class="sorting-work-memo-state"></span>
     </div>
     <div class="sorting-work-destination" data-action="quick-edit-destination" title="売却先を編集"></div>
     <div class="quick-edit-slot"></div>
@@ -10454,6 +10456,7 @@ function createSortingWorkCard(item) {
   thumbnail.dataset.action = "change-sorting-photo";
   card.querySelector(".sorting-work-thumb").append(thumbnail);
   card.querySelector(".sorting-work-title").textContent = item.name || "商品名未設定";
+  card.querySelector(".sorting-work-code").textContent = sourceItem?.itemCode || item.itemCode || item.id || "ID未設定";
   card.querySelector(".sorting-work-offer").textContent = bestOffer
     ? `💰${formatMoney(bestOffer.value)}`
     : "💰未入力";
@@ -10465,6 +10468,9 @@ function createSortingWorkCard(item) {
   card.querySelector(".sorting-work-status").textContent = `⚪${item.status || "未確認"}`;
   card.querySelector(".sorting-work-shipping").textContent = `📦${shortenShippingStatus(item.shippingStatus || "未仕分け")}`;
   card.querySelector(".sorting-work-destination").textContent = `🏪 ${getSortingDestinationLabel(item.destination)}`;
+  const hasSortingMemo = Boolean(String(item.memo || sourceItem?.memo || "").trim());
+  card.querySelector(".sorting-work-memo-state").textContent = hasSortingMemo ? "📝あり" : "📝なし";
+  card.querySelector(".sorting-work-memo-state").classList.toggle("muted-empty", !hasSortingMemo);
   appendImageStateBadges(card.querySelector(".sorting-work-card-body"), item, {
     summary: getSortingDisplayImageSummary(item),
   });
