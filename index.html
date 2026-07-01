@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>メルカリ出品補助室</title>
-    <link rel="stylesheet" href="styles.css?v=filter-counts-20260630">
+    <link rel="stylesheet" href="styles.css?v=sorting-density-compact-edit-20260630">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
   <body class="work-view work-tab-form">
@@ -961,11 +961,17 @@
           </div>
         </div>
 
-        <form class="sorting-form" id="sortingForm" autocomplete="off">
-          <input type="hidden" id="sortingId">
+        <details class="sorting-form-drawer app-accordion" id="sortingFormDrawer">
+          <summary>
+            <span>仕分け登録・編集パネル</span>
+            <small>必要な時だけ開く</small>
+          </summary>
 
-          <div class="sorting-form-card">
-            <h3>商品情報</h3>
+          <form class="sorting-form" id="sortingForm" autocomplete="off">
+            <input type="hidden" id="sortingId">
+
+          <details class="sorting-form-card sorting-entry-card app-accordion" open>
+            <summary>商品情報</summary>
             <div class="sorting-card-grid sorting-primary-product-grid">
               <label class="wide-field">
                 商品名
@@ -982,10 +988,10 @@
                 <textarea id="sortingMemo" rows="2" maxlength="600" placeholder="状態、箱数、査定メモなど"></textarea>
               </label>
             </div>
-          </div>
+          </details>
 
-          <div class="sorting-form-card">
-            <h3>売却情報</h3>
+          <details class="sorting-form-card sorting-entry-card app-accordion">
+            <summary>売却情報</summary>
             <div class="sorting-card-grid sorting-primary-sales-grid">
               <label>
                 最終売却先
@@ -1029,7 +1035,7 @@
                 </select>
               </label>
             </div>
-          </div>
+          </details>
 
           <details class="sorting-form-card sorting-extra-card sorting-image-card app-accordion">
             <summary>画像管理</summary>
@@ -1101,7 +1107,8 @@
             <button class="primary-button" type="submit" id="sortingSubmitButton">仕分け登録</button>
             <button class="ghost-button hidden" type="button" id="sortingCancelButton">編集をやめる</button>
           </div>
-        </form>
+          </form>
+        </details>
 
         <section class="sorting-list-section" aria-labelledby="sortingListTitle">
           <div class="sorting-list-heading">
@@ -1121,6 +1128,10 @@
             <option value="destination">売却先別</option>
             <option value="newest">登録順</option>
           </select>
+          <div class="sorting-density-toggle" role="group" aria-label="仕分け一覧の表示密度">
+            <button class="density-toggle-button" type="button" data-sorting-density="standard">標準表示</button>
+            <button class="density-toggle-button" type="button" data-sorting-density="compact">コンパクト表示</button>
+          </div>
           <button class="ghost-button sorting-shipping-mode-button" type="button" id="sortingShippingModeButton" aria-pressed="false">発送モード（一覧）</button>
           <label class="quick-filter-check">
             <input id="sortingImageOnlyFilter" type="checkbox">
@@ -1569,6 +1580,6 @@
       </div>
     </div>
 
-    <script src="app.js?v=filter-counts-20260630"></script>
+    <script src="app.js?v=sorting-density-compact-edit-20260630"></script>
   </body>
 </html>

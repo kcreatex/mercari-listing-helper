@@ -4383,6 +4383,14 @@ tbody tr:last-child td {
   gap: 10px;
 }
 
+.image-section-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .reference-image-header h4 {
   margin: 0;
   color: #302b29;
@@ -4407,9 +4415,28 @@ tbody tr:last-child td {
   padding-top: 2px;
 }
 
+.reference-image-category > summary,
 .reference-image-category > strong {
   color: #302b29;
   font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  list-style: none;
+}
+
+.reference-image-category > summary::-webkit-details-marker {
+  display: none;
+}
+
+.reference-image-category > summary::before {
+  content: "▶";
+  display: inline-block;
+  width: 16px;
+  color: #8b817c;
+}
+
+.reference-image-category[open] > summary::before {
+  content: "▼";
 }
 
 .reference-image-card {
@@ -4491,6 +4518,24 @@ tbody tr:last-child td {
   font-size: 11px;
   font-weight: 800;
   white-space: nowrap;
+}
+
+.image-badge-empty {
+  border-color: #e4e1df;
+  background: #f7f5f4;
+  color: #9a928e;
+}
+
+.reference-category-summary {
+  display: block;
+  grid-column: 1 / -1;
+  max-width: 100%;
+  color: #6f6662;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1.35;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .quick-filter-check {
@@ -22536,5 +22581,1443 @@ body.settings-view .template-setting-row .template-edit-fields textarea {
     margin: 5px 0 8px;
     padding: 3px 8px;
     font-size: 11px;
+  }
+}
+
+/* Mobile operation policy: daily item work stays available; PC-only bulk/admin tools are hidden. */
+@media (max-width: 700px) {
+  .side-nav a[data-view="import"],
+  .import-panel,
+  .inventory-csv-section,
+  .settings-backup-group,
+  .backup-controls,
+  .backup-controls-top,
+  .backup-controls-bottom,
+  #sortingCsvButton,
+  #packingListCsvButton {
+    display: none !important;
+  }
+}
+
+/* Sale-destination sorting polish: compact cards for checking where to sell and ship. */
+body.work-tab-sorting .sorting-work-card-list:not(.hidden) {
+  display: grid !important;
+  gap: 8px !important;
+}
+
+body.work-tab-sorting .sorting-work-card,
+body.work-tab-sorting .sorting-work-card.shipping-mode-card {
+  position: relative !important;
+  display: grid !important;
+  grid-template-columns: 46px minmax(0, 1fr) 78px 34px !important;
+  grid-template-rows: auto !important;
+  align-items: center !important;
+  gap: 6px 8px !important;
+  width: 100% !important;
+  min-height: 78px !important;
+  padding: 8px !important;
+  border: 1px solid #e8dfda !important;
+  border-radius: 10px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+body.work-tab-sorting .sorting-work-card.shipping-mode-card {
+  grid-template-columns: 24px 46px minmax(0, 1fr) 78px 34px !important;
+}
+
+body.work-tab-sorting .sorting-work-card + .sorting-work-card {
+  margin-top: 0 !important;
+}
+
+body.work-tab-sorting .sorting-pick-check {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  justify-self: center !important;
+  align-self: center !important;
+  width: 22px !important;
+  min-width: 22px !important;
+}
+
+body.work-tab-sorting .sorting-work-thumb {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  width: 46px !important;
+  height: 46px !important;
+  min-width: 46px !important;
+  align-self: center !important;
+}
+
+body.work-tab-sorting .shipping-mode-card .sorting-work-thumb {
+  grid-column: 2 !important;
+}
+
+body.work-tab-sorting .sorting-work-thumb .list-thumb,
+body.work-tab-sorting .sorting-work-thumb img,
+body.work-tab-sorting .sorting-work-thumb button {
+  width: 46px !important;
+  height: 46px !important;
+  min-width: 46px !important;
+  max-width: 46px !important;
+  border-radius: 8px !important;
+}
+
+body.work-tab-sorting .sorting-work-card-body {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  display: grid !important;
+  grid-template-columns: auto auto minmax(0, 1fr) !important;
+  gap: 3px !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+
+body.work-tab-sorting .shipping-mode-card .sorting-work-card-body {
+  grid-column: 3 !important;
+}
+
+body.work-tab-sorting .sorting-work-title {
+  grid-column: 1 / -1 !important;
+  display: -webkit-box !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  color: #292522 !important;
+  font-size: 13px !important;
+  font-weight: 850 !important;
+  line-height: 1.28 !important;
+  text-overflow: ellipsis !important;
+  white-space: normal !important;
+  -webkit-box-orient: vertical !important;
+  -webkit-line-clamp: 2 !important;
+}
+
+body.work-tab-sorting .sorting-work-offer {
+  grid-column: 1 / -1 !important;
+  display: block !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  color: #0f766e !important;
+  font-size: 13px !important;
+  font-weight: 900 !important;
+  line-height: 1.2 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+body.work-tab-sorting .sorting-work-storage {
+  grid-column: 1 / -1 !important;
+  display: flex !important;
+  align-items: center !important;
+  min-height: 17px !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  color: #5f5752 !important;
+  font-size: 11px !important;
+  font-weight: 750 !important;
+  line-height: 1.25 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+body.work-tab-sorting .sorting-work-status-line {
+  grid-column: 1 / -1 !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 4px !important;
+  min-width: 0 !important;
+}
+
+body.work-tab-sorting .sorting-work-status,
+body.work-tab-sorting .sorting-work-shipping {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  max-width: 100% !important;
+  min-height: 19px !important;
+  padding: 2px 6px !important;
+  border: 1px solid #e8dfda !important;
+  border-radius: 999px !important;
+  background: #fbf8f5 !important;
+  color: #6b625d !important;
+  font-size: 9.5px !important;
+  font-weight: 800 !important;
+  line-height: 1.1 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+body.work-tab-sorting .sorting-work-card-body .image-state-badges,
+body.work-tab-sorting .sorting-work-card-body .reference-category-summary {
+  max-width: 100% !important;
+}
+
+body.work-tab-sorting .sorting-work-card-body .image-state-badges {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 3px !important;
+  margin-top: 0 !important;
+}
+
+body.work-tab-sorting .sorting-work-card-body .main-image-badge,
+body.work-tab-sorting .sorting-work-card-body .reference-image-badge {
+  min-height: 17px !important;
+  padding: 1px 5px !important;
+  border-radius: 999px !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  line-height: 1.1 !important;
+}
+
+body.work-tab-sorting .sorting-work-card-body > .main-image-badge {
+  position: absolute !important;
+  left: 8px !important;
+  bottom: 7px !important;
+  grid-column: auto !important;
+  max-width: 38px !important;
+  justify-content: center !important;
+}
+
+body.work-tab-sorting .sorting-work-card-body > .reference-image-badge {
+  position: absolute !important;
+  left: 48px !important;
+  bottom: 7px !important;
+  grid-column: auto !important;
+  max-width: 38px !important;
+  justify-content: center !important;
+}
+
+body.work-tab-sorting .shipping-mode-card .sorting-work-card-body > .main-image-badge {
+  left: 32px !important;
+}
+
+body.work-tab-sorting .shipping-mode-card .sorting-work-card-body > .reference-image-badge {
+  left: 72px !important;
+}
+
+body.work-tab-sorting .sorting-work-card-body .reference-category-summary {
+  display: block !important;
+  max-height: 2.5em !important;
+  overflow: hidden !important;
+  color: #8a8079 !important;
+  font-size: 9.5px !important;
+  font-weight: 700 !important;
+  line-height: 1.25 !important;
+}
+
+body.work-tab-sorting .sorting-work-destination {
+  grid-column: 3 !important;
+  grid-row: 1 !important;
+  align-self: center !important;
+  justify-self: stretch !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  min-height: 34px !important;
+  padding: 4px 6px !important;
+  border: 1px solid #e5ddd8 !important;
+  border-radius: 9px !important;
+  background: #f8f5f2 !important;
+  color: #4f4641 !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  line-height: 1.2 !important;
+  text-align: center !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  transform: none !important;
+}
+
+body.work-tab-sorting .sorting-action-menu {
+  grid-column: 4 !important;
+  grid-row: 1 !important;
+  align-self: center !important;
+  justify-self: end !important;
+  width: 34px !important;
+  min-width: 34px !important;
+  z-index: 90 !important;
+}
+
+body.work-tab-sorting .sorting-action-menu > summary {
+  width: 34px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  border-radius: 999px !important;
+}
+
+body.work-tab-sorting .shipping-mode-card .sorting-work-destination {
+  grid-column: 4 !important;
+}
+
+body.work-tab-sorting .shipping-mode-card .sorting-action-menu {
+  grid-column: 5 !important;
+}
+
+@media (max-width: 390px) {
+  body.work-tab-sorting .sorting-work-card {
+    grid-template-columns: 42px minmax(0, 1fr) 68px 32px !important;
+    min-height: 76px !important;
+    padding: 7px !important;
+    column-gap: 7px !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card.shipping-mode-card {
+    grid-template-columns: 22px 42px minmax(0, 1fr) 68px 32px !important;
+  }
+
+  body.work-tab-sorting .sorting-work-thumb,
+  body.work-tab-sorting .sorting-work-thumb .list-thumb,
+  body.work-tab-sorting .sorting-work-thumb img,
+  body.work-tab-sorting .sorting-work-thumb button {
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+    max-width: 42px !important;
+  }
+
+  body.work-tab-sorting .sorting-work-title,
+  body.work-tab-sorting .sorting-work-offer {
+    font-size: 12px !important;
+  }
+
+  body.work-tab-sorting .sorting-work-storage,
+  body.work-tab-sorting .sorting-work-destination {
+    font-size: 10px !important;
+  }
+
+  body.work-tab-sorting .sorting-action-menu,
+  body.work-tab-sorting .sorting-action-menu > summary {
+    width: 32px !important;
+    min-width: 32px !important;
+  }
+}
+
+/* Quick edit buttons: fast changes from item and sorting lists without opening detail screens. */
+.quick-edit-slot {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.quick-edit-bar {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(34px, 1fr));
+  gap: 5px;
+  width: 100%;
+  max-width: 100%;
+}
+
+.quick-edit-bar button {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 0;
+  min-height: 34px;
+  padding: 4px 5px;
+  border: 1px solid #e5ddd8;
+  border-radius: 9px;
+  background: #fffdfb;
+  color: #514a45;
+  font-size: 13px;
+  font-weight: 850;
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background-color 140ms ease, border-color 140ms ease, transform 120ms ease;
+}
+
+.quick-edit-bar button span {
+  color: #6f6660;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.quick-edit-bar button:active {
+  transform: scale(0.98);
+  background: #f8f1ec;
+  border-color: #dccbc2;
+}
+
+body.work-tab-list .mobile-compact-table-card .quick-edit-slot {
+  grid-column: 2 / 4;
+  grid-row: 2;
+}
+
+body.work-tab-list .mobile-item-card .quick-edit-slot,
+body.work-tab-list .inventory-shelf-card .quick-edit-slot {
+  width: 100%;
+}
+
+body.work-tab-sorting .sorting-work-card .quick-edit-slot {
+  grid-column: 2 / 5 !important;
+  grid-row: 2 !important;
+  align-self: stretch !important;
+  width: 100% !important;
+}
+
+body.work-tab-sorting .sorting-work-card.shipping-mode-card .quick-edit-slot {
+  grid-column: 3 / 6 !important;
+}
+
+body.work-tab-sorting .sorting-work-card .quick-edit-bar {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+body.work-tab-sorting .sorting-work-card .quick-edit-bar button {
+  min-height: 32px;
+  padding: 3px 4px;
+  background: #fff;
+}
+
+@media (max-width: 700px) {
+  .quick-edit-bar {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5px;
+  }
+
+  .quick-edit-bar button {
+    min-height: 38px;
+    padding: 5px 4px;
+    font-size: 14px;
+  }
+
+  .quick-edit-bar button span {
+    font-size: 10px;
+  }
+
+  body.work-tab-sorting .sorting-work-card .quick-edit-bar {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  body.work-tab-sorting .sorting-work-card .quick-edit-bar button {
+    min-height: 34px;
+    padding: 4px 2px;
+    font-size: 13px;
+  }
+
+  body.work-tab-sorting .sorting-work-card .quick-edit-bar button span {
+    font-size: 9px;
+  }
+}
+
+@media (max-width: 390px) {
+  body.work-tab-list .mobile-compact-table-card .quick-edit-slot {
+    grid-column: 1 / -1;
+  }
+
+  body.work-tab-sorting .sorting-work-card .quick-edit-slot {
+    grid-column: 1 / -1 !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card.shipping-mode-card .quick-edit-slot {
+    grid-column: 1 / -1 !important;
+  }
+}
+
+/* Sorting screen renewal: item list is the main work area for high-volume processing. */
+body.work-tab-sorting .sorting-panel {
+  display: grid !important;
+  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr) !important;
+  align-items: start !important;
+  gap: 16px !important;
+}
+
+body.work-tab-sorting .sorting-panel > .panel-heading {
+  grid-column: 1 / -1 !important;
+}
+
+body.work-tab-sorting .sorting-form {
+  grid-column: 1 !important;
+  position: sticky !important;
+  top: 12px !important;
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  align-self: start !important;
+  gap: 8px !important;
+  max-height: calc(100vh - 24px) !important;
+  overflow: auto !important;
+  padding-right: 2px !important;
+}
+
+body.work-tab-sorting .sorting-list-section {
+  grid-column: 2 !important;
+  min-width: 0 !important;
+}
+
+body.work-tab-sorting .sorting-shipping-summary {
+  grid-column: 2 !important;
+}
+
+body.work-tab-sorting .sorting-form > .sorting-form-card,
+body.work-tab-sorting .sorting-form > .sorting-extra-card,
+body.work-tab-sorting .sorting-form > .sorting-actions {
+  grid-column: 1 / -1 !important;
+}
+
+body.work-tab-sorting .sorting-form-card {
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+body.work-tab-sorting .sorting-form-card > summary {
+  min-height: 42px !important;
+  padding: 10px 12px 10px 38px !important;
+  border-radius: 10px !important;
+  background: #fffdfb !important;
+  font-size: 13px !important;
+  font-weight: 900 !important;
+}
+
+body.work-tab-sorting .sorting-form-card > summary::before {
+  left: 14px !important;
+}
+
+body.work-tab-sorting .sorting-form-card[open] > summary {
+  border-bottom: 1px solid #eee4df !important;
+  border-radius: 10px 10px 0 0 !important;
+}
+
+body.work-tab-sorting .sorting-form-card > .sorting-card-grid,
+body.work-tab-sorting .sorting-form-card > .sorting-price-grid,
+body.work-tab-sorting .sorting-image-card > .photo-management-note,
+body.work-tab-sorting .sorting-image-card > .image-field,
+body.work-tab-sorting .sorting-image-card > .image-reference-grid {
+  padding: 10px !important;
+}
+
+body.work-tab-sorting .sorting-form-card:not([open]) > :not(summary) {
+  display: none !important;
+}
+
+body.work-tab-sorting .sorting-primary-product-grid,
+body.work-tab-sorting .sorting-primary-sales-grid,
+body.work-tab-sorting .sorting-card-grid,
+body.work-tab-sorting .sorting-price-grid,
+body.work-tab-sorting .image-reference-grid {
+  grid-template-columns: 1fr !important;
+  gap: 8px !important;
+}
+
+body.work-tab-sorting .sorting-card-grid label,
+body.work-tab-sorting .sorting-price-grid label,
+body.work-tab-sorting .image-reference-grid label {
+  gap: 5px !important;
+  font-size: 12px !important;
+}
+
+body.work-tab-sorting .sorting-card-grid input,
+body.work-tab-sorting .sorting-card-grid select,
+body.work-tab-sorting .sorting-card-grid textarea,
+body.work-tab-sorting .sorting-price-grid input,
+body.work-tab-sorting .sorting-price-grid select,
+body.work-tab-sorting .sorting-price-grid textarea,
+body.work-tab-sorting .image-reference-grid input,
+body.work-tab-sorting .image-reference-grid select {
+  min-height: 38px !important;
+  font-size: 13px !important;
+}
+
+body.work-tab-sorting .sorting-actions {
+  position: sticky !important;
+  bottom: 0 !important;
+  z-index: 8 !important;
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 6px !important;
+  padding: 8px !important;
+  border: 1px solid #eaded8 !important;
+  border-radius: 12px !important;
+  background: rgba(255, 255, 255, 0.96) !important;
+  box-shadow: 0 -8px 20px rgba(57, 48, 42, 0.08) !important;
+}
+
+body.work-tab-sorting .sorting-actions button {
+  width: 100% !important;
+  min-height: 40px !important;
+}
+
+body.work-tab-sorting .sorting-list-heading {
+  margin-bottom: 8px !important;
+}
+
+body.work-tab-sorting .sorting-work-toolbar {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 30 !important;
+  display: grid !important;
+  grid-template-columns: minmax(180px, 1.4fr) minmax(140px, 0.75fr) minmax(120px, 0.7fr) repeat(2, max-content) !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin: 0 0 8px !important;
+  padding: 8px !important;
+  border: 1px solid #eaded8 !important;
+  border-radius: 12px !important;
+  background: rgba(255, 253, 251, 0.96) !important;
+  box-shadow: 0 8px 22px rgba(58, 45, 38, 0.08) !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+body.work-tab-sorting .sorting-toolbar-label {
+  display: none !important;
+}
+
+body.work-tab-sorting .sorting-work-toolbar input,
+body.work-tab-sorting .sorting-work-toolbar select,
+body.work-tab-sorting .sorting-work-toolbar button {
+  width: 100% !important;
+  min-height: 40px !important;
+}
+
+body.work-tab-sorting .sorting-work-toolbar .quick-filter-check {
+  min-height: 40px !important;
+  padding: 0 10px !important;
+  white-space: nowrap !important;
+}
+
+body.work-tab-sorting .sorting-work-card,
+body.work-tab-sorting .sorting-work-card.shipping-mode-card {
+  min-height: 168px !important;
+  padding: 12px !important;
+  gap: 8px 10px !important;
+  border-radius: 12px !important;
+}
+
+body.work-tab-sorting .sorting-work-title {
+  font-size: 14px !important;
+  line-height: 1.35 !important;
+}
+
+body.work-tab-sorting .sorting-work-offer {
+  font-size: 14px !important;
+}
+
+body.work-tab-sorting .sorting-work-status,
+body.work-tab-sorting .sorting-work-shipping {
+  min-height: 22px !important;
+  font-size: 10px !important;
+}
+
+body.work-tab-sorting .sorting-work-card .quick-edit-slot {
+  margin-top: 2px !important;
+}
+
+body.work-tab-sorting .sorting-work-card .quick-edit-bar {
+  grid-template-columns: repeat(5, 34px) !important;
+  justify-content: start !important;
+  gap: 6px !important;
+}
+
+body.work-tab-sorting .sorting-work-card .quick-edit-bar button {
+  width: 34px !important;
+  min-width: 34px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  padding: 0 !important;
+  border-radius: 999px !important;
+  font-size: 15px !important;
+}
+
+body.work-tab-sorting .sorting-work-card .quick-edit-bar button span {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  white-space: nowrap !important;
+}
+
+@media (max-width: 900px) {
+  body.work-tab-sorting .sorting-panel {
+    grid-template-columns: 1fr !important;
+  }
+
+  body.work-tab-sorting .sorting-form,
+  body.work-tab-sorting .sorting-list-section,
+  body.work-tab-sorting .sorting-shipping-summary {
+    grid-column: 1 / -1 !important;
+  }
+
+  body.work-tab-sorting .sorting-form {
+    position: static !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  body.work-tab-sorting .sorting-work-toolbar {
+    top: 0 !important;
+    grid-template-columns: minmax(0, 1fr) minmax(112px, 0.7fr) !important;
+  }
+
+  body.work-tab-sorting .sorting-work-toolbar select,
+  body.work-tab-sorting .sorting-work-toolbar button,
+  body.work-tab-sorting .sorting-work-toolbar .quick-filter-check {
+    min-width: 0 !important;
+  }
+}
+
+/* Sorting screen spacing pass: keep the list first, and open registration/editing only when needed. */
+body.work-tab-sorting .sorting-panel {
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 22px !important;
+}
+
+body.work-tab-sorting .sorting-form-drawer {
+  grid-column: 1 / -1 !important;
+  order: 2 !important;
+  width: 100% !important;
+  max-width: 980px !important;
+  margin: 2px auto 0 !important;
+  border: 1px solid #eaded8 !important;
+  border-radius: 14px !important;
+  background: #fffdfb !important;
+  box-shadow: 0 10px 24px rgba(58, 45, 38, 0.06) !important;
+  overflow: hidden !important;
+}
+
+body.work-tab-sorting .sorting-form-drawer > summary {
+  position: relative !important;
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-height: 46px !important;
+  padding: 10px 14px 10px 40px !important;
+  cursor: pointer !important;
+  list-style: none !important;
+  font-weight: 900 !important;
+}
+
+body.work-tab-sorting .sorting-form-drawer > summary::-webkit-details-marker {
+  display: none !important;
+}
+
+body.work-tab-sorting .sorting-form-drawer > summary::before {
+  content: "▶" !important;
+  position: absolute !important;
+  left: 16px !important;
+  color: #7b6c64 !important;
+  font-size: 12px !important;
+}
+
+body.work-tab-sorting .sorting-form-drawer[open] > summary::before {
+  content: "▼" !important;
+}
+
+body.work-tab-sorting .sorting-form-drawer > summary small {
+  justify-self: end !important;
+  color: #8b817b !important;
+  font-size: 11px !important;
+  font-weight: 750 !important;
+}
+
+body.work-tab-sorting .sorting-form-drawer:not([open]) .sorting-form {
+  display: none !important;
+}
+
+body.work-tab-sorting .sorting-list-section {
+  grid-column: 1 / -1 !important;
+  order: 1 !important;
+  padding: 18px !important;
+  border-radius: 16px !important;
+}
+
+body.work-tab-sorting .sorting-shipping-summary {
+  order: 3 !important;
+  grid-column: 1 / -1 !important;
+}
+
+body.work-tab-sorting .sorting-form {
+  position: static !important;
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  align-items: start !important;
+  gap: 12px !important;
+  max-height: none !important;
+  overflow: visible !important;
+  padding: 14px !important;
+}
+
+body.work-tab-sorting .sorting-form > .sorting-form-card,
+body.work-tab-sorting .sorting-form > .sorting-extra-card {
+  grid-column: span 1 !important;
+}
+
+body.work-tab-sorting .sorting-form > .sorting-actions {
+  grid-column: 1 / -1 !important;
+}
+
+body.work-tab-sorting .sorting-form-card[open] {
+  grid-column: span 2 !important;
+}
+
+body.work-tab-sorting .sorting-assessment-card[open] {
+  grid-column: span 3 !important;
+}
+
+body.work-tab-sorting .sorting-work-toolbar {
+  margin-bottom: 12px !important;
+  padding: 12px !important;
+  border-radius: 14px !important;
+  row-gap: 10px !important;
+}
+
+body.work-tab-sorting .filter-result-count {
+  margin: 8px 0 14px !important;
+}
+
+body.work-tab-sorting .sorting-filter-panel {
+  margin: 0 0 18px !important;
+}
+
+body.work-tab-sorting .sorting-work-card-list:not(.hidden) {
+  gap: 14px !important;
+}
+
+body.work-tab-sorting .sorting-work-card,
+body.work-tab-sorting .sorting-work-card.shipping-mode-card {
+  grid-template-columns: 56px minmax(0, 1fr) 104px 40px !important;
+  min-height: 176px !important;
+  padding: 14px !important;
+  gap: 10px 12px !important;
+  border-color: #e4d8d1 !important;
+}
+
+body.work-tab-sorting .sorting-work-card.shipping-mode-card {
+  grid-template-columns: 26px 56px minmax(0, 1fr) 104px 40px !important;
+}
+
+body.work-tab-sorting .sorting-work-thumb,
+body.work-tab-sorting .sorting-work-thumb .list-thumb,
+body.work-tab-sorting .sorting-work-thumb img,
+body.work-tab-sorting .sorting-work-thumb button {
+  width: 52px !important;
+  height: 52px !important;
+  min-width: 52px !important;
+  max-width: 52px !important;
+}
+
+body.work-tab-sorting .sorting-work-title {
+  font-size: 15px !important;
+  line-height: 1.38 !important;
+}
+
+body.work-tab-sorting .sorting-work-offer {
+  margin-top: 1px !important;
+  color: #0b766b !important;
+  font-size: 15px !important;
+}
+
+body.work-tab-sorting .sorting-work-storage {
+  color: #625852 !important;
+  font-size: 12px !important;
+}
+
+body.work-tab-sorting .sorting-work-status-line {
+  max-width: 360px !important;
+  gap: 6px !important;
+}
+
+body.work-tab-sorting .sorting-work-status,
+body.work-tab-sorting .sorting-work-shipping {
+  min-height: 24px !important;
+  background: #f8f4f1 !important;
+}
+
+body.work-tab-sorting .sorting-work-destination {
+  min-height: 42px !important;
+  font-size: 12px !important;
+}
+
+body.work-tab-sorting .sorting-action-menu > summary {
+  width: 38px !important;
+  height: 38px !important;
+  min-height: 38px !important;
+}
+
+body.work-tab-sorting .sorting-work-card .quick-edit-slot {
+  margin-top: 5px !important;
+}
+
+body.work-tab-sorting .sorting-work-card .quick-edit-bar {
+  gap: 9px !important;
+}
+
+body.work-tab-sorting .sorting-work-card .quick-edit-bar button {
+  width: 36px !important;
+  min-width: 36px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+}
+
+body.work-tab-sorting .row-action-menu .actions,
+body.work-tab-sorting .sorting-action-panel {
+  gap: 8px !important;
+  padding: 10px !important;
+}
+
+body.work-tab-sorting .row-action-menu .actions .danger-button,
+body.work-tab-sorting .sorting-action-panel .danger-button {
+  margin-top: 8px !important;
+  border-color: #e5b8b0 !important;
+  background: #fff5f3 !important;
+  color: #9f2f22 !important;
+}
+
+@media (max-width: 900px) {
+  body.work-tab-sorting .sorting-panel {
+    gap: 16px !important;
+  }
+
+  body.work-tab-sorting .sorting-list-section {
+    padding: 14px 10px !important;
+  }
+
+  body.work-tab-sorting .sorting-form {
+    grid-template-columns: 1fr !important;
+    padding: 10px !important;
+  }
+
+  body.work-tab-sorting .sorting-form > .sorting-form-card,
+  body.work-tab-sorting .sorting-form > .sorting-extra-card,
+  body.work-tab-sorting .sorting-form-card[open],
+  body.work-tab-sorting .sorting-assessment-card[open] {
+    grid-column: 1 / -1 !important;
+  }
+
+  body.work-tab-sorting .sorting-form-drawer {
+    max-width: 100% !important;
+  }
+
+  body.work-tab-sorting .sorting-form-drawer > summary small {
+    display: none !important;
+  }
+
+  body.work-tab-sorting .sorting-work-toolbar {
+    padding: 10px !important;
+    gap: 8px !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list:not(.hidden) {
+    gap: 12px !important;
+  }
+}
+
+@media (max-width: 390px) {
+  body.work-tab-sorting .sorting-work-card,
+  body.work-tab-sorting .sorting-work-card.shipping-mode-card {
+    min-height: 178px !important;
+    padding: 12px !important;
+  }
+
+  body.work-tab-sorting .sorting-work-thumb,
+  body.work-tab-sorting .sorting-work-thumb .list-thumb,
+  body.work-tab-sorting .sorting-work-thumb img,
+  body.work-tab-sorting .sorting-work-thumb button {
+    width: 46px !important;
+    height: 46px !important;
+    min-width: 46px !important;
+    max-width: 46px !important;
+  }
+}
+
+/* PC sorting density switch: compact rows for high-volume sale-destination checks. */
+body.work-tab-sorting .sorting-list-section > .sorting-list-heading,
+body.work-tab-sorting .sorting-list-section > .sorting-work-toolbar,
+body.work-tab-sorting .sorting-list-section > .sorting-filter-panel,
+body.work-tab-sorting .sorting-list-section > .sorting-work-card-list,
+body.work-tab-sorting .sorting-list-section > .table-wrap,
+body.work-tab-sorting .sorting-list-section > .empty-state {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  justify-self: stretch !important;
+}
+
+body.work-tab-sorting .sorting-work-toolbar > input,
+body.work-tab-sorting .sorting-work-toolbar > select,
+body.work-tab-sorting .sorting-work-toolbar > button,
+body.work-tab-sorting .sorting-work-toolbar > label,
+body.work-tab-sorting .sorting-work-toolbar > .sorting-density-toggle {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+}
+
+body.work-tab-sorting .sorting-density-toggle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  min-width: 0;
+}
+
+body.work-tab-sorting .density-toggle-button {
+  appearance: none;
+  -webkit-appearance: none;
+  min-height: 38px;
+  padding: 6px 10px;
+  border: 1px solid #e2d8d1;
+  border-radius: 10px;
+  background: #fff;
+  color: #5b514b;
+  font-size: 12px;
+  font-weight: 850;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+body.work-tab-sorting .density-toggle-button.active {
+  border-color: #d7bfb5;
+  background: #f7eee9;
+  color: #6f352a;
+}
+
+@media (min-width: 701px) {
+  body.work-tab-sorting .sorting-work-toolbar {
+    grid-template-columns: minmax(170px, 1fr) minmax(160px, 0.8fr) minmax(200px, 1fr) minmax(145px, 0.7fr) minmax(125px, 0.6fr) minmax(150px, 0.75fr) !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 10px 12px !important;
+  }
+
+  body.work-tab-sorting .sorting-work-toolbar input,
+  body.work-tab-sorting .sorting-work-toolbar select,
+  body.work-tab-sorting .sorting-work-toolbar button,
+  body.work-tab-sorting .sorting-work-toolbar .quick-filter-check {
+    min-height: 38px !important;
+  }
+
+  body.work-tab-sorting .sorting-toolbar-label {
+    margin: 0 !important;
+    white-space: nowrap !important;
+  }
+
+  body.work-tab-sorting .sorting-work-toolbar > #sortingItemSearch {
+    grid-column: auto !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list:not(.hidden) {
+    gap: 7px !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-card,
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-card.shipping-mode-card {
+    grid-template-columns: 44px minmax(0, 1fr) minmax(92px, 0.28fr) 176px 34px !important;
+    min-height: 92px !important;
+    padding: 9px 10px !important;
+    gap: 6px 10px !important;
+    border-radius: 10px !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-card.shipping-mode-card {
+    grid-template-columns: 22px 44px minmax(0, 1fr) minmax(92px, 0.28fr) 176px 34px !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-thumb,
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-thumb .list-thumb,
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-thumb img,
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-thumb button {
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+    max-width: 42px !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-card-body {
+    grid-template-columns: minmax(220px, 1.4fr) minmax(104px, 0.55fr) minmax(132px, 0.7fr) minmax(136px, 0.75fr) !important;
+    align-items: center !important;
+    gap: 4px 8px !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-title {
+    grid-column: 1 !important;
+    grid-row: 1 / span 2 !important;
+    font-size: 13px !important;
+    line-height: 1.28 !important;
+    -webkit-line-clamp: 2 !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-offer {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    margin: 0 !important;
+    font-size: 13px !important;
+    text-align: right !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-storage {
+    grid-column: 3 !important;
+    grid-row: 1 !important;
+    min-height: 20px !important;
+    font-size: 11px !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-status-line {
+    grid-column: 4 !important;
+    grid-row: 1 !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 4px !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-status,
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-shipping {
+    min-height: 20px !important;
+    padding: 2px 6px !important;
+    font-size: 9.5px !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-card-body .image-state-badges {
+    grid-column: 2 / 5 !important;
+    grid-row: 2 !important;
+    flex-wrap: nowrap !important;
+    overflow: hidden !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-card-body > .main-image-badge,
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-card-body > .reference-image-badge {
+    position: static !important;
+    left: auto !important;
+    bottom: auto !important;
+    max-width: none !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-card-body .reference-category-summary {
+    grid-column: 3 / 5 !important;
+    grid-row: 2 !important;
+    max-height: 1.35em !important;
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-destination {
+    min-height: 30px !important;
+    padding: 3px 6px !important;
+    font-size: 10.5px !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-action-menu,
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-action-menu > summary {
+    width: 32px !important;
+    min-width: 32px !important;
+    height: 32px !important;
+    min-height: 32px !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .quick-edit-slot {
+    grid-column: 4 / 5 !important;
+    grid-row: 1 !important;
+    align-self: center !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .shipping-mode-card .quick-edit-slot {
+    grid-column: 5 / 6 !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .shipping-mode-card .sorting-action-menu {
+    grid-column: 6 !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .quick-edit-bar {
+    grid-template-columns: repeat(5, 30px) !important;
+    justify-content: end !important;
+    gap: 5px !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .quick-edit-bar button {
+    width: 30px !important;
+    min-width: 30px !important;
+    height: 30px !important;
+    min-height: 30px !important;
+    padding: 0 !important;
+    border-radius: 999px !important;
+    font-size: 13px !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .quick-edit-bar button span {
+    display: none !important;
+  }
+}
+
+@media (max-width: 700px) {
+  body.work-tab-sorting .sorting-density-toggle {
+    display: none !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-card,
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-card.shipping-mode-card {
+    min-height: 178px !important;
+  }
+}
+
+/* Sorting compact density refinement: more rows per PC screen without changing mobile cards. */
+@media (min-width: 701px) {
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list:not(.hidden) {
+    gap: 5px !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-card,
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-card.shipping-mode-card {
+    grid-template-columns: 40px minmax(0, 1fr) minmax(86px, 0.22fr) 148px 30px !important;
+    min-height: 74px !important;
+    padding: 7px 9px !important;
+    gap: 5px 8px !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-card.shipping-mode-card {
+    grid-template-columns: 20px 40px minmax(0, 1fr) minmax(86px, 0.22fr) 148px 30px !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-thumb,
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-thumb .list-thumb,
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-thumb img,
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-thumb button {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    max-width: 40px !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-card-body {
+    grid-template-columns: minmax(220px, 1.8fr) minmax(82px, 0.42fr) minmax(94px, 0.45fr) minmax(122px, 0.56fr) !important;
+    grid-template-rows: 22px 18px !important;
+    gap: 3px 7px !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-title {
+    display: block !important;
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    overflow: hidden !important;
+    font-size: 12.5px !important;
+    line-height: 1.25 !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    -webkit-line-clamp: unset !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-offer {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    color: #0d766e !important;
+    font-size: 13px !important;
+    font-weight: 950 !important;
+    line-height: 1.2 !important;
+    text-align: right !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-storage {
+    grid-column: 3 !important;
+    grid-row: 1 !important;
+    min-height: 18px !important;
+    font-size: 10.5px !important;
+    line-height: 1.2 !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-status-line {
+    grid-column: 4 !important;
+    grid-row: 1 !important;
+    gap: 3px !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-status,
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-shipping {
+    min-height: 18px !important;
+    padding: 1px 5px !important;
+    font-size: 9.5px !important;
+    line-height: 1.1 !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-offer,
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-storage,
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-status,
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-shipping,
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-destination {
+    cursor: pointer !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-offer:hover,
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-storage:hover,
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-status:hover,
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-shipping:hover,
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-destination:hover {
+    background: #fff6f0 !important;
+    border-color: #dfc9bd !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-card-body .image-state-badges {
+    grid-column: 2 / 4 !important;
+    grid-row: 2 !important;
+    gap: 3px !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-card-body .main-image-badge,
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-card-body .reference-image-badge {
+    min-height: 16px !important;
+    padding: 1px 4px !important;
+    font-size: 9.5px !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-card-body .reference-category-summary {
+    grid-column: 4 !important;
+    grid-row: 2 !important;
+    max-height: 1.25em !important;
+    font-size: 9px !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-destination {
+    min-height: 26px !important;
+    padding: 2px 5px !important;
+    font-size: 10px !important;
+    line-height: 1.15 !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-action-menu,
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-action-menu > summary {
+    width: 28px !important;
+    min-width: 28px !important;
+    height: 28px !important;
+    min-height: 28px !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .quick-edit-bar {
+    grid-template-columns: repeat(5, 26px) !important;
+    gap: 4px !important;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .quick-edit-bar button {
+    width: 26px !important;
+    min-width: 26px !important;
+    height: 26px !important;
+    min-height: 26px !important;
+    font-size: 12px !important;
+  }
+}
+
+.sorting-inline-editor {
+  position: absolute;
+  right: 42px;
+  top: 8px;
+  z-index: 180;
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) auto;
+  gap: 7px;
+  align-items: end;
+  width: min(420px, calc(100% - 72px));
+  padding: 10px;
+  border: 1px solid #ddc9bf;
+  border-radius: 12px;
+  background: #fffdfb;
+  box-shadow: 0 16px 32px rgba(48, 36, 30, 0.18);
+}
+
+body.work-tab-sorting .sorting-work-offer.offer-level-unset {
+  color: #8d8580 !important;
+}
+
+body.work-tab-sorting .sorting-work-offer.offer-level-orange {
+  color: #b85f16 !important;
+}
+
+body.work-tab-sorting .sorting-work-offer.offer-level-green {
+  color: #0d766e !important;
+}
+
+body.work-tab-sorting .sorting-work-offer.offer-level-gold {
+  color: #9a6a00 !important;
+  text-shadow: 0 0 0 rgba(154, 106, 0, 0.1);
+}
+
+.sorting-inline-label {
+  grid-column: 1 / -1;
+  color: #695f58;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.sorting-inline-input-slot {
+  min-width: 0;
+}
+
+.sorting-inline-control {
+  width: 100%;
+  min-height: 36px;
+  padding: 7px 9px;
+  border: 1px solid #dccfc7;
+  border-radius: 9px;
+  background: #fff;
+  color: #2d2926;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+textarea.sorting-inline-control {
+  min-height: 68px;
+  resize: vertical;
+}
+
+.sorting-inline-actions {
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+  gap: 6px;
+}
+
+.sorting-inline-actions button {
+  min-height: 34px;
+  padding: 6px 10px;
+  white-space: nowrap;
+}
+
+@media (min-width: 701px) {
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-inline-editor {
+    top: 5px;
+    right: 36px;
+    grid-template-columns: minmax(150px, 1fr) auto;
+    width: min(360px, calc(100% - 62px));
+    padding: 8px;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-inline-label {
+    font-size: 10px;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-inline-control {
+    min-height: 30px;
+    padding: 5px 7px;
+    font-size: 12px;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list textarea.sorting-inline-control {
+    min-height: 54px;
+  }
+
+  body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-inline-actions button {
+    min-height: 30px;
+    padding: 5px 8px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 700px) {
+  .sorting-inline-editor {
+    left: 10px;
+    right: 10px;
+    top: 10px;
+    width: auto;
+    grid-template-columns: 1fr;
+  }
+
+  .sorting-inline-actions {
+    grid-template-columns: 1fr 1fr;
   }
 }

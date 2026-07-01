@@ -243,6 +243,7 @@ const profitAmountRankingList = document.querySelector("#profitAmountRankingList
 const profitRateRankingList = document.querySelector("#profitRateRankingList");
 const categoryProfitRankingList = document.querySelector("#categoryProfitRankingList");
 const storageProfitRankingList = document.querySelector("#storageProfitRankingList");
+const sortingFormDrawer = document.querySelector("#sortingFormDrawer");
 const sortingForm = document.querySelector("#sortingForm");
 const sortingIdInput = document.querySelector("#sortingId");
 const sortingNameInput = document.querySelector("#sortingName");
@@ -278,6 +279,7 @@ const sortingGenreFilter = document.querySelector("#sortingGenreFilter");
 const sortingBoxSearchInput = document.querySelector("#sortingBoxSearch");
 const sortingItemSearchInput = document.querySelector("#sortingItemSearch");
 const sortingOrderInput = document.querySelector("#sortingOrder");
+const sortingDensityButtons = document.querySelectorAll("[data-sorting-density]");
 const sortingImageOnlyFilter = document.querySelector("#sortingImageOnlyFilter");
 const sortingStorageUnsetFilter = document.querySelector("#sortingStorageUnsetFilter");
 const sortingShippingModeButton = document.querySelector("#sortingShippingModeButton");
@@ -438,10 +440,19 @@ let pendingImportReferenceId = "";
 let pendingReferenceCategory = "";
 let sortingImageOnly = Boolean(uiState.sorting?.imageOnly);
 let sortingStorageUnsetOnly = Boolean(uiState.sorting?.storageUnsetOnly);
+let sortingDensityMode = uiState.sorting?.densityMode || "compact";
 const sortingShippingCheckedIds = new Set();
 
 function isMobileViewport() {
   return window.matchMedia("(max-width: 700px)").matches;
+}
+
+function normalizeViewForDevice(view) {
+  if (isMobileViewport() && view === "import") {
+    return "list";
+  }
+
+  return view;
 }
 
 function loadUiState() {
@@ -497,6 +508,7 @@ function collectUiStatePatch() {
       shippingMode: isSortingShippingMode,
       imageOnly: sortingImageOnly,
       storageUnsetOnly: sortingStorageUnsetOnly,
+      densityMode: sortingDensityMode,
     },
     import: {
       filter: importResultFilter,
@@ -890,6 +902,77 @@ function getReferenceImageCount(target) {
   return getReferenceImages(target).length;
 }
 
+function getReferenceCategoryLabel(category, { compact = false } = {}) {
+  const normalized = String(category || "その他").trim() || "その他";
+  if (!compact) {
+    return normalized;
+  }
+
+  const shortLabels = {
+    "駿河屋スクショ": "駿河屋",
+    "購入時スクショ": "購入時",
+    "バーコード": "バーコード",
+    "状態確認": "状態",
+  };
+
+  return shortLabels[normalized] || normalized.replace(/画像|写真|スクショ/g, "") || normalized;
+}
+
+function getProductImageKeys(target) {
+  if (!target || typeof target !== "object") {
+    return [];
+  }
+
+  const refs = normalizeImageRefs(target.imageRefs);
+  const keys = [
+    refs.googlePhotoId ? `google:${refs.googlePhotoId}` : "",
+    refs.localImageId ? `local:${refs.localImageId}` : "",
+    refs.cloudImageId ? `cloud:${refs.cloudImageId}` : "",
+    !refs.localImageId && target.imageData ? `embedded:${target.id || target.itemCode || target.imageData}` : "",
+  ].filter(Boolean);
+
+  if (keys.length === 0 && target.imageData) {
+    keys.push(`embedded:${target.id || target.itemCode || "image"}`);
+  }
+
+  return [...new Set(keys)];
+}
+
+function getImageSummary(...targets) {
+  const productKeys = new Set();
+  const referenceMap = new Map();
+
+  targets.filter(Boolean).forEach((target) => {
+    getProductImageKeys(target).forEach((key) => productKeys.add(key));
+    getReferenceImages(target).forEach((image) => {
+      const key = image.imageId || `${image.category}:${image.createdAt}:${image.memo}`;
+      if (!referenceMap.has(key)) {
+        referenceMap.set(key, image);
+      }
+    });
+  });
+
+  const referenceCategoryCounts = new Map();
+  [...referenceMap.values()].forEach((image) => {
+    const category = image.category || "その他";
+    referenceCategoryCounts.set(category, (referenceCategoryCounts.get(category) || 0) + 1);
+  });
+
+  return {
+    productCount: productKeys.size,
+    referenceCount: referenceMap.size,
+    referenceCategoryCounts,
+  };
+}
+
+function getDisplayImageSummary(target) {
+  return getImageSummary(target);
+}
+
+function getSortingDisplayImageSummary(item) {
+  return getImageSummary(getSortingSourceItem(item), item);
+}
+
 function hasMainImage(target) {
   const refs = normalizeImageRefs(target?.imageRefs);
   return Boolean(
@@ -910,33 +993,41 @@ function hasAnyDisplayImage(target) {
 }
 
 function getProductImageCount(target) {
-  return hasMainImage(target) ? 1 : 0;
+  return getDisplayImageSummary(target).productCount;
 }
 
 function getImageStateLabels(target) {
-  const labels = [];
-  const productImageCount = getProductImageCount(target);
-  const referenceImageCount = getReferenceImageCount(target);
-  if (productImageCount > 0) {
-    labels.push(`📷${productImageCount}`);
-  }
-  if (referenceImageCount > 0) {
-    labels.push(`📚${referenceImageCount}`);
-  }
-  return labels;
+  const summary = getDisplayImageSummary(target);
+  return [`📷${summary.productCount}`, `📚${summary.referenceCount}`];
 }
 
-function appendImageStateBadges(container, target) {
+function appendImageStateBadges(container, target, options = {}) {
   if (!container) {
     return;
   }
 
-  getImageStateLabels(target).forEach((label) => {
+  const summary = options.summary || getDisplayImageSummary(target);
+  [
+    { label: `📷${summary.productCount}`, type: "product", count: summary.productCount },
+    { label: `📚${summary.referenceCount}`, type: "reference", count: summary.referenceCount },
+  ].forEach(({ label, type, count }) => {
     const badge = document.createElement("span");
-    badge.className = label.startsWith("📚") ? "reference-image-badge" : "main-image-badge";
+    badge.className = type === "reference" ? "reference-image-badge" : "main-image-badge";
+    badge.classList.toggle("image-badge-empty", count === 0);
     badge.textContent = label;
     container.append(badge);
   });
+
+  const categories = [...summary.referenceCategoryCounts.entries()]
+    .filter(([, count]) => count > 0)
+    .map(([category, count]) => `${getReferenceCategoryLabel(category, { compact: true })}${count}`);
+
+  if (categories.length > 0) {
+    const categoryLine = document.createElement("small");
+    categoryLine.className = "reference-category-summary";
+    categoryLine.textContent = categories.join(" / ");
+    container.append(categoryLine);
+  }
 }
 
 function chooseReferenceImageCategory() {
@@ -1004,7 +1095,11 @@ function isImportStorageUnset(importedItem) {
 
 function hasImportDisplayImage(importedItem) {
   const matchTarget = getImportTargetByMatch(importedItem?.matchTarget);
-  return hasAnyDisplayImage(importedItem) || (matchTarget ? hasAnyDisplayImage(matchTarget) : false);
+  const sourceItem = matchTarget && sortingItems.some((item) => item.id === matchTarget.id)
+    ? getSortingSourceItem(matchTarget)
+    : null;
+  const summary = getImageSummary(importedItem, matchTarget, sourceItem);
+  return summary.productCount > 0 || summary.referenceCount > 0;
 }
 
 function getImageProviderLabel(provider) {
@@ -3931,6 +4026,45 @@ function collapseSortingExtrasOnMobile() {
   document.querySelectorAll(".sorting-extra-card").forEach((details) => {
     details.removeAttribute("open");
   });
+}
+
+function initializeSortingFormAccordions() {
+  const sections = [...sortingForm.querySelectorAll(".sorting-form-card")];
+
+  if (sections.length === 0) {
+    return;
+  }
+
+  sections.forEach((details, index) => {
+    if (!(details instanceof HTMLDetailsElement)) {
+      return;
+    }
+
+    details.open = index === 0;
+    details.addEventListener("toggle", () => {
+      if (!details.open) {
+        return;
+      }
+
+      sections.forEach((section) => {
+        if (section !== details && section instanceof HTMLDetailsElement) {
+          section.open = false;
+        }
+      });
+    });
+  });
+}
+
+function openSortingFormDrawer() {
+  if (sortingFormDrawer) {
+    sortingFormDrawer.open = true;
+  }
+}
+
+function closeSortingFormDrawer() {
+  if (sortingFormDrawer) {
+    sortingFormDrawer.open = false;
+  }
 }
 
 function initializeSupabaseClient() {
@@ -9009,10 +9143,8 @@ function createDetailHero(item) {
 function createDetailSummary(item) {
   const summary = document.createElement("section");
   const profit = calculateProfit(item);
-  const imageRefs = normalizeImageRefs(item.imageRefs);
-  const hasLocalImage = Boolean(getLocalItemImage(item));
-  const hasGooglePhotoId = Boolean(String(imageRefs.googlePhotoId || "").trim());
-  const imageStatus = hasLocalImage ? "端末画像あり" : hasGooglePhotoId ? "Google IDあり" : "任意";
+  const imageSummary = getDisplayImageSummary(item);
+  const imageStatus = `📷${imageSummary.productCount} / 📚${imageSummary.referenceCount}`;
   summary.className = "detail-priority-summary";
   summary.innerHTML = `
     <div class="detail-summary-card detail-summary-profit">
@@ -9051,7 +9183,7 @@ function createReferenceImageSection(target, collection = "items") {
 
   section.className = "reference-image-section";
   header.className = "reference-image-header";
-  title.textContent = "📚 参考画像";
+  title.textContent = `📚 参考画像（非公開） ${referenceImages.length}枚`;
   addButton.className = "ghost-button";
   addButton.type = "button";
   addButton.textContent = "📚 参考画像追加";
@@ -9074,11 +9206,12 @@ function createReferenceImageSection(target, collection = "items") {
     });
 
     groups.forEach((images, category) => {
-      const groupSection = document.createElement("div");
-      const groupTitle = document.createElement("strong");
+      const groupSection = document.createElement("details");
+      const groupTitle = document.createElement("summary");
       const list = document.createElement("div");
       groupSection.className = "reference-image-category";
-      groupTitle.textContent = `■${category}`;
+      groupSection.open = true;
+      groupTitle.textContent = `■ ${category}（${images.length}）`;
       list.className = "reference-image-list";
 
       images.forEach((referenceImage) => {
@@ -9120,18 +9253,27 @@ function createProductImageSection(item, collection = "items") {
   const section = document.createElement("section");
   const header = document.createElement("div");
   const title = document.createElement("h4");
+  const actions = document.createElement("div");
   const addButton = document.createElement("button");
+  const removeButton = document.createElement("button");
   const imageWrap = document.createElement("div");
   const localImage = getLocalItemImage(item);
 
   section.className = "product-image-section";
   header.className = "reference-image-header";
-  title.textContent = "📷 商品画像（出品用）";
+  title.textContent = `📷 商品画像（出品用） ${getProductImageCount(item)}枚`;
+  actions.className = "image-section-actions";
   addButton.className = "ghost-button";
   addButton.type = "button";
   addButton.textContent = "📷 商品画像追加";
   addButton.addEventListener("click", () => requestLocalPhoto(item.id, collection));
-  header.append(title, addButton);
+  removeButton.className = "ghost-button";
+  removeButton.type = "button";
+  removeButton.textContent = "削除";
+  removeButton.disabled = !hasMainImage(item);
+  removeButton.addEventListener("click", () => removeLocalPhoto(item, collection));
+  actions.append(addButton, removeButton);
+  header.append(title, actions);
 
   imageWrap.className = "detail-image-wrap";
   if (localImage) {
@@ -9260,7 +9402,7 @@ function openDetailModal(item) {
   copyDetailDescriptionButton.disabled = !String(item.description || "").trim();
   copyDetailItemIdButton.disabled = !String(getItemCode(item) || "").trim();
   copyGooglePhotoIdButton.disabled = !String(imageRefs.googlePhotoId || "").trim();
-  removeDetailLocalPhotoButton.disabled = !Boolean(localImage);
+  removeDetailLocalPhotoButton.disabled = !Boolean(getLocalItemImage(item));
   updateDetailNavigationButtons();
 
   detailModal.classList.remove("hidden");
@@ -10034,7 +10176,8 @@ function getFilteredSortingItems() {
     const matchesGenre = !sortingGenreFilter.value || item.genre === sortingGenreFilter.value;
     const matchesBox = !boxKeyword || String(item.boxNumber || "").toLowerCase().includes(boxKeyword);
     const matchesKeyword = valuesMatchKeyword(getSortingSearchValues(item), keyword);
-    const matchesImage = !sortingImageOnly || hasAnyDisplayImage(item);
+    const imageSummary = getSortingDisplayImageSummary(item);
+    const matchesImage = !sortingImageOnly || imageSummary.productCount > 0 || imageSummary.referenceCount > 0;
     const matchesStorageUnset = !sortingStorageUnsetOnly || isStorageUnset(item);
     return matchesDestination && matchesStatus && matchesGenre && matchesBox && matchesKeyword && matchesImage && matchesStorageUnset;
   });
@@ -10067,6 +10210,61 @@ function isSortingShippingCandidate(item) {
   return !["発送済", "査定待ち", "入金済", "完了"].includes(item.shippingStatus || "未仕分け");
 }
 
+function shortenShippingStatus(status) {
+  const normalizedStatus = normalizeText(status) || "未仕分け";
+  const labels = {
+    発送準備済み: "準備済み",
+    発送準備中: "準備中",
+    仕分け済: "仕分け済",
+    未仕分け: "未仕分け",
+    発送待ち: "発送待ち",
+    発送済: "発送済",
+    査定待ち: "査定待ち",
+    入金済: "入金済",
+    完了: "完了",
+  };
+
+  return labels[normalizedStatus] || normalizedStatus;
+}
+
+function getSortingOfferLevelClass(bestOffer) {
+  if (!bestOffer || parseMoney(bestOffer.value) === "") {
+    return "offer-level-unset";
+  }
+
+  const value = parseMoney(bestOffer.value);
+
+  if (value >= 3000) {
+    return "offer-level-gold";
+  }
+
+  if (value >= 1000) {
+    return "offer-level-green";
+  }
+
+  return "offer-level-orange";
+}
+
+function getEffectiveSortingDensityMode() {
+  if (isMobileViewport()) {
+    return "standard";
+  }
+
+  return sortingDensityMode === "standard" ? "standard" : "compact";
+}
+
+function updateSortingDensityControls() {
+  const effectiveMode = getEffectiveSortingDensityMode();
+
+  sortingWorkCardList?.classList.toggle("sorting-compact-list", effectiveMode === "compact");
+  sortingWorkCardList?.classList.toggle("sorting-standard-list", effectiveMode !== "compact");
+  sortingDensityButtons.forEach((button) => {
+    const isActive = button.dataset.sortingDensity === sortingDensityMode;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-pressed", String(isActive));
+  });
+}
+
 function createSortingWorkCard(item) {
   const card = document.createElement("article");
   const bestOffer = getBestSortingOffer(item);
@@ -10089,10 +10287,15 @@ function createSortingWorkCard(item) {
     <div class="sorting-work-thumb"></div>
     <div class="sorting-work-card-body">
       <strong class="sorting-work-title"></strong>
-      <b class="sorting-work-offer"></b>
-      <span class="sorting-work-storage"></span>
+      <b class="sorting-work-offer" data-action="quick-edit-appraisal" title="査定額を編集"></b>
+      <span class="sorting-work-storage" data-action="quick-edit-storage" title="保管場所を編集"></span>
+      <span class="sorting-work-status-line">
+        <span class="sorting-work-status" data-action="quick-edit-status" title="状態を編集"></span>
+        <span class="sorting-work-shipping" data-action="quick-edit-shipping" title="発送状態を編集"></span>
+      </span>
     </div>
-    <div class="sorting-work-destination"></div>
+    <div class="sorting-work-destination" data-action="quick-edit-destination" title="売却先を編集"></div>
+    <div class="quick-edit-slot"></div>
     <details class="row-action-menu sorting-action-menu">
       <summary aria-label="操作メニュー">⋯</summary>
       <div class="actions sorting-row-actions sorting-action-panel">
@@ -10111,10 +10314,21 @@ function createSortingWorkCard(item) {
   thumbnail.dataset.action = "change-sorting-photo";
   card.querySelector(".sorting-work-thumb").append(thumbnail);
   card.querySelector(".sorting-work-title").textContent = item.name || "商品名未設定";
-  card.querySelector(".sorting-work-offer").textContent = bestOffer ? formatMoney(bestOffer.value) : "査定額未設定";
-  card.querySelector(".sorting-work-storage").textContent = `📦 ${item.storageLocation || "保管場所未設定"}`;
+  card.querySelector(".sorting-work-offer").textContent = bestOffer
+    ? `💰${formatMoney(bestOffer.value)}`
+    : "💰未入力";
+  card.querySelector(".sorting-work-offer").classList.add(getSortingOfferLevelClass(bestOffer));
+  card.querySelector(".sorting-work-offer").title = bestOffer
+    ? `${bestOffer.label} ${formatMoney(bestOffer.value)} / クリックで編集`
+    : "査定額を編集";
+  card.querySelector(".sorting-work-storage").textContent = `📍${item.storageLocation || "未設定"}`;
+  card.querySelector(".sorting-work-status").textContent = `⚪${item.status || "未確認"}`;
+  card.querySelector(".sorting-work-shipping").textContent = `📦${shortenShippingStatus(item.shippingStatus || "未仕分け")}`;
   card.querySelector(".sorting-work-destination").textContent = `🏪 ${getSortingDestinationLabel(item.destination)}`;
-  appendImageStateBadges(card.querySelector(".sorting-work-card-body"), item);
+  appendImageStateBadges(card.querySelector(".sorting-work-card-body"), item, {
+    summary: getSortingDisplayImageSummary(item),
+  });
+  card.querySelector(".quick-edit-slot").append(createQuickEditBar("sorting"));
   if (sourceItem) {
     card.dataset.sourceId = sourceItem.id;
     card.querySelectorAll(".sorting-source-action").forEach((button) => button.classList.remove("hidden"));
@@ -10710,7 +10924,9 @@ function createSortingRow(item) {
 
   const cells = row.querySelectorAll("td");
   cells[0].querySelector(".sorting-row-title").textContent = item.name || "-";
-  appendImageStateBadges(cells[0], item);
+  appendImageStateBadges(cells[0], item, {
+    summary: getSortingDisplayImageSummary(item),
+  });
   cells[1].querySelector(".sorting-row-storage").textContent = item.storageLocation || "-";
   cells[2].querySelector(".sorting-row-destination").textContent = getSortingDestinationLabel(item.destination);
   cells[3].querySelector(".sorting-row-shipping").textContent = item.shippingStatus || "未仕分け";
@@ -10755,6 +10971,7 @@ function renderSorting() {
     searched: searchedSortingCount,
     total: sortingItems.length,
   });
+  updateSortingDensityControls();
   sortingTableBody.innerHTML = "";
   sortingWorkCardList.innerHTML = "";
   sortingShippingModeButton.classList.toggle("active", isSortingShippingMode);
@@ -10815,9 +11032,11 @@ function resetSortingForm() {
   renderSortingAppraisalFields();
   sortingSubmitButton.textContent = "仕分け登録";
   sortingCancelButton.classList.add("hidden");
+  closeSortingFormDrawer();
 }
 
 function startSortingEdit(item) {
+  openSortingFormDrawer();
   sortingIdInput.value = item.id;
   sortingNameInput.value = item.name || "";
   sortingGenreInput.value = item.genre || "";
@@ -10950,6 +11169,556 @@ function markItemAsShippingReadyFromList(item) {
     : currentItem);
   saveItems();
   showToast("✓ 発送準備へ変更しました", "success");
+}
+
+function createQuickEditBar(collection = "items") {
+  const bar = document.createElement("div");
+  bar.className = "quick-edit-bar";
+  bar.setAttribute("aria-label", "クイック編集");
+  bar.innerHTML = `
+    <button type="button" data-action="quick-edit-storage" title="保管場所を編集">📦<span>保管</span></button>
+    <button type="button" data-action="quick-edit-appraisal" title="査定額を編集">💰<span>査定</span></button>
+    <button type="button" data-action="quick-edit-memo" title="メモを編集">📝<span>メモ</span></button>
+    <button type="button" data-action="${collection === "sorting" ? "change-sorting-photo" : "change-photo"}" title="商品画像を追加">📷<span>商品</span></button>
+    <button type="button" data-action="${collection === "sorting" ? "add-sorting-reference-image" : "add-reference-image"}" title="参考画像を追加">📚<span>参考</span></button>
+  `;
+  return bar;
+}
+
+function getAppraisalSourceByLabel(label) {
+  const normalizedLabel = normalizeText(label);
+  return getAppraisalSources().find((source) => normalizeText(getAppraisalFieldLabel(source)) === normalizedLabel) || null;
+}
+
+function getDefaultAppraisalSource() {
+  return getAppraisalSources()[0] || null;
+}
+
+function getSortingQuickAppraisalField(item) {
+  const destinationSource = getAppraisalSourceByLabel(getSortingDestinationLabel(item.destination));
+  const bestOffer = getBestSortingOffer(item);
+  const bestSource = bestOffer ? getAppraisalSourceByLabel(bestOffer.label) : null;
+  const source = destinationSource || bestSource || getDefaultAppraisalSource();
+
+  if (!source) {
+    return null;
+  }
+
+  return {
+    field: getAppraisalFieldName(source),
+    label: getAppraisalFieldLabel(source),
+  };
+}
+
+function replaceVisibleItemCards(item) {
+  document.querySelectorAll(`[data-id="${CSS.escape(item.id)}"]`).forEach((node) => {
+    if (node.classList.contains("mobile-compact-table-card")) {
+      node.replaceWith(createMobileCompactTableCard(item));
+      return;
+    }
+    if (node.classList.contains("mobile-item-card")) {
+      node.replaceWith(createMobileCard(item));
+      return;
+    }
+    if (node.classList.contains("inventory-shelf-card")) {
+      node.replaceWith(createInventoryShelfCard(item));
+      return;
+    }
+    if (node.classList.contains("compact-list-row")) {
+      node.replaceWith(createCompactListRow(item));
+      return;
+    }
+    if (node.tagName === "TR" && node.closest("#itemTableBody")) {
+      node.replaceWith(createActiveRow(item));
+    }
+  });
+}
+
+function replaceVisibleSortingCards(item) {
+  document.querySelectorAll(`[data-id="${CSS.escape(item.id)}"]`).forEach((node) => {
+    if (node.classList.contains("sorting-work-card")) {
+      node.replaceWith(createSortingWorkCard(item));
+      return;
+    }
+    if (node.tagName === "TR" && node.closest("#sortingTableBody")) {
+      node.replaceWith(createSortingRow(item));
+    }
+  });
+}
+
+function updateLinkedSortingStorage(itemId, storageLocation) {
+  const linkedSortingItems = sortingItems.filter((sortingItem) => sortingItem.sourceItemId === itemId);
+
+  if (linkedSortingItems.length === 0) {
+    return;
+  }
+
+  const updatedAt = new Date().toISOString();
+  sortingItems = sortingItems.map((sortingItem) => (sortingItem.sourceItemId === itemId
+    ? { ...sortingItem, storageLocation, updatedAt }
+    : sortingItem));
+  saveSortingItems();
+  linkedSortingItems.forEach((sortingItem) => {
+    replaceVisibleSortingCards({ ...sortingItem, storageLocation, updatedAt });
+  });
+}
+
+function updateItemQuickField(item, updates, successMessage, historyChanges = []) {
+  const updatedAt = new Date().toISOString();
+  const updatedItem = {
+    ...item,
+    ...updates,
+    updatedAt,
+  };
+  const changes = historyChanges.length > 0 ? historyChanges : getItemChangeDescriptions(item, updatedItem);
+  updatedItem.editHistory = appendEditHistory(item, changes, updatedAt);
+  items = items.map((currentItem) => (currentItem.id === item.id ? updatedItem : currentItem));
+
+  if (!saveItems()) {
+    return item;
+  }
+
+  replaceVisibleItemCards(updatedItem);
+  showToast(successMessage, "success");
+  return updatedItem;
+}
+
+function updateSortingQuickField(item, updates, successMessage) {
+  const updatedItem = normalizeSortingItem({
+    ...item,
+    ...updates,
+    updatedAt: new Date().toISOString(),
+  });
+  sortingItems = sortingItems.map((currentItem) => (currentItem.id === item.id ? updatedItem : currentItem));
+  saveSortingItems();
+  replaceVisibleSortingCards(updatedItem);
+  showToast(successMessage, "success");
+  return updatedItem;
+}
+
+function quickEditItemStorage(item) {
+  const storageOptions = getStorageLocationOptions(item.storageLocation || "")
+    .filter((value) => value !== "未設定")
+    .join(" / ");
+  const nextStorage = prompt(`保管場所を入力してください。\n候補: ${storageOptions || "設定ページで追加できます"}`, item.storageLocation || "");
+
+  if (nextStorage === null) {
+    return;
+  }
+
+  const storageLocation = normalizeText(nextStorage);
+
+  if (!storageLocation) {
+    showToast("保管場所を入力してください", "error");
+    return;
+  }
+
+  updateItemQuickField(item, { storageLocation }, "✓ 保管場所を保存しました", [
+    `保管場所: ${formatHistoryValue(item.storageLocation)} → ${storageLocation}`,
+  ]);
+  updateLinkedSortingStorage(item.id, storageLocation);
+}
+
+function quickEditItemAppraisal(item) {
+  const linkedSortingItem = sortingItems.find((sortingItem) => sortingItem.sourceItemId === item.id);
+
+  if (linkedSortingItem) {
+    quickEditSortingAppraisal(linkedSortingItem);
+    return;
+  }
+
+  const currentValue = parseMoney(item.plannedPrice);
+  const nextValue = prompt("査定額または予定価格を入力してください。", currentValue === "" ? "" : String(currentValue));
+
+  if (nextValue === null) {
+    return;
+  }
+
+  const plannedPrice = parseMoney(nextValue);
+
+  if (plannedPrice === "") {
+    showToast("金額を入力してください", "error");
+    return;
+  }
+
+  updateItemQuickField(item, { plannedPrice }, "✓ 査定額を保存しました", [
+    `予定価格: ${formatHistoryValue(formatMoney(parseMoney(item.plannedPrice)))} → ${formatMoney(plannedPrice)}`,
+  ]);
+}
+
+function quickEditItemMemo(item) {
+  const nextMemo = prompt("メモを入力してください。", item.memo || "");
+
+  if (nextMemo === null) {
+    return;
+  }
+
+  updateItemQuickField(item, { memo: normalizeText(nextMemo) }, "✓ メモを保存しました", [
+    "メモを更新",
+  ]);
+}
+
+function quickEditSortingStorage(item) {
+  const nextStorage = prompt("保管場所を入力してください。", item.storageLocation || "");
+
+  if (nextStorage === null) {
+    return;
+  }
+
+  const storageLocation = normalizeText(nextStorage);
+
+  if (!storageLocation) {
+    showToast("保管場所を入力してください", "error");
+    return;
+  }
+
+  updateSortingQuickField(item, { storageLocation }, "✓ 保管場所を保存しました");
+
+  if (item.sourceItemId) {
+    const sourceItem = items.find((currentItem) => currentItem.id === item.sourceItemId);
+    if (sourceItem) {
+      updateItemQuickField(sourceItem, { storageLocation }, "✓ 紐づく商品にも反映しました", [
+        `保管場所: ${formatHistoryValue(sourceItem.storageLocation)} → ${storageLocation}`,
+      ]);
+    }
+  }
+}
+
+function quickEditSortingAppraisal(item) {
+  const appraisal = getSortingQuickAppraisalField(item);
+
+  if (!appraisal) {
+    showToast("査定先が未設定です", "error");
+    return;
+  }
+
+  const currentValue = parseMoney(item[appraisal.field]);
+  const nextValue = prompt(`${appraisal.label}の査定額を入力してください。`, currentValue === "" ? "" : String(currentValue));
+
+  if (nextValue === null) {
+    return;
+  }
+
+  const appraisalValue = parseMoney(nextValue);
+
+  if (appraisalValue === "") {
+    showToast("金額を入力してください", "error");
+    return;
+  }
+
+  updateSortingQuickField(item, { [appraisal.field]: appraisalValue }, "✓ 査定額を保存しました");
+}
+
+function quickEditSortingMemo(item) {
+  const nextMemo = prompt("メモを入力してください。", item.memo || "");
+
+  if (nextMemo === null) {
+    return;
+  }
+
+  updateSortingQuickField(item, { memo: normalizeText(nextMemo) }, "✓ メモを保存しました");
+}
+
+function closeSortingInlineEditor() {
+  document.querySelectorAll(".sorting-inline-editor").forEach((editor) => editor.remove());
+}
+
+function getAdjacentVisibleSortingItem(itemId, direction) {
+  const cards = [...sortingWorkCardList.querySelectorAll(".sorting-work-card")];
+  const currentIndex = cards.findIndex((card) => card.dataset.id === itemId);
+
+  if (currentIndex < 0) {
+    return null;
+  }
+
+  const nextCard = cards[currentIndex + direction];
+  const nextItemId = nextCard?.dataset.id;
+
+  if (!nextItemId) {
+    return null;
+  }
+
+  return sortingItems.find((item) => item.id === nextItemId) || null;
+}
+
+function createSortingInlineEditorControl(config) {
+  if (config.type === "select") {
+    const select = document.createElement("select");
+    select.className = "sorting-inline-control";
+    config.options.forEach((optionValue) => {
+      const option = document.createElement("option");
+      option.value = optionValue;
+      option.textContent = optionValue;
+      select.append(option);
+    });
+    select.value = config.value || config.options[0] || "";
+    return select;
+  }
+
+  if (config.type === "textarea") {
+    const textarea = document.createElement("textarea");
+    textarea.className = "sorting-inline-control";
+    textarea.rows = 3;
+    textarea.value = config.value || "";
+    return textarea;
+  }
+
+  const input = document.createElement("input");
+  input.className = "sorting-inline-control";
+  input.type = config.inputType || "text";
+  input.value = config.value || "";
+  return input;
+}
+
+function getSortingInlineEditorConfig(item, action) {
+  if (action === "quick-edit-storage") {
+    return {
+      label: "保管場所",
+      value: item.storageLocation || "",
+      placeholder: "例：棚A",
+      save(value) {
+        const storageLocation = normalizeText(value);
+        if (!storageLocation) {
+          showToast("保管場所を入力してください", "error");
+          return false;
+        }
+        updateSortingQuickField(item, { storageLocation }, "✓ 保管場所を保存しました");
+
+        if (item.sourceItemId) {
+          const sourceItem = items.find((currentItem) => currentItem.id === item.sourceItemId);
+          if (sourceItem) {
+            updateItemQuickField(sourceItem, { storageLocation }, "✓ 紐づく商品にも反映しました", [
+              `保管場所: ${formatHistoryValue(sourceItem.storageLocation)} → ${storageLocation}`,
+            ]);
+          }
+        }
+        return true;
+      },
+    };
+  }
+
+  if (action === "quick-edit-appraisal") {
+    const appraisal = getSortingQuickAppraisalField(item);
+    if (!appraisal) {
+      showToast("査定先が未設定です", "error");
+      return null;
+    }
+    const bestOffer = getBestSortingOffer(item);
+    const fieldValue = parseMoney(item[appraisal.field]);
+    const currentValue = fieldValue === "" && bestOffer ? parseMoney(bestOffer.value) : fieldValue;
+    return {
+      label: `${appraisal.label} 査定額`,
+      value: currentValue === "" ? "" : String(currentValue),
+      inputType: "number",
+      placeholder: "例：700",
+      save(value) {
+        const appraisalValue = parseMoney(value);
+        if (appraisalValue === "") {
+          showToast("金額を入力してください", "error");
+          return false;
+        }
+        updateSortingQuickField(item, { [appraisal.field]: appraisalValue }, "✓ 査定額を保存しました");
+        return true;
+      },
+    };
+  }
+
+  if (action === "quick-edit-memo") {
+    return {
+      label: "メモ",
+      type: "textarea",
+      value: item.memo || "",
+      placeholder: "メモ",
+      save(value) {
+        updateSortingQuickField(item, { memo: normalizeText(value) }, "✓ メモを保存しました");
+        return true;
+      },
+    };
+  }
+
+  if (action === "quick-edit-destination") {
+    const options = [...new Set([getSortingDestinationLabel(item.destination), ...getAppraisalSources().map(getAppraisalFieldLabel), "未定", "その他"].filter(Boolean))];
+    return {
+      label: "売却先",
+      type: "select",
+      value: getSortingDestinationLabel(item.destination),
+      options,
+      save(value) {
+        updateSortingQuickField(item, { destination: value }, "✓ 売却先を保存しました");
+        return true;
+      },
+    };
+  }
+
+  if (action === "quick-edit-status") {
+    return {
+      label: "状態",
+      type: "select",
+      value: item.status || "未確認",
+      options: SORTING_STATUSES,
+      save(value) {
+        updateSortingQuickField(item, { status: value }, "✓ 状態を保存しました");
+        return true;
+      },
+    };
+  }
+
+  if (action === "quick-edit-shipping") {
+    const shippingStatuses = ["未仕分け", "仕分け済", "発送準備中", "発送準備済み", "発送待ち", "発送済", "査定待ち", "入金済", "完了"];
+    return {
+      label: "発送状態",
+      type: "select",
+      value: item.shippingStatus || "未仕分け",
+      options: shippingStatuses,
+      save(value) {
+        updateSortingQuickField(item, { shippingStatus: value }, "✓ 発送状態を保存しました");
+        return true;
+      },
+    };
+  }
+
+  return null;
+}
+
+function openSortingInlineEditor(item, action, anchorElement) {
+  const card = anchorElement?.closest(".sorting-work-card");
+  const config = getSortingInlineEditorConfig(item, action);
+  const isAppraisalEditor = action === "quick-edit-appraisal";
+
+  if (!card || !config) {
+    return;
+  }
+
+  closeSortingInlineEditor();
+  closeSortingActionMenus();
+
+  const editor = document.createElement("div");
+  editor.className = "sorting-inline-editor";
+  editor.innerHTML = `
+    <label class="sorting-inline-label"></label>
+    <div class="sorting-inline-input-slot"></div>
+    <div class="sorting-inline-actions">
+      <button class="ghost-button" type="button" data-inline-action="cancel">キャンセル</button>
+      <button class="primary-button" type="button" data-inline-action="save">保存</button>
+    </div>
+  `;
+
+  const label = editor.querySelector(".sorting-inline-label");
+  const control = createSortingInlineEditorControl(config);
+  label.textContent = config.label;
+  control.placeholder = config.placeholder || "";
+  editor.querySelector(".sorting-inline-input-slot").append(control);
+  card.append(editor);
+
+  const save = ({ moveDirection = 0 } = {}) => {
+    const nextItem = moveDirection ? getAdjacentVisibleSortingItem(item.id, moveDirection) : null;
+    const didSave = config.save(control.value);
+    if (didSave) {
+      closeSortingInlineEditor();
+      if (nextItem && isAppraisalEditor && !isMobileViewport()) {
+        window.setTimeout(() => {
+          const nextCard = sortingWorkCardList.querySelector(`.sorting-work-card[data-id="${CSS.escape(nextItem.id)}"]`);
+          const nextOffer = nextCard?.querySelector(".sorting-work-offer");
+          if (nextOffer) {
+            openSortingInlineEditor(nextItem, "quick-edit-appraisal", nextOffer);
+          }
+        }, 0);
+      }
+    }
+    return didSave;
+  };
+
+  editor.addEventListener("click", (event) => {
+    event.stopPropagation();
+    const actionButton = event.target.closest("[data-inline-action]");
+    if (!actionButton) {
+      return;
+    }
+    if (actionButton.dataset.inlineAction === "cancel") {
+      editor.remove();
+      return;
+    }
+    save();
+  });
+
+  control.addEventListener("keydown", (event) => {
+    if (isAppraisalEditor && !isMobileViewport() && (event.key === "ArrowDown" || event.key === "ArrowUp")) {
+      event.preventDefault();
+      save({ moveDirection: event.key === "ArrowDown" ? 1 : -1 });
+      return;
+    }
+    if (event.key === "Enter" && config.type !== "textarea") {
+      event.preventDefault();
+      save({ moveDirection: isAppraisalEditor && !isMobileViewport() ? 1 : 0 });
+    }
+    if (event.key === "Escape") {
+      event.preventDefault();
+      editor.remove();
+    }
+  });
+
+  control.focus();
+  if (typeof control.select === "function") {
+    control.select();
+  }
+}
+
+function promptFromOptions(title, options, currentValue) {
+  const uniqueOptions = [...new Set(options.filter(Boolean))];
+  const nextValue = prompt(`${title}\n候補: ${uniqueOptions.join(" / ")}`, currentValue || "");
+
+  if (nextValue === null) {
+    return null;
+  }
+
+  return normalizeText(nextValue);
+}
+
+function quickEditSortingDestination(item) {
+  const currentLabel = getSortingDestinationLabel(item.destination);
+  const nextDestination = promptFromOptions("売却先を入力してください。", getAppraisalSources().map(getAppraisalFieldLabel), currentLabel);
+
+  if (nextDestination === null) {
+    return;
+  }
+
+  if (!nextDestination) {
+    showToast("売却先を入力してください", "error");
+    return;
+  }
+
+  updateSortingQuickField(item, { destination: nextDestination }, "✓ 売却先を保存しました");
+}
+
+function quickEditSortingStatus(item) {
+  const nextStatus = promptFromOptions("状態を入力してください。", SORTING_STATUSES, item.status || "未確認");
+
+  if (nextStatus === null) {
+    return;
+  }
+
+  if (!nextStatus) {
+    showToast("状態を入力してください", "error");
+    return;
+  }
+
+  updateSortingQuickField(item, { status: nextStatus }, "✓ 状態を保存しました");
+}
+
+function quickEditSortingShippingStatus(item) {
+  const shippingStatuses = ["未仕分け", "仕分け済", "発送準備中", "発送準備済み", "発送待ち", "発送済", "査定待ち", "入金済", "完了"];
+  const nextShippingStatus = promptFromOptions("発送状態を入力してください。", shippingStatuses, item.shippingStatus || "未仕分け");
+
+  if (nextShippingStatus === null) {
+    return;
+  }
+
+  if (!nextShippingStatus) {
+    showToast("発送状態を入力してください", "error");
+    return;
+  }
+
+  updateSortingQuickField(item, { shippingStatus: nextShippingStatus }, "✓ 発送状態を保存しました");
 }
 
 function returnToSourceItem(sortingItem) {
@@ -11790,6 +12559,7 @@ function createMobileCompactTableCard(item) {
       <span class="mobile-compact-destination"></span>
       <b class="mobile-compact-offer"></b>
     </div>
+    <div class="quick-edit-slot"></div>
     <details class="row-action-menu mobile-compact-actions">
       <summary aria-label="操作メニュー">⋯</summary>
       <div class="actions">
@@ -11819,6 +12589,7 @@ function createMobileCompactTableCard(item) {
   profitField.textContent = profit === "" ? "利益 未入力" : `利益 ${formatMoney(profit)}`;
   profitField.classList.toggle("profit-unset", profit === "");
   applyProfitLevel(profitField, profit);
+  card.querySelector(".quick-edit-slot").append(createQuickEditBar("items"));
 
   return card;
 }
@@ -11870,6 +12641,7 @@ function createInventoryShelfCard(item) {
       <span class="profit-cell shelf-profit" data-field="profit"></span>
       <span class="destination-label"></span>
     </div>
+    <div class="quick-edit-slot"></div>
     <dl class="shelf-card-money shelf-card-aux shelf-priority-small">
       <div><dt>価格</dt><dd data-field="plannedPrice"></dd></div>
     </dl>
@@ -11890,6 +12662,7 @@ function createInventoryShelfCard(item) {
   const profitField = card.querySelector('[data-field="profit"]');
   profitField.textContent = formatMoney(profit);
   applyProfitLevel(profitField, profit);
+  card.querySelector(".quick-edit-slot").append(createQuickEditBar("items"));
 
   return card;
 }
@@ -12000,6 +12773,7 @@ function createMobileCard(item) {
       <button class="text-button" type="button" data-action="view-detail">詳細</button>
       <button class="text-button" type="button" data-action="edit">編集</button>
     </div>
+    <div class="quick-edit-slot"></div>
     <details class="mobile-more-actions">
       <summary aria-label="その他の操作">…</summary>
       <div class="mobile-more-actions-panel">
@@ -12037,6 +12811,7 @@ function createMobileCard(item) {
   conditionField.classList.toggle("muted-empty", !item.condition);
   card.querySelector('[data-field="plannedPrice"]').textContent = formatMoney(parseMoney(item.plannedPrice));
   appendImageStateBadges(card.querySelector(".mobile-card-status-row"), item);
+  card.querySelector(".quick-edit-slot").append(createQuickEditBar("items"));
 
   return card;
 }
@@ -12970,6 +13745,7 @@ function startEdit(item, options = {}) {
 }
 
 function setActiveNavigation(view, tab = "form") {
+  view = normalizeViewForDevice(view);
   const workViews = ["form", "list", "import", "sorting", "box"];
   const workTab = workViews.includes(view) ? view : tab;
   currentView = view;
@@ -13031,6 +13807,13 @@ sideNavLinks.forEach((link) => {
     reloadCloudDataIfReady(`タブ切り替え:${view}`);
     document.querySelector(link.getAttribute("href"))?.scrollIntoView({ behavior: "smooth", block: "start" });
   });
+});
+
+window.addEventListener("resize", () => {
+  if (isMobileViewport() && currentView === "import") {
+    setActiveNavigation("list");
+    render();
+  }
 });
 
 document.addEventListener("visibilitychange", () => {
@@ -13408,6 +14191,18 @@ async function handleItemTableAction(event) {
 
   if (button.dataset.action === "quick-change-storage") {
     changeItemStorageFromList(item);
+  }
+
+  if (button.dataset.action === "quick-edit-storage") {
+    quickEditItemStorage(item);
+  }
+
+  if (button.dataset.action === "quick-edit-appraisal") {
+    quickEditItemAppraisal(item);
+  }
+
+  if (button.dataset.action === "quick-edit-memo") {
+    quickEditItemMemo(item);
   }
 
   if (button.dataset.action === "quick-mark-listed") {
@@ -14201,6 +14996,7 @@ sortingRemoveImageButton?.addEventListener("click", () => {
 });
 
 sortingImageProviderInput?.addEventListener("change", updateSortingImageReferenceMode);
+initializeSortingFormAccordions();
 
 removeImageButton.addEventListener("click", () => {
   imageInput.value = "";
@@ -14490,6 +15286,13 @@ sortingOrderInput.addEventListener("change", () => {
   renderSorting();
   saveUiState();
 });
+sortingDensityButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    sortingDensityMode = button.dataset.sortingDensity === "standard" ? "standard" : "compact";
+    renderSorting();
+    saveUiState();
+  });
+});
 sortingImageOnlyFilter?.addEventListener("change", () => {
   sortingImageOnly = sortingImageOnlyFilter.checked;
   renderSorting();
@@ -14533,40 +15336,71 @@ sortingWorkCardList.addEventListener("click", async (event) => {
     return;
   }
 
+  const actionTarget = event.target.closest("[data-action]");
   const button = event.target.closest("button");
   if (button?.closest(".row-action-menu")) {
     event.stopPropagation();
   }
 
-  if (button?.dataset.action === "view-sorting-detail") {
+  const action = button?.dataset.action || actionTarget?.dataset.action || "";
+
+  if (actionTarget && actionTarget !== checkbox) {
+    event.stopPropagation();
+  }
+
+  if (action === "view-sorting-detail") {
     closeSortingActionMenus();
     openSortingDetailModal(item);
     return;
   }
-  if (button?.dataset.action === "edit-sorting") {
+  if (action === "edit-sorting") {
     closeSortingActionMenus();
     startSortingEdit(item);
     return;
   }
-  if (button?.dataset.action === "delete-sorting") {
+  if (action === "delete-sorting") {
     closeSortingActionMenus();
     await deleteSortingItem(item);
     return;
   }
-  if (button?.dataset.action === "copy-source-item-code") {
+  if (action === "copy-source-item-code") {
     const sourceItem = items.find((currentItem) => currentItem.id === card.dataset.sourceId);
     copyText(getItemCode(sourceItem), "商品IDをコピーしました。");
     return;
   }
-  if (button?.dataset.action === "change-sorting-photo") {
+  if (action === "change-sorting-photo") {
     requestLocalPhoto(item.id, "sorting");
     return;
   }
-  if (button?.dataset.action === "add-sorting-reference-image") {
+  if (action === "add-sorting-reference-image") {
     requestReferenceImage(item.id, "sorting");
     return;
   }
-  if (button?.dataset.action === "remove-sorting-photo") {
+  if (action === "quick-edit-storage") {
+    openSortingInlineEditor(item, action, actionTarget || button);
+    return;
+  }
+  if (action === "quick-edit-appraisal") {
+    openSortingInlineEditor(item, action, actionTarget || button);
+    return;
+  }
+  if (action === "quick-edit-memo") {
+    openSortingInlineEditor(item, action, actionTarget || button);
+    return;
+  }
+  if (action === "quick-edit-destination") {
+    openSortingInlineEditor(item, action, actionTarget || button);
+    return;
+  }
+  if (action === "quick-edit-status") {
+    openSortingInlineEditor(item, action, actionTarget || button);
+    return;
+  }
+  if (action === "quick-edit-shipping") {
+    openSortingInlineEditor(item, action, actionTarget || button);
+    return;
+  }
+  if (action === "remove-sorting-photo") {
     removeLocalPhoto(item, "sorting");
     return;
   }
@@ -14591,6 +15425,9 @@ sortingWorkCardList.addEventListener("keydown", (event) => {
 document.addEventListener("click", (event) => {
   if (!event.target.closest("#sortingTableWrap .row-action-menu, #sortingWorkCardList .row-action-menu")) {
     closeSortingActionMenus();
+  }
+  if (!event.target.closest(".sorting-inline-editor, #sortingWorkCardList [data-action]")) {
+    closeSortingInlineEditor();
   }
 });
 
