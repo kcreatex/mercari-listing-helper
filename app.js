@@ -12932,33 +12932,17 @@ function createMobileCard(item) {
     <div class="mobile-card-layout">
       <div class="mobile-card-thumb"></div>
       <div class="mobile-card-content">
-        <div class="mobile-card-head">
-          <div class="mobile-card-title-wrap">
-            <h3 class="mobile-card-name"></h3>
-            <span class="mobile-card-code"></span>
-          </div>
-          <details class="row-action-menu mobile-more-actions">
-            <summary aria-label="その他の操作">…</summary>
-            <div class="actions mobile-more-actions-panel">
-              <button class="text-button" type="button" data-action="quick-change-storage">保管場所変更</button>
-              <button class="text-button" type="button" data-action="quick-mark-listed">出品中に変更</button>
-              <button class="text-button" type="button" data-action="quick-shipping-ready">発送準備へ</button>
-              <button class="text-button" type="button" data-action="mark-sold">売却済み</button>
-              <button class="text-button" type="button" data-action="copy-title">タイトルコピー</button>
-              <button class="text-button" type="button" data-action="copy-description">説明コピー</button>
-              <button class="text-button" type="button" data-action="copy-item-code">商品IDコピー</button>
-              <button class="text-button" type="button" data-action="change-photo">📷 商品画像追加</button>
-              <button class="text-button" type="button" data-action="add-reference-image">📚 参考画像追加</button>
-              <button class="text-button" type="button" data-action="remove-photo">📷 商品画像削除</button>
-              <button class="text-button" type="button" data-action="relist">再出品</button>
-              <button class="text-button" type="button" data-action="send-to-sorting">仕分けへ</button>
-              <button class="danger-button" type="button" data-action="delete">削除</button>
-            </div>
-          </details>
+        <div class="mobile-card-title-wrap">
+          <h3 class="mobile-card-name"></h3>
+          <span class="mobile-card-code"></span>
         </div>
         <div class="mobile-card-row mobile-card-row-main">
           <span class="mobile-card-storage"></span>
-          <strong class="mobile-card-profit-value" data-field="profit"></strong>
+          <span class="status-badge mobile-card-status"></span>
+        </div>
+        <div class="mobile-card-row mobile-card-row-state">
+          <span class="mobile-card-destination"></span>
+          <span class="mobile-card-shipping"></span>
         </div>
         <div class="mobile-card-row mobile-card-row-media">
           <span class="mobile-card-image-count"></span>
@@ -12966,11 +12950,27 @@ function createMobileCard(item) {
           <span class="mobile-card-memo-state"></span>
           <span class="mobile-card-shipping-mini"></span>
         </div>
-        <div class="mobile-card-row mobile-card-row-state">
-          <span class="status-badge mobile-card-status"></span>
-          <span class="mobile-card-destination"></span>
-          <span class="mobile-card-shipping"></span>
-        </div>
+      </div>
+      <div class="mobile-card-side">
+        <strong class="mobile-card-profit-value" data-field="profit"></strong>
+        <details class="row-action-menu mobile-more-actions">
+          <summary aria-label="その他の操作">…</summary>
+          <div class="actions mobile-more-actions-panel">
+            <button class="text-button" type="button" data-action="quick-change-storage">保管場所変更</button>
+            <button class="text-button" type="button" data-action="quick-mark-listed">出品中に変更</button>
+            <button class="text-button" type="button" data-action="quick-shipping-ready">発送準備へ</button>
+            <button class="text-button" type="button" data-action="mark-sold">売却済み</button>
+            <button class="text-button" type="button" data-action="copy-title">タイトルコピー</button>
+            <button class="text-button" type="button" data-action="copy-description">説明コピー</button>
+            <button class="text-button" type="button" data-action="copy-item-code">商品IDコピー</button>
+            <button class="text-button" type="button" data-action="change-photo">📷 商品画像追加</button>
+            <button class="text-button" type="button" data-action="add-reference-image">📚 参考画像追加</button>
+            <button class="text-button" type="button" data-action="remove-photo">📷 商品画像削除</button>
+            <button class="text-button" type="button" data-action="relist">再出品</button>
+            <button class="text-button" type="button" data-action="send-to-sorting">仕分けへ</button>
+            <button class="danger-button" type="button" data-action="delete">削除</button>
+          </div>
+        </details>
       </div>
     </div>
     <div class="mobile-card-primary-actions">

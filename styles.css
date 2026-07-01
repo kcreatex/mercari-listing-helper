@@ -22,6 +22,117 @@
   display: none;
 }
 
+/* Smartphone product list filter bar: keep search controls aligned and compact. */
+@media (max-width: 600px) {
+  html body.work-tab-list .inventory-primary-search {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(118px, 0.52fr) !important;
+    gap: 8px !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 0 8px !important;
+    padding: 8px !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+  }
+
+  html body.work-tab-list .inventory-primary-search > * {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  html body.work-tab-list .inventory-primary-search #searchInput,
+  html body.work-tab-list .inventory-primary-search #statusFilter {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 42px !important;
+    min-height: 42px !important;
+    max-height: 42px !important;
+    margin: 0 !important;
+    padding: 0 10px !important;
+    border: 1px solid #ded6d1 !important;
+    border-radius: 9px !important;
+    background: #fff !important;
+    color: #2f2926 !important;
+    font-size: 13px !important;
+    font-weight: 750 !important;
+    line-height: 42px !important;
+    box-sizing: border-box !important;
+  }
+
+  html body.work-tab-list .inventory-primary-search .quick-filter-check {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 42px !important;
+    height: 42px !important;
+    margin: 0 !important;
+    padding: 0 10px !important;
+    border: 1px solid #ded6d1 !important;
+    border-radius: 9px !important;
+    background: #fff !important;
+    color: #4f4743 !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+    box-sizing: border-box !important;
+  }
+
+  html body.work-tab-list .inventory-primary-search .quick-filter-check input,
+  html body.work-tab-list .inventory-primary-search .quick-filter-check input[type="checkbox"] {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    display: inline-grid !important;
+    place-items: center !important;
+    flex: 0 0 20px !important;
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px !important;
+    min-height: 20px !important;
+    max-width: 20px !important;
+    max-height: 20px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 1.5px solid #b9afa9 !important;
+    border-radius: 5px !important;
+    background: #fff !important;
+    box-sizing: border-box !important;
+  }
+
+  html body.work-tab-list .inventory-primary-search .quick-filter-check input:checked,
+  html body.work-tab-list .inventory-primary-search .quick-filter-check input[type="checkbox"]:checked {
+    border-color: #d84033 !important;
+    background: #d84033 !important;
+  }
+
+  html body.work-tab-list .inventory-primary-search .quick-filter-check input:checked::after,
+  html body.work-tab-list .inventory-primary-search .quick-filter-check input[type="checkbox"]:checked::after {
+    content: "" !important;
+    width: 8px !important;
+    height: 4px !important;
+    border-bottom: 2px solid #fff !important;
+    border-left: 2px solid #fff !important;
+    transform: rotate(-45deg) translate(1px, -1px) !important;
+  }
+
+  html body.work-tab-list .inventory-primary-search .quick-filter-check span {
+    display: block !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+}
+
 /* High-specificity smartphone card rules. Kept PC layouts untouched. */
 @media (max-width: 600px) {
   html body.work-tab-list .mobile-item-card .quick-edit-slot,
@@ -32,7 +143,7 @@
 
   html body.work-tab-list .mobile-card-layout {
     display: grid !important;
-    grid-template-columns: 48px minmax(0, 1fr) !important;
+    grid-template-columns: 56px minmax(0, 1fr) 58px !important;
     gap: 8px !important;
     align-items: start !important;
     min-width: 0 !important;
@@ -41,7 +152,233 @@
   html body.work-tab-list .mobile-card-thumb,
   html body.work-tab-list .mobile-card-thumb .list-thumbnail-button,
   html body.work-tab-list .mobile-card-thumb img,
-  html body.work-tab-list .mobile-card-thumb .thumbnail-placeholder,
+  html body.work-tab-list .mobile-card-thumb .thumbnail-placeholder {
+    width: 56px !important;
+    height: 56px !important;
+    min-width: 56px !important;
+    min-height: 56px !important;
+    max-width: 56px !important;
+    border-radius: 8px !important;
+  }
+
+  html body.work-tab-sorting .sorting-work-thumb,
+  html body.work-tab-sorting .sorting-work-thumb .list-thumb,
+  html body.work-tab-sorting .sorting-work-thumb img,
+  html body.work-tab-sorting .sorting-work-thumb button {
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+    min-height: 48px !important;
+    max-width: 48px !important;
+    border-radius: 8px !important;
+  }
+
+  html body.work-tab-list .mobile-card-side {
+    display: grid !important;
+    grid-template-rows: auto 34px !important;
+    gap: 8px !important;
+    align-items: start !important;
+    justify-items: end !important;
+    min-width: 0 !important;
+  }
+
+  html body.work-tab-list .mobile-card-content {
+    display: grid !important;
+    gap: 3px !important;
+    min-width: 0 !important;
+    text-align: left !important;
+  }
+}
+
+/* High-specificity smartphone card rules. Kept PC layouts untouched. */
+@media (max-width: 600px) {
+  html body.work-tab-list .mobile-item-card .quick-edit-slot,
+  html body.work-tab-list .mobile-card-primary-actions,
+  html body.work-tab-sorting .sorting-work-card .quick-edit-slot {
+    display: none !important;
+  }
+
+  html body.work-tab-list .mobile-card-layout {
+    display: grid !important;
+    grid-template-columns: 56px minmax(0, 1fr) 58px !important;
+    gap: 8px !important;
+    align-items: start !important;
+    min-width: 0 !important;
+  }
+
+  html body.work-tab-list .mobile-card-thumb,
+  html body.work-tab-list .mobile-card-thumb .list-thumbnail-button,
+  html body.work-tab-list .mobile-card-thumb img,
+  html body.work-tab-list .mobile-card-thumb .thumbnail-placeholder {
+    width: 56px !important;
+    height: 56px !important;
+    min-width: 56px !important;
+    min-height: 56px !important;
+    max-width: 56px !important;
+    border-radius: 8px !important;
+  }
+
+  html body.work-tab-list .mobile-card-side {
+    display: grid !important;
+    grid-template-rows: auto 34px !important;
+    gap: 8px !important;
+    align-items: start !important;
+    justify-items: end !important;
+    min-width: 0 !important;
+  }
+
+  html body.work-tab-list .mobile-card-content {
+    display: grid !important;
+    gap: 3px !important;
+    min-width: 0 !important;
+    text-align: left !important;
+  }
+
+  html body.work-tab-list .mobile-card-row-main {
+    grid-template-columns: minmax(0, 1fr) auto !important;
+  }
+
+  html body.work-tab-list .mobile-card-row-state {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.95fr) !important;
+  }
+
+  html body.work-tab-list .mobile-card-row-media {
+    grid-template-columns: auto auto auto minmax(0, 1fr) !important;
+  }
+
+  html body.work-tab-list .mobile-card-status {
+    position: static !important;
+    max-width: 82px !important;
+    min-height: 19px !important;
+    margin: 0 !important;
+    padding: 2px 6px !important;
+    overflow: hidden !important;
+    font-size: 9.5px !important;
+    line-height: 1.1 !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    transform: none !important;
+  }
+
+  html body.work-tab-list .mobile-more-actions {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    margin: 0 !important;
+    transform: none !important;
+  }
+
+  html body.work-tab-list .mobile-more-actions > summary {
+    display: grid !important;
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    min-height: 34px !important;
+    padding: 0 !important;
+    place-items: center !important;
+    border: 1px solid #ded6d1 !important;
+    border-radius: 999px !important;
+    background: #fff !important;
+    color: #4f4743 !important;
+    font-size: 18px !important;
+    line-height: 1 !important;
+  }
+
+  html body.work-tab-list .mobile-card-profit-value {
+    align-self: start !important;
+    justify-self: end !important;
+    max-width: 58px !important;
+    overflow: hidden !important;
+    color: #16834c !important;
+    font-size: 12px !important;
+    font-weight: 950 !important;
+    line-height: 1.2 !important;
+    text-align: right !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  html body.work-tab-list .mobile-card-name {
+    font-size: 12.5px !important;
+    line-height: 1.22 !important;
+  }
+
+  html body.work-tab-list .mobile-card-code {
+    margin-top: 0 !important;
+  }
+
+  html body.work-tab-list .mobile-card-storage,
+  html body.work-tab-list .mobile-card-destination,
+  html body.work-tab-list .mobile-card-shipping,
+  html body.work-tab-list .mobile-card-shipping-mini,
+  html body.work-tab-list .mobile-card-memo-state,
+  html body.work-tab-list .mobile-card-image-count,
+  html body.work-tab-list .mobile-card-reference-count {
+    font-size: 10px !important;
+    line-height: 1.12 !important;
+  }
+
+  html body.work-tab-list .mobile-item-card {
+    padding: 7px !important;
+  }
+
+  html body.work-tab-list .mobile-card-primary-actions,
+  html body.work-tab-list .mobile-item-card .quick-edit-slot {
+    display: none !important;
+  }
+
+  html body.work-tab-sorting .sorting-work-thumb,
+  html body.work-tab-sorting .sorting-work-thumb .list-thumb,
+  html body.work-tab-sorting .sorting-work-thumb img,
+  html body.work-tab-sorting .sorting-work-thumb button {
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+    min-height: 48px !important;
+    max-width: 48px !important;
+    border-radius: 8px !important;
+  }
+
+  html body.work-tab-list,
+  html body.work-tab-list .list-panel,
+  html body.work-tab-list .mobile-card-list {
+    overflow-x: hidden !important;
+  }
+
+  html body.work-tab-list .mobile-card-list:not(.hidden) {
+    gap: 7px !important;
+  }
+}
+
+@media (max-width: 600px) {
+  html body.work-tab-sorting .sorting-work-thumb,
+  html body.work-tab-sorting .sorting-work-thumb .list-thumb,
+  html body.work-tab-sorting .sorting-work-thumb img,
+  html body.work-tab-sorting .sorting-work-thumb button {
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+    min-height: 48px !important;
+    max-width: 48px !important;
+    border-radius: 8px !important;
+  }
+}
+
+@media (max-width: 600px) {
+  html body.work-tab-sorting .sorting-work-thumb,
+  html body.work-tab-sorting .sorting-work-thumb .list-thumb,
+  html body.work-tab-sorting .sorting-work-thumb img,
+  html body.work-tab-sorting .sorting-work-thumb button {
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+    min-height: 48px !important;
+    max-width: 48px !important;
+    border-radius: 8px !important;
+  }
+}
+
+@media (max-width: 600px) {
   html body.work-tab-sorting .sorting-work-thumb,
   html body.work-tab-sorting .sorting-work-thumb .list-thumb,
   html body.work-tab-sorting .sorting-work-thumb img,
