@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>メルカリ出品補助室</title>
-    <link rel="stylesheet" href="styles.css?v=cloud-sync-card-visible-20260701">
+    <link rel="stylesheet" href="styles.css?v=pc-inventory-table-20260701">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
   <body class="work-view work-tab-form">
@@ -486,12 +486,10 @@
             <div class="image-field compact-image-field">
               <label for="imageInput">任意画像メモ</label>
               <input id="imageInput" name="imageInput" type="file" accept="image/*">
-              <div class="image-preview" id="imagePreview" aria-live="polite">
-                <span>＋任意で画像追加</span>
-              </div>
+              <div class="image-preview" id="imagePreview" aria-live="polite"></div>
               <button class="ghost-button hidden" type="button" id="removeImageButton">画像を削除</button>
             </div>
-            <div class="image-reference-grid" aria-label="画像管理ID">
+            <div class="image-reference-grid hidden" aria-label="画像管理ID" aria-hidden="true">
               <label>
                 管理方式
                 <select id="imageProvider">
@@ -821,24 +819,15 @@
                 </div>
                 <div class="inventory-setting-group">
                   <span class="inventory-setting-label">表示対象</span>
-                  <div class="inventory-control-group inventory-target-toggle" aria-label="在庫フィルター">
-                    <button class="ghost-button" type="button" id="listShowAllButton">全商品</button>
-                    <button class="ghost-button active" type="button" id="listInventoryOnlyButton">在庫のみ</button>
-                  </div>
+                  <div class="inventory-control-group inventory-target-toggle" aria-label="在庫フィルター"><button class="ghost-button" type="button" id="listShowAllButton">全商品</button><button class="ghost-button active" type="button" id="listInventoryOnlyButton">在庫のみ</button></div>
                 </div>
                 <div class="inventory-setting-group">
                   <span class="inventory-setting-label">表示モード</span>
-                  <div class="inventory-control-group storage-view-toggle" aria-label="表示モード">
-                    <button class="ghost-button active" type="button" id="normalListModeButton">通常一覧</button>
-                    <button class="ghost-button" type="button" id="storageListModeButton">保管場所別</button>
-                  </div>
+                  <div class="inventory-control-group storage-view-toggle" aria-label="表示モード"><button class="ghost-button active" type="button" id="normalListModeButton">通常一覧</button><button class="ghost-button" type="button" id="storageListModeButton">保管場所別</button></div>
                 </div>
                 <div class="inventory-setting-group">
                   <span class="inventory-setting-label">表示形式</span>
-                  <div class="inventory-control-group view-toggle" aria-label="表示形式">
-                    <button class="ghost-button active" type="button" id="listViewButton">一覧</button>
-                    <button class="ghost-button" type="button" id="cardViewButton">カード</button>
-                  </div>
+                  <div class="inventory-control-group view-toggle" aria-label="表示形式"><button class="ghost-button active" type="button" id="listViewButton">一覧</button><button class="ghost-button" type="button" id="cardViewButton">カード</button></div>
                 </div>
               </div>
             </div>
@@ -1597,6 +1586,6 @@
       </div>
     </div>
 
-    <script src="app.js?v=cloud-sync-card-visible-20260701"></script>
+    <script src="app.js?v=pc-inventory-table-20260701"></script>
   </body>
 </html>

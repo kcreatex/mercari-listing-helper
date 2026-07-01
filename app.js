@@ -9859,7 +9859,7 @@ function updateImagePreview(imageData) {
   imagePreview.innerHTML = "";
 
   if (!imageData) {
-    imagePreview.textContent = "＋画像追加";
+    imagePreview.textContent = "画像未選択";
     removeImageButton.classList.add("hidden");
     return;
   }
@@ -12306,9 +12306,21 @@ function render() {
     backupControlsTop.classList.remove("hidden");
     backupControlsTop.hidden = false;
   }
+  const shouldUseMobileItemCards = shouldRenderFullItemList
+    && itemListGroupMode === "normal"
+    && window.matchMedia("(max-width: 600px)").matches;
+  const shouldUseDesktopInventoryTable = shouldRenderFullItemList
+    && itemListGroupMode === "normal"
+    && window.matchMedia("(min-width: 900px)").matches;
   const shouldShowStorageList = shouldRenderFullItemList && itemListGroupMode === "storage";
-  const shouldShowCompactList = shouldRenderFullItemList && itemListGroupMode === "normal" && itemListViewMode === "list";
-  const shouldShowCardList = shouldRenderFullItemList && itemListGroupMode === "normal" && itemListViewMode === "card";
+  const shouldShowCompactList = shouldRenderFullItemList
+    && itemListGroupMode === "normal"
+    && !shouldUseMobileItemCards
+    && (itemListViewMode === "list" || shouldUseDesktopInventoryTable);
+  const shouldShowCardList = shouldRenderFullItemList
+    && itemListGroupMode === "normal"
+    && !shouldUseDesktopInventoryTable
+    && (itemListViewMode === "card" || shouldUseMobileItemCards);
   normalListModeButton.classList.toggle("active", itemListGroupMode === "normal");
   storageListModeButton.classList.toggle("active", itemListGroupMode === "storage");
   listViewButton.classList.toggle("active", itemListViewMode === "list");
@@ -12491,10 +12503,14 @@ function createCompactTableBlock(sourceItems) {
     <thead>
       <tr>
         <th class="compact-photo-column">写真</th>
-        <th>商品名</th>
-        <th>📦 保管場所</th>
+        <th>商品名 / 商品ID</th>
+        <th>保管場所</th>
+        <th>状態</th>
         <th>売却先</th>
         <th>予定買取額</th>
+        <th>利益</th>
+        <th>商品画像</th>
+        <th>参考画像</th>
         <th>操作</th>
       </tr>
     </thead>
@@ -12522,10 +12538,14 @@ function createCompactListRow(item) {
       <strong></strong>
       <small></small>
     </td>
-    <td></td>
-    <td></td>
-    <td class="money-cell"></td>
-    <td>
+    <td class="compact-storage-cell"></td>
+    <td class="compact-status-cell"></td>
+    <td class="compact-destination-cell"></td>
+    <td class="money-cell compact-planned-cell"></td>
+    <td class="profit-cell compact-profit-cell"></td>
+    <td class="compact-image-count-cell compact-product-image-cell"></td>
+    <td class="compact-image-count-cell compact-reference-image-cell"></td>
+    <td class="compact-action-cell">
       <details class="row-action-menu compact-list-actions">
         <summary aria-label="操作メニュー">⋯</summary>
         <div class="actions">
@@ -12548,10 +12568,29 @@ function createCompactListRow(item) {
   row.querySelector(".compact-photo-cell").append(createListThumbnail(item, { compact: true }));
   row.querySelector(".title-cell strong").textContent = getListingTitle(item) || "-";
   row.querySelector(".title-cell small").textContent = getItemCode(item) || "ID未設定";
-  appendImageStateBadges(row.querySelector(".title-cell"), item);
-  row.children[2].textContent = item.storageLocation || "未設定";
-  row.children[3].textContent = getSortingDestinationForItem(item);
-  row.children[4].textContent = getHighestOfferForItem(item);
+  row.querySelector(".compact-storage-cell").textContent = item.storageLocation || "未設定";
+
+  const statusBadge = document.createElement("span");
+  statusBadge.className = `status-badge ${STATUS_CLASS_NAMES[getItemStatus(item)] || "status-unlisted"}`;
+  statusBadge.textContent = formatStatusDisplay(getItemStatus(item));
+  row.querySelector(".compact-status-cell").append(statusBadge);
+
+  row.querySelector(".compact-destination-cell").textContent = getSortingDestinationForItem(item);
+  row.querySelector(".compact-planned-cell").textContent = getHighestOfferForItem(item);
+
+  const profit = calculateProfit(item);
+  const profitCell = row.querySelector(".compact-profit-cell");
+  profitCell.textContent = profit === "" ? "未入力" : formatMoney(profit);
+  profitCell.classList.toggle("profit-unset", profit === "");
+  applyProfitLevel(profitCell, profit);
+
+  const imageSummary = getDisplayImageSummary(item);
+  const productImageCell = row.querySelector(".compact-product-image-cell");
+  const referenceImageCell = row.querySelector(".compact-reference-image-cell");
+  productImageCell.textContent = `📷 ${imageSummary.productCount}`;
+  referenceImageCell.textContent = `📚 ${imageSummary.referenceCount}`;
+  productImageCell.classList.toggle("image-badge-empty", imageSummary.productCount === 0);
+  referenceImageCell.classList.toggle("image-badge-empty", imageSummary.referenceCount === 0);
 
   return row;
 }
@@ -12877,80 +12916,87 @@ function createMobileCard(item) {
   const storageText = item.storageLocation || "未設定";
   const conditionText = item.condition || "未設定";
   const statusText = getItemStatus(item) || "未設定";
+  const linkedSortingItem = sortingItems.find((sortingItem) => sortingItem.sourceItemId === item.id);
+  const destinationText = getSortingDestinationForItem(item) || "-";
+  const shippingText = item.shippingStatus || linkedSortingItem?.shippingStatus || "未仕分け";
+  const imageSummary = getDisplayImageSummary(item);
+  const hasMemo = Boolean(String(item.memo || linkedSortingItem?.memo || "").trim());
 
   card.innerHTML = `
-    <div class="mobile-card-head">
-      <div class="mobile-card-title-wrap">
-        <h3 class="mobile-card-name"></h3>
-        <span class="mobile-card-code"></span>
+    <div class="mobile-card-layout">
+      <div class="mobile-card-thumb"></div>
+      <div class="mobile-card-content">
+        <div class="mobile-card-head">
+          <div class="mobile-card-title-wrap">
+            <h3 class="mobile-card-name"></h3>
+            <span class="mobile-card-code"></span>
+          </div>
+          <details class="row-action-menu mobile-more-actions">
+            <summary aria-label="その他の操作">…</summary>
+            <div class="actions mobile-more-actions-panel">
+              <button class="text-button" type="button" data-action="quick-change-storage">保管場所変更</button>
+              <button class="text-button" type="button" data-action="quick-mark-listed">出品中に変更</button>
+              <button class="text-button" type="button" data-action="quick-shipping-ready">発送準備へ</button>
+              <button class="text-button" type="button" data-action="mark-sold">売却済み</button>
+              <button class="text-button" type="button" data-action="copy-title">タイトルコピー</button>
+              <button class="text-button" type="button" data-action="copy-description">説明コピー</button>
+              <button class="text-button" type="button" data-action="copy-item-code">商品IDコピー</button>
+              <button class="text-button" type="button" data-action="change-photo">📷 商品画像追加</button>
+              <button class="text-button" type="button" data-action="add-reference-image">📚 参考画像追加</button>
+              <button class="text-button" type="button" data-action="remove-photo">📷 商品画像削除</button>
+              <button class="text-button" type="button" data-action="relist">再出品</button>
+              <button class="text-button" type="button" data-action="send-to-sorting">仕分けへ</button>
+              <button class="danger-button" type="button" data-action="delete">削除</button>
+            </div>
+          </details>
+        </div>
+        <div class="mobile-card-row mobile-card-row-main">
+          <span class="mobile-card-storage"></span>
+          <strong class="mobile-card-profit-value" data-field="profit"></strong>
+        </div>
+        <div class="mobile-card-row mobile-card-row-media">
+          <span class="mobile-card-image-count"></span>
+          <span class="mobile-card-reference-count"></span>
+          <span class="mobile-card-memo-state"></span>
+          <span class="mobile-card-shipping-mini"></span>
+        </div>
+        <div class="mobile-card-row mobile-card-row-state">
+          <span class="status-badge mobile-card-status"></span>
+          <span class="mobile-card-destination"></span>
+          <span class="mobile-card-shipping"></span>
+        </div>
       </div>
     </div>
-    <div class="mobile-card-status-row">
-      <div class="mobile-priority-profit mobile-card-profit">
-        <span>💴 見込み利益</span>
-        <strong data-field="profit"></strong>
-      </div>
-    </div>
-    <dl class="mobile-card-details">
-      <div class="mobile-priority-status">
-        <dt>📤 出品ステータス</dt>
-        <dd><span class="status-badge mobile-card-status"></span></dd>
-      </div>
-      <div class="mobile-priority-storage">
-        <dt>📦 保管場所</dt>
-        <dd data-field="storageLocation"></dd>
-      </div>
-      <div class="mobile-priority-small">
-        <dt>販売価格</dt>
-        <dd data-field="plannedPrice"></dd>
-      </div>
-      <div class="mobile-priority-small">
-        <dt>状態</dt>
-        <dd data-field="condition"></dd>
-      </div>
-    </dl>
     <div class="mobile-card-primary-actions">
       <button class="text-button" type="button" data-action="view-detail">詳細</button>
       <button class="text-button" type="button" data-action="edit">編集</button>
     </div>
     <div class="quick-edit-slot"></div>
-    <details class="mobile-more-actions">
-      <summary aria-label="その他の操作">…</summary>
-      <div class="mobile-more-actions-panel">
-        <button class="text-button" type="button" data-action="quick-change-storage">保管場所変更</button>
-        <button class="text-button" type="button" data-action="quick-mark-listed">出品中に変更</button>
-        <button class="text-button" type="button" data-action="quick-shipping-ready">発送準備へ</button>
-        <button class="text-button" type="button" data-action="mark-sold">売却済み</button>
-        <button class="text-button" type="button" data-action="copy-title">タイトルコピー</button>
-        <button class="text-button" type="button" data-action="copy-description">説明コピー</button>
-        <button class="text-button" type="button" data-action="copy-item-code">商品IDコピー</button>
-        <button class="text-button" type="button" data-action="change-photo">📷 商品画像追加</button>
-        <button class="text-button" type="button" data-action="add-reference-image">📚 参考画像追加</button>
-        <button class="text-button" type="button" data-action="remove-photo">📷 商品画像削除</button>
-        <button class="text-button" type="button" data-action="relist">再出品</button>
-        <button class="text-button" type="button" data-action="send-to-sorting">仕分けへ</button>
-        <button class="danger-button" type="button" data-action="delete">削除</button>
-      </div>
-    </details>
   `;
 
+  card.querySelector(".mobile-card-thumb").append(createListThumbnail(item, { compact: true }));
   card.querySelector(".mobile-card-name").textContent = getListingTitle(item) || "商品名未設定";
   card.querySelector(".mobile-card-code").textContent = item.itemCode || "ID未設定";
   const statusBadge = card.querySelector(".mobile-card-status");
   statusBadge.textContent = formatStatusDisplay(statusText);
   statusBadge.classList.add(STATUS_CLASS_NAMES[getItemStatus(item)] || "status-unlisted");
   const mobileProfit = profit;
-  const mobileProfitField = card.querySelector('[data-field="profit"]');
+  const mobileProfitField = card.querySelector(".mobile-card-profit-value");
   mobileProfitField.textContent = formatMoney(mobileProfit);
   applyProfitLevel(mobileProfitField, mobileProfit);
-  const storageField = card.querySelector('[data-field="storageLocation"]');
+  const storageField = card.querySelector(".mobile-card-storage");
   storageField.textContent = storageText;
   storageField.classList.toggle("muted-empty", !item.storageLocation);
-  const conditionField = card.querySelector('[data-field="condition"]');
-  conditionField.textContent = conditionText;
-  conditionField.classList.toggle("muted-empty", !item.condition);
-  card.querySelector('[data-field="plannedPrice"]').textContent = formatMoney(parseMoney(item.plannedPrice));
-  appendImageStateBadges(card.querySelector(".mobile-card-status-row"), item);
+  card.querySelector(".mobile-card-image-count").textContent = `📷${imageSummary.productCount}`;
+  card.querySelector(".mobile-card-image-count").classList.toggle("image-badge-empty", imageSummary.productCount === 0);
+  card.querySelector(".mobile-card-reference-count").textContent = `📚${imageSummary.referenceCount}`;
+  card.querySelector(".mobile-card-reference-count").classList.toggle("image-badge-empty", imageSummary.referenceCount === 0);
+  card.querySelector(".mobile-card-memo-state").textContent = hasMemo ? "📝あり" : "📝なし";
+  card.querySelector(".mobile-card-memo-state").classList.toggle("muted-empty", !hasMemo);
+  card.querySelector(".mobile-card-shipping-mini").textContent = `🚚${shortenShippingStatus(shippingText)}`;
+  card.querySelector(".mobile-card-destination").textContent = `売却先 ${destinationText}`;
+  card.querySelector(".mobile-card-shipping").textContent = `発送 ${shortenShippingStatus(shippingText)}`;
+  card.querySelector(".mobile-card-shipping").classList.toggle("muted-empty", !shippingText);
   card.querySelector(".quick-edit-slot").append(createQuickEditBar("items"));
 
   return card;
@@ -14641,8 +14687,18 @@ mobileCardList.addEventListener("click", async (event) => {
   const card = event.target.closest(".mobile-item-card");
 
   if (actionSummary) {
+    event.preventDefault();
     event.stopPropagation();
-    closeItemActionMenus(actionSummary.closest(".row-action-menu"));
+    const menu = actionSummary.closest(".row-action-menu");
+    const shouldOpen = !menu.open;
+    closeItemActionMenus(menu);
+
+    if (shouldOpen) {
+      menu.open = true;
+      requestAnimationFrame(() => positionItemActionMenu(menu));
+    } else {
+      menu.removeAttribute("open");
+    }
     return;
   }
 
@@ -14677,6 +14733,34 @@ mobileCardList.addEventListener("click", async (event) => {
 
   if (button.dataset.action === "view-detail") {
     openDetailModal(item);
+  }
+
+  if (button.dataset.action === "quick-change-storage") {
+    changeItemStorageFromList(item);
+  }
+
+  if (button.dataset.action === "quick-edit-storage") {
+    quickEditItemStorage(item);
+  }
+
+  if (button.dataset.action === "quick-edit-appraisal") {
+    quickEditItemAppraisal(item);
+  }
+
+  if (button.dataset.action === "quick-edit-memo") {
+    quickEditItemMemo(item);
+  }
+
+  if (button.dataset.action === "quick-mark-listed") {
+    markItemAsListedFromList(item);
+  }
+
+  if (button.dataset.action === "quick-shipping-ready") {
+    markItemAsShippingReadyFromList(item);
+  }
+
+  if (button.dataset.action === "mark-sold") {
+    markItemAsSoldFromList(item);
   }
 
   if (button.dataset.action === "copy-title") {
