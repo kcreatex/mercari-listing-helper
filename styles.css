@@ -17,6 +17,273 @@
   --control-height: 44px;
 }
 
+/* Final smartphone sorting override: keep mobile sale-destination UI stable. */
+@media (max-width: 600px) {
+  html body.work-view.work-tab-sorting .sorting-work-toolbar {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    padding: 8px !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-toolbar > #sortingItemSearch {
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-density-toggle {
+    display: grid !important;
+    grid-column: 1 / -1 !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-toolbar input,
+  html body.work-view.work-tab-sorting .sorting-work-toolbar select,
+  html body.work-view.work-tab-sorting .sorting-work-toolbar button,
+  html body.work-view.work-tab-sorting .sorting-work-toolbar .quick-filter-check,
+  html body.work-view.work-tab-sorting .sorting-density-toggle > button {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: 52px !important;
+    min-height: 52px !important;
+    max-height: 52px !important;
+    margin: 0 !important;
+    padding: 0 10px !important;
+    box-sizing: border-box !important;
+    font-size: 12px !important;
+    font-weight: 850 !important;
+    line-height: 1.2 !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-toolbar .quick-filter-check {
+    justify-content: flex-start !important;
+    gap: 8px !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-toolbar .quick-filter-check input,
+  html body.work-view.work-tab-sorting .sorting-work-toolbar .quick-filter-check input[type="checkbox"] {
+    flex: 0 0 20px !important;
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px !important;
+    min-height: 20px !important;
+    max-width: 20px !important;
+    max-height: 20px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-card,
+  html body.work-view.work-tab-sorting .sorting-work-card.shipping-mode-card,
+  html body.work-view.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-card,
+  html body.work-view.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-card.shipping-mode-card {
+    position: relative !important;
+    display: grid !important;
+    grid-template-columns: 56px minmax(0, 1fr) 36px !important;
+    gap: 7px 8px !important;
+    align-items: start !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 136px !important;
+    padding: 9px !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+    transform: none !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-card.shipping-mode-card,
+  html body.work-view.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-card.shipping-mode-card {
+    grid-template-columns: 24px 56px minmax(0, 1fr) 36px !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-thumb,
+  html body.work-view.work-tab-sorting .sorting-work-thumb .list-thumb,
+  html body.work-view.work-tab-sorting .sorting-work-thumb img,
+  html body.work-view.work-tab-sorting .sorting-work-thumb button,
+  html body.work-view.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-thumb,
+  html body.work-view.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-thumb .list-thumb,
+  html body.work-view.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-thumb img,
+  html body.work-view.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-thumb button {
+    width: 56px !important;
+    height: 56px !important;
+    min-width: 56px !important;
+    min-height: 56px !important;
+    max-width: 56px !important;
+    max-height: 56px !important;
+    border-radius: 9px !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-card-body,
+  html body.work-view.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-card-body {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: auto !important;
+    grid-column: 2 !important;
+    gap: 4px !important;
+    min-width: 0 !important;
+    text-align: left !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-card.shipping-mode-card .sorting-work-card-body {
+    grid-column: 3 !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-title,
+  html body.work-view.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-title {
+    display: -webkit-box !important;
+    grid-column: 1 !important;
+    grid-row: auto !important;
+    overflow: hidden !important;
+    font-size: 13px !important;
+    font-weight: 950 !important;
+    line-height: 1.22 !important;
+    text-overflow: ellipsis !important;
+    white-space: normal !important;
+    -webkit-box-orient: vertical !important;
+    -webkit-line-clamp: 2 !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-code {
+    display: none !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-offer,
+  html body.work-view.work-tab-sorting .sorting-work-storage,
+  html body.work-view.work-tab-sorting .sorting-work-destination,
+  html body.work-view.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-offer,
+  html body.work-view.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-storage,
+  html body.work-view.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-destination {
+    grid-column: 1 !important;
+    grid-row: auto !important;
+    justify-self: start !important;
+    min-height: 18px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    background: transparent !important;
+    border: 0 !important;
+    font-size: 11px !important;
+    line-height: 1.2 !important;
+    text-align: left !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    transform: none !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-offer,
+  html body.work-view.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-offer {
+    color: #0d766e !important;
+    font-size: 13px !important;
+    font-weight: 950 !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-destination,
+  html body.work-view.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-destination {
+    grid-column: 2 / 4 !important;
+    max-width: 100% !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-status-line,
+  html body.work-view.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-status-line {
+    display: flex !important;
+    grid-column: 1 !important;
+    grid-row: auto !important;
+    flex-wrap: wrap !important;
+    gap: 5px !important;
+    align-items: center !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-status,
+  html body.work-view.work-tab-sorting .sorting-work-shipping,
+  html body.work-view.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-status,
+  html body.work-view.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-shipping {
+    display: inline-flex !important;
+    align-items: center !important;
+    max-width: 100% !important;
+    min-height: 20px !important;
+    padding: 2px 6px !important;
+    overflow: hidden !important;
+    font-size: 10px !important;
+    font-weight: 850 !important;
+    line-height: 1.1 !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    transform: none !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-memo-state,
+  html body.work-view.work-tab-sorting .sorting-work-card-body .main-image-badge,
+  html body.work-view.work-tab-sorting .sorting-work-card-body .reference-image-badge {
+    position: static !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    width: auto !important;
+    min-height: 18px !important;
+    padding: 1px 5px !important;
+    overflow: hidden !important;
+    font-size: 10px !important;
+    font-weight: 800 !important;
+    line-height: 1.1 !important;
+    white-space: nowrap !important;
+    transform: none !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-card-body .image-state-badges {
+    display: flex !important;
+    grid-column: 1 !important;
+    grid-row: auto !important;
+    flex-wrap: wrap !important;
+    gap: 5px !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-action-menu,
+  html body.work-view.work-tab-sorting .sorting-action-menu > summary {
+    position: static !important;
+    grid-column: 3 !important;
+    grid-row: 1 !important;
+    justify-self: end !important;
+    align-self: start !important;
+    width: 34px !important;
+    min-width: 34px !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: none !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-card.shipping-mode-card .sorting-action-menu {
+    grid-column: 4 !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-card .quick-edit-slot,
+  html body.work-view.work-tab-sorting .sorting-work-card .quick-edit-bar,
+  html body.work-view.work-tab-sorting .sorting-work-card-body .reference-category-summary {
+    display: none !important;
+  }
+}
+
 .sorting-work-code,
 .sorting-work-memo-state {
   display: none;
@@ -825,6 +1092,808 @@
     height: 38px !important;
     padding: 7px 9px !important;
     font-size: 12px !important;
+  }
+}
+
+/* Settings summary alignment: only rows with count badges reserve the right column. */
+body.settings-view .settings-panel details.settings-accordion > summary,
+body.settings-view .settings-panel .cloud-panel.settings-accordion > summary,
+body.settings-view .settings-panel .settings-maintenance.settings-accordion > summary {
+  display: grid !important;
+  grid-template-columns: 22px minmax(0, 1fr) !important;
+  column-gap: 8px !important;
+  align-items: center !important;
+}
+
+body.settings-view .settings-panel details.settings-accordion > summary:has(.settings-summary-metrics) {
+  grid-template-columns: 22px minmax(0, 1fr) max-content !important;
+}
+
+body.settings-view .settings-panel details.settings-accordion > summary .settings-summary-label,
+body.settings-view .settings-panel .cloud-panel.settings-accordion > summary .settings-summary-label,
+body.settings-view .settings-panel .settings-maintenance.settings-accordion > summary .settings-summary-label {
+  grid-column: 2 !important;
+  min-width: 0 !important;
+}
+
+body.settings-view .settings-panel details.settings-accordion > summary:not(:has(.settings-summary-metrics)) .settings-summary-label,
+body.settings-view .settings-panel .cloud-panel.settings-accordion > summary .settings-summary-label,
+body.settings-view .settings-panel .settings-maintenance.settings-accordion > summary .settings-summary-label {
+  grid-column: 2 / -1 !important;
+}
+
+body.settings-view .settings-panel details.settings-accordion > summary .settings-summary-metrics {
+  grid-column: 3 !important;
+  justify-self: end !important;
+  min-width: 0 !important;
+}
+
+body.settings-view .settings-panel details.settings-accordion > summary:not(:has(.settings-summary-metrics)) {
+  padding-right: 10px !important;
+}
+
+body.settings-view .settings-panel .settings-backup-group.settings-accordion > summary {
+  padding: 10px 12px !important;
+}
+
+@media (max-width: 700px) {
+  body.settings-view .settings-panel details.settings-accordion > summary,
+  body.settings-view .settings-panel .cloud-panel.settings-accordion > summary,
+  body.settings-view .settings-panel .settings-maintenance.settings-accordion > summary {
+    grid-template-columns: 20px minmax(0, 1fr) !important;
+    column-gap: 7px !important;
+  }
+
+  body.settings-view .settings-panel details.settings-accordion > summary:has(.settings-summary-metrics) {
+    grid-template-columns: 20px minmax(0, 1fr) max-content !important;
+  }
+
+  body.settings-view .settings-panel .settings-backup-group.settings-accordion > summary {
+    padding: 10px 12px !important;
+  }
+}
+
+/* Final smartphone sorting override placed at EOF. */
+@media (max-width: 600px) {
+  html body.work-view.work-tab-sorting .sorting-work-toolbar {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    padding: 8px !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-toolbar > #sortingItemSearch,
+  html body.work-view.work-tab-sorting .sorting-density-toggle {
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-density-toggle {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-toolbar input,
+  html body.work-view.work-tab-sorting .sorting-work-toolbar select,
+  html body.work-view.work-tab-sorting .sorting-work-toolbar button,
+  html body.work-view.work-tab-sorting .sorting-work-toolbar .quick-filter-check,
+  html body.work-view.work-tab-sorting .sorting-density-toggle > button {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: 52px !important;
+    min-height: 52px !important;
+    max-height: 52px !important;
+    margin: 0 !important;
+    padding: 0 10px !important;
+    box-sizing: border-box !important;
+    font-size: 12px !important;
+    font-weight: 850 !important;
+    line-height: 1.2 !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-toolbar .quick-filter-check {
+    justify-content: flex-start !important;
+    gap: 8px !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-toolbar .quick-filter-check input,
+  html body.work-view.work-tab-sorting .sorting-work-toolbar .quick-filter-check input[type="checkbox"] {
+    flex: 0 0 20px !important;
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px !important;
+    min-height: 20px !important;
+    max-width: 20px !important;
+    max-height: 20px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-card,
+  html body.work-view.work-tab-sorting .sorting-work-card.shipping-mode-card,
+  html body.work-view.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-card,
+  html body.work-view.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-card.shipping-mode-card {
+    position: relative !important;
+    display: grid !important;
+    grid-template-columns: 56px minmax(0, 1fr) 36px !important;
+    gap: 7px 8px !important;
+    align-items: start !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 136px !important;
+    padding: 9px !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+    transform: none !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-thumb,
+  html body.work-view.work-tab-sorting .sorting-work-thumb .list-thumb,
+  html body.work-view.work-tab-sorting .sorting-work-thumb img,
+  html body.work-view.work-tab-sorting .sorting-work-thumb button {
+    width: 56px !important;
+    height: 56px !important;
+    min-width: 56px !important;
+    min-height: 56px !important;
+    max-width: 56px !important;
+    max-height: 56px !important;
+    border-radius: 9px !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-card-body {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: auto !important;
+    grid-column: 2 !important;
+    gap: 4px !important;
+    min-width: 0 !important;
+    text-align: left !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-title {
+    display: -webkit-box !important;
+    grid-column: 1 !important;
+    grid-row: auto !important;
+    overflow: hidden !important;
+    font-size: 13px !important;
+    font-weight: 950 !important;
+    line-height: 1.22 !important;
+    text-overflow: ellipsis !important;
+    white-space: normal !important;
+    -webkit-box-orient: vertical !important;
+    -webkit-line-clamp: 2 !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-code {
+    display: none !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-offer,
+  html body.work-view.work-tab-sorting .sorting-work-storage,
+  html body.work-view.work-tab-sorting .sorting-work-destination {
+    grid-column: 1 !important;
+    grid-row: auto !important;
+    justify-self: start !important;
+    min-height: 18px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    background: transparent !important;
+    border: 0 !important;
+    font-size: 11px !important;
+    line-height: 1.2 !important;
+    text-align: left !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    transform: none !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-offer {
+    color: #0d766e !important;
+    font-size: 13px !important;
+    font-weight: 950 !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-destination {
+    grid-column: 2 / 4 !important;
+    max-width: 100% !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-status-line {
+    display: flex !important;
+    grid-column: 1 !important;
+    grid-row: auto !important;
+    flex-wrap: wrap !important;
+    gap: 5px !important;
+    align-items: center !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-status,
+  html body.work-view.work-tab-sorting .sorting-work-shipping {
+    display: inline-flex !important;
+    align-items: center !important;
+    max-width: 100% !important;
+    min-height: 20px !important;
+    padding: 2px 6px !important;
+    overflow: hidden !important;
+    font-size: 10px !important;
+    font-weight: 850 !important;
+    line-height: 1.1 !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    transform: none !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-memo-state,
+  html body.work-view.work-tab-sorting .sorting-work-card-body .main-image-badge,
+  html body.work-view.work-tab-sorting .sorting-work-card-body .reference-image-badge {
+    position: static !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    width: auto !important;
+    min-height: 18px !important;
+    padding: 1px 5px !important;
+    overflow: hidden !important;
+    font-size: 10px !important;
+    font-weight: 800 !important;
+    line-height: 1.1 !important;
+    white-space: nowrap !important;
+    transform: none !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-card-body .image-state-badges {
+    display: flex !important;
+    grid-column: 1 !important;
+    grid-row: auto !important;
+    flex-wrap: wrap !important;
+    gap: 5px !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-action-menu,
+  html body.work-view.work-tab-sorting .sorting-action-menu > summary {
+    position: static !important;
+    grid-column: 3 !important;
+    grid-row: 1 !important;
+    justify-self: end !important;
+    align-self: start !important;
+    width: 34px !important;
+    min-width: 34px !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: none !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-card .quick-edit-slot,
+  html body.work-view.work-tab-sorting .sorting-work-card .quick-edit-bar,
+  html body.work-view.work-tab-sorting .sorting-work-card-body .reference-category-summary {
+    display: none !important;
+  }
+}
+
+/* Final smartphone sorting override placed last intentionally. */
+@media (max-width: 600px) {
+  html body.work-view.work-tab-sorting .sorting-work-toolbar {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    padding: 8px !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-toolbar > #sortingItemSearch,
+  html body.work-view.work-tab-sorting .sorting-density-toggle {
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-density-toggle {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-toolbar input,
+  html body.work-view.work-tab-sorting .sorting-work-toolbar select,
+  html body.work-view.work-tab-sorting .sorting-work-toolbar button,
+  html body.work-view.work-tab-sorting .sorting-work-toolbar .quick-filter-check,
+  html body.work-view.work-tab-sorting .sorting-density-toggle > button {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: 52px !important;
+    min-height: 52px !important;
+    max-height: 52px !important;
+    margin: 0 !important;
+    padding: 0 10px !important;
+    box-sizing: border-box !important;
+    font-size: 12px !important;
+    font-weight: 850 !important;
+    line-height: 1.2 !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-toolbar .quick-filter-check {
+    justify-content: flex-start !important;
+    gap: 8px !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-toolbar .quick-filter-check input,
+  html body.work-view.work-tab-sorting .sorting-work-toolbar .quick-filter-check input[type="checkbox"] {
+    flex: 0 0 20px !important;
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px !important;
+    min-height: 20px !important;
+    max-width: 20px !important;
+    max-height: 20px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-card,
+  html body.work-view.work-tab-sorting .sorting-work-card.shipping-mode-card,
+  html body.work-view.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-card,
+  html body.work-view.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-card.shipping-mode-card {
+    position: relative !important;
+    display: grid !important;
+    grid-template-columns: 56px minmax(0, 1fr) 36px !important;
+    gap: 7px 8px !important;
+    align-items: start !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 136px !important;
+    padding: 9px !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+    transform: none !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-thumb,
+  html body.work-view.work-tab-sorting .sorting-work-thumb .list-thumb,
+  html body.work-view.work-tab-sorting .sorting-work-thumb img,
+  html body.work-view.work-tab-sorting .sorting-work-thumb button {
+    width: 56px !important;
+    height: 56px !important;
+    min-width: 56px !important;
+    min-height: 56px !important;
+    max-width: 56px !important;
+    max-height: 56px !important;
+    border-radius: 9px !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-card-body {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: auto !important;
+    grid-column: 2 !important;
+    gap: 4px !important;
+    min-width: 0 !important;
+    text-align: left !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-title {
+    display: -webkit-box !important;
+    grid-column: 1 !important;
+    grid-row: auto !important;
+    overflow: hidden !important;
+    font-size: 13px !important;
+    font-weight: 950 !important;
+    line-height: 1.22 !important;
+    text-overflow: ellipsis !important;
+    white-space: normal !important;
+    -webkit-box-orient: vertical !important;
+    -webkit-line-clamp: 2 !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-code {
+    display: none !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-offer,
+  html body.work-view.work-tab-sorting .sorting-work-storage,
+  html body.work-view.work-tab-sorting .sorting-work-destination {
+    grid-column: 1 !important;
+    grid-row: auto !important;
+    justify-self: start !important;
+    min-height: 18px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    background: transparent !important;
+    border: 0 !important;
+    font-size: 11px !important;
+    line-height: 1.2 !important;
+    text-align: left !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    transform: none !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-offer {
+    color: #0d766e !important;
+    font-size: 13px !important;
+    font-weight: 950 !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-destination {
+    grid-column: 2 / 4 !important;
+    max-width: 100% !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-status-line {
+    display: flex !important;
+    grid-column: 1 !important;
+    grid-row: auto !important;
+    flex-wrap: wrap !important;
+    gap: 5px !important;
+    align-items: center !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-status,
+  html body.work-view.work-tab-sorting .sorting-work-shipping {
+    display: inline-flex !important;
+    align-items: center !important;
+    max-width: 100% !important;
+    min-height: 20px !important;
+    padding: 2px 6px !important;
+    overflow: hidden !important;
+    font-size: 10px !important;
+    font-weight: 850 !important;
+    line-height: 1.1 !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    transform: none !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-memo-state,
+  html body.work-view.work-tab-sorting .sorting-work-card-body .main-image-badge,
+  html body.work-view.work-tab-sorting .sorting-work-card-body .reference-image-badge {
+    position: static !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    width: auto !important;
+    min-height: 18px !important;
+    padding: 1px 5px !important;
+    overflow: hidden !important;
+    font-size: 10px !important;
+    font-weight: 800 !important;
+    line-height: 1.1 !important;
+    white-space: nowrap !important;
+    transform: none !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-card-body .image-state-badges {
+    display: flex !important;
+    grid-column: 1 !important;
+    grid-row: auto !important;
+    flex-wrap: wrap !important;
+    gap: 5px !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-action-menu,
+  html body.work-view.work-tab-sorting .sorting-action-menu > summary {
+    position: static !important;
+    grid-column: 3 !important;
+    grid-row: 1 !important;
+    justify-self: end !important;
+    align-self: start !important;
+    width: 34px !important;
+    min-width: 34px !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: none !important;
+  }
+
+  html body.work-view.work-tab-sorting .sorting-work-card .quick-edit-slot,
+  html body.work-view.work-tab-sorting .sorting-work-card .quick-edit-bar,
+  html body.work-view.work-tab-sorting .sorting-work-card-body .reference-category-summary {
+    display: none !important;
+  }
+}
+
+/* Smartphone inventory list: final readable vertical card layout. */
+@media (max-width: 600px) {
+  html body.work-tab-list,
+  html body.work-tab-list .app-shell,
+  html body.work-tab-list .list-panel,
+  html body.work-tab-list .mobile-card-list {
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+  }
+
+  html body.work-tab-list .inventory-primary-search {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    padding: 8px !important;
+    margin: 0 0 8px !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+  }
+
+  html body.work-tab-list .inventory-primary-search > * {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  html body.work-tab-list .inventory-primary-search #searchInput,
+  html body.work-tab-list .inventory-primary-search #statusFilter {
+    height: 40px !important;
+    min-height: 40px !important;
+    max-height: 40px !important;
+    margin: 0 !important;
+    padding: 0 10px !important;
+    font-size: 13px !important;
+    line-height: 40px !important;
+  }
+
+  html body.work-tab-list .inventory-primary-search .quick-filter-check {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    margin: 0 !important;
+    padding: 0 8px !important;
+    font-size: 11px !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+  }
+
+  html body.work-tab-list .inventory-primary-search .quick-filter-check input,
+  html body.work-tab-list .inventory-primary-search .quick-filter-check input[type="checkbox"] {
+    flex: 0 0 20px !important;
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px !important;
+    min-height: 20px !important;
+    max-width: 20px !important;
+    max-height: 20px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  html body.work-tab-list .inventory-primary-search .quick-filter-check span {
+    display: block !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  html body.work-tab-list .mobile-card-list:not(.hidden) {
+    display: grid !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  html body.work-tab-list .mobile-item-card {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 102px !important;
+    padding: 8px !important;
+    overflow: visible !important;
+    box-sizing: border-box !important;
+  }
+
+  html body.work-tab-list .mobile-card-layout {
+    display: grid !important;
+    grid-template-columns: 64px minmax(0, 1fr) 50px !important;
+    gap: 8px !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  html body.work-tab-list .mobile-card-thumb,
+  html body.work-tab-list .mobile-card-thumb .list-thumbnail-button,
+  html body.work-tab-list .mobile-card-thumb img,
+  html body.work-tab-list .mobile-card-thumb .thumbnail-placeholder {
+    width: 64px !important;
+    height: 64px !important;
+    min-width: 64px !important;
+    min-height: 64px !important;
+    max-width: 64px !important;
+    max-height: 64px !important;
+    border-radius: 9px !important;
+  }
+
+  html body.work-tab-list .mobile-card-thumb .list-thumbnail-button {
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+
+  html body.work-tab-list .mobile-card-thumb img {
+    object-fit: cover !important;
+  }
+
+  html body.work-tab-list .mobile-card-content {
+    display: grid !important;
+    gap: 3px !important;
+    align-content: start !important;
+    min-width: 0 !important;
+    text-align: left !important;
+  }
+
+  html body.work-tab-list .mobile-card-title-wrap {
+    display: grid !important;
+    gap: 1px !important;
+    min-width: 0 !important;
+  }
+
+  html body.work-tab-list .mobile-card-name {
+    display: -webkit-box !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    color: #241f1d !important;
+    font-size: 12.5px !important;
+    font-weight: 900 !important;
+    line-height: 1.2 !important;
+    text-align: left !important;
+    text-overflow: ellipsis !important;
+    white-space: normal !important;
+    -webkit-box-orient: vertical !important;
+    -webkit-line-clamp: 2 !important;
+  }
+
+  html body.work-tab-list .mobile-card-code {
+    overflow: hidden !important;
+    color: #9a908b !important;
+    font-size: 9.5px !important;
+    font-weight: 750 !important;
+    line-height: 1.1 !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  html body.work-tab-list .mobile-card-row {
+    display: grid !important;
+    gap: 3px !important;
+    align-items: center !important;
+    min-width: 0 !important;
+  }
+
+  html body.work-tab-list .mobile-card-row-main {
+    grid-template-columns: minmax(0, 1fr) auto !important;
+  }
+
+  html body.work-tab-list .mobile-card-row-state {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 1px !important;
+  }
+
+  html body.work-tab-list .mobile-card-row-media {
+    grid-template-columns: auto auto !important;
+    justify-content: start !important;
+    gap: 8px !important;
+  }
+
+  html body.work-tab-list .mobile-card-storage,
+  html body.work-tab-list .mobile-card-destination,
+  html body.work-tab-list .mobile-card-shipping,
+  html body.work-tab-list .mobile-card-image-count,
+  html body.work-tab-list .mobile-card-reference-count {
+    min-width: 0 !important;
+    overflow: hidden !important;
+    color: #5f5652 !important;
+    font-size: 10.5px !important;
+    font-weight: 800 !important;
+    line-height: 1.15 !important;
+    text-align: left !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  html body.work-tab-list .mobile-card-storage::before {
+    content: "📦 ";
+  }
+
+  html body.work-tab-list .mobile-card-status {
+    position: static !important;
+    max-width: 72px !important;
+    min-height: 17px !important;
+    margin: 0 !important;
+    padding: 1px 5px !important;
+    overflow: hidden !important;
+    font-size: 9px !important;
+    line-height: 1.1 !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    transform: none !important;
+  }
+
+  html body.work-tab-list .mobile-card-side {
+    display: grid !important;
+    grid-template-rows: auto 34px !important;
+    align-content: space-between !important;
+    justify-items: end !important;
+    min-width: 0 !important;
+    min-height: 86px !important;
+    gap: 6px !important;
+  }
+
+  html body.work-tab-list .mobile-card-profit-value {
+    display: block !important;
+    max-width: 50px !important;
+    overflow: hidden !important;
+    color: #16834c !important;
+    font-size: 12px !important;
+    font-weight: 950 !important;
+    line-height: 1.15 !important;
+    text-align: right !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  html body.work-tab-list .mobile-card-profit-value.profit-unset {
+    color: #aaa29e !important;
+    font-size: 11px !important;
+    font-weight: 850 !important;
+  }
+
+  html body.work-tab-list .mobile-more-actions,
+  html body.work-tab-list .mobile-more-actions > summary {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    min-height: 34px !important;
+    margin: 0 !important;
+  }
+
+  html body.work-tab-list .mobile-card-primary-actions,
+  html body.work-tab-list .mobile-item-card .quick-edit-slot,
+  html body.work-tab-list .mobile-item-card .quick-edit-bar,
+  html body.work-tab-list .mobile-card-shipping-mini {
+    display: none !important;
   }
 }
 
@@ -25913,12 +26982,398 @@ body.work-tab-sorting .density-toggle-button.active {
 
 @media (max-width: 700px) {
   body.work-tab-sorting .sorting-density-toggle {
-    display: none !important;
+    display: grid !important;
   }
 
   body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-card,
   body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-card.shipping-mode-card {
     min-height: 178px !important;
+  }
+}
+
+/* Smartphone sorting screen: stable filter grid and readable work cards. */
+@media (max-width: 600px) {
+  html body.work-tab-sorting,
+  html body.work-tab-sorting .app-shell,
+  html body.work-tab-sorting .sorting-panel,
+  html body.work-tab-sorting .sorting-list-section,
+  html body.work-tab-sorting .sorting-work-card-list {
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+  }
+
+  html body.work-tab-sorting .sorting-work-toolbar {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 30 !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    margin: 0 0 8px !important;
+    padding: 8px !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+  }
+
+  html body.work-tab-sorting .sorting-work-toolbar > #sortingItemSearch {
+    grid-column: 1 / -1 !important;
+  }
+
+  html body.work-tab-sorting .sorting-toolbar-label {
+    display: none !important;
+  }
+
+  html body.work-tab-sorting .sorting-work-toolbar input,
+  html body.work-tab-sorting .sorting-work-toolbar select,
+  html body.work-tab-sorting .sorting-work-toolbar button,
+  html body.work-tab-sorting .sorting-work-toolbar .quick-filter-check {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: 52px !important;
+    min-height: 52px !important;
+    max-height: 52px !important;
+    margin: 0 !important;
+    padding: 0 10px !important;
+    box-sizing: border-box !important;
+    font-size: 12px !important;
+    line-height: 1.2 !important;
+  }
+
+  html body.work-tab-sorting .sorting-density-toggle {
+    display: grid !important;
+    grid-column: 1 / -1 !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  html body.work-tab-sorting .density-toggle-button {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    white-space: nowrap !important;
+  }
+
+  html body.work-tab-sorting .sorting-work-toolbar .quick-filter-check {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+    border: 1px solid #ded6d1 !important;
+    border-radius: 10px !important;
+    background: #fff !important;
+    color: #4f4743 !important;
+    font-weight: 850 !important;
+    white-space: nowrap !important;
+  }
+
+  html body.work-tab-sorting .sorting-work-toolbar .quick-filter-check input,
+  html body.work-tab-sorting .sorting-work-toolbar .quick-filter-check input[type="checkbox"] {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    display: inline-grid !important;
+    place-items: center !important;
+    flex: 0 0 20px !important;
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px !important;
+    min-height: 20px !important;
+    max-width: 20px !important;
+    max-height: 20px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 1.5px solid #b9afa9 !important;
+    border-radius: 5px !important;
+    background: #fff !important;
+    box-sizing: border-box !important;
+  }
+
+  html body.work-tab-sorting .sorting-work-toolbar .quick-filter-check input:checked,
+  html body.work-tab-sorting .sorting-work-toolbar .quick-filter-check input[type="checkbox"]:checked {
+    border-color: #d84033 !important;
+    background: #d84033 !important;
+  }
+
+  html body.work-tab-sorting .sorting-work-toolbar .quick-filter-check input:checked::after,
+  html body.work-tab-sorting .sorting-work-toolbar .quick-filter-check input[type="checkbox"]:checked::after {
+    content: "" !important;
+    width: 8px !important;
+    height: 4px !important;
+    border-bottom: 2px solid #fff !important;
+    border-left: 2px solid #fff !important;
+    transform: rotate(-45deg) translate(1px, -1px) !important;
+  }
+
+  html body.work-tab-sorting .sorting-work-toolbar .quick-filter-check span {
+    display: block !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  html body.work-tab-sorting .sorting-work-card-list:not(.hidden) {
+    display: grid !important;
+    gap: 9px !important;
+    width: 100% !important;
+  }
+
+  html body.work-tab-sorting .sorting-work-card,
+  html body.work-tab-sorting .sorting-work-card.shipping-mode-card,
+  html body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-card,
+  html body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-card.shipping-mode-card {
+    position: relative !important;
+    display: grid !important;
+    grid-template-columns: 56px minmax(0, 1fr) 36px !important;
+    grid-template-rows: auto !important;
+    gap: 7px 8px !important;
+    align-items: start !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 136px !important;
+    padding: 9px !important;
+    border-radius: 12px !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+    transform: none !important;
+  }
+
+  html body.work-tab-sorting .sorting-work-card.shipping-mode-card,
+  html body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-card.shipping-mode-card {
+    grid-template-columns: 24px 56px minmax(0, 1fr) 36px !important;
+  }
+
+  html body.work-tab-sorting .sorting-pick-check {
+    position: static !important;
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    width: 22px !important;
+    min-width: 22px !important;
+    margin: 0 !important;
+    transform: none !important;
+  }
+
+  html body.work-tab-sorting .sorting-work-thumb,
+  html body.work-tab-sorting .sorting-work-thumb .list-thumb,
+  html body.work-tab-sorting .sorting-work-thumb img,
+  html body.work-tab-sorting .sorting-work-thumb button,
+  html body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-thumb,
+  html body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-thumb .list-thumb,
+  html body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-thumb img,
+  html body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-thumb button {
+    width: 56px !important;
+    height: 56px !important;
+    min-width: 56px !important;
+    min-height: 56px !important;
+    max-width: 56px !important;
+    max-height: 56px !important;
+    border-radius: 9px !important;
+  }
+
+  html body.work-tab-sorting .sorting-work-card.shipping-mode-card .sorting-work-thumb {
+    grid-column: 2 !important;
+  }
+
+  html body.work-tab-sorting .sorting-work-card-body,
+  html body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-card-body {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: auto !important;
+    grid-column: 2 !important;
+    gap: 4px !important;
+    align-content: start !important;
+    min-width: 0 !important;
+    text-align: left !important;
+  }
+
+  html body.work-tab-sorting .sorting-work-card.shipping-mode-card .sorting-work-card-body {
+    grid-column: 3 !important;
+  }
+
+  html body.work-tab-sorting .sorting-work-title,
+  html body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-title {
+    display: -webkit-box !important;
+    grid-column: 1 !important;
+    grid-row: auto !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    color: #241f1d !important;
+    font-size: 13px !important;
+    font-weight: 950 !important;
+    line-height: 1.22 !important;
+    text-overflow: ellipsis !important;
+    white-space: normal !important;
+    -webkit-box-orient: vertical !important;
+    -webkit-line-clamp: 2 !important;
+  }
+
+  html body.work-tab-sorting .sorting-work-code {
+    display: none !important;
+  }
+
+  html body.work-tab-sorting .sorting-work-offer,
+  html body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-offer {
+    grid-column: 1 !important;
+    grid-row: auto !important;
+    justify-self: start !important;
+    min-height: 20px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    font-size: 13px !important;
+    font-weight: 950 !important;
+    line-height: 1.2 !important;
+    text-align: left !important;
+    white-space: nowrap !important;
+    background: transparent !important;
+    border: 0 !important;
+  }
+
+  html body.work-tab-sorting .sorting-work-storage,
+  html body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-storage {
+    grid-column: 1 !important;
+    grid-row: auto !important;
+    min-height: 18px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    color: #625852 !important;
+    font-size: 11px !important;
+    font-weight: 850 !important;
+    line-height: 1.2 !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    background: transparent !important;
+    border: 0 !important;
+  }
+
+  html body.work-tab-sorting .sorting-work-status-line,
+  html body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-status-line {
+    display: flex !important;
+    grid-column: 1 !important;
+    grid-row: auto !important;
+    flex-wrap: wrap !important;
+    gap: 5px !important;
+    align-items: center !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  html body.work-tab-sorting .sorting-work-status,
+  html body.work-tab-sorting .sorting-work-shipping,
+  html body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-status,
+  html body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-shipping {
+    display: inline-flex !important;
+    align-items: center !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    min-height: 20px !important;
+    padding: 2px 6px !important;
+    overflow: hidden !important;
+    font-size: 10px !important;
+    font-weight: 850 !important;
+    line-height: 1.1 !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    transform: none !important;
+  }
+
+  html body.work-tab-sorting .sorting-work-memo-state,
+  html body.work-tab-sorting .sorting-work-card-body .main-image-badge,
+  html body.work-tab-sorting .sorting-work-card-body .reference-image-badge,
+  html body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-card-body .main-image-badge,
+  html body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-card-body .reference-image-badge {
+    position: static !important;
+    display: inline-flex !important;
+    grid-row: auto !important;
+    align-items: center !important;
+    width: auto !important;
+    min-width: 0 !important;
+    min-height: 18px !important;
+    max-width: 100% !important;
+    padding: 1px 5px !important;
+    overflow: hidden !important;
+    font-size: 10px !important;
+    font-weight: 800 !important;
+    line-height: 1.1 !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    transform: none !important;
+  }
+
+  html body.work-tab-sorting .sorting-work-card-body .image-state-badges,
+  html body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-card-body .image-state-badges {
+    display: flex !important;
+    grid-column: 1 !important;
+    grid-row: auto !important;
+    flex-wrap: wrap !important;
+    gap: 5px !important;
+    align-items: center !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow: visible !important;
+  }
+
+  html body.work-tab-sorting .sorting-work-destination,
+  html body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-work-destination {
+    grid-column: 2 / 4 !important;
+    grid-row: auto !important;
+    justify-self: stretch !important;
+    min-width: 0 !important;
+    min-height: 22px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    color: #5f5652 !important;
+    font-size: 11px !important;
+    font-weight: 850 !important;
+    line-height: 1.2 !important;
+    text-align: left !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    background: transparent !important;
+    border: 0 !important;
+    transform: none !important;
+  }
+
+  html body.work-tab-sorting .sorting-work-card.shipping-mode-card .sorting-work-destination {
+    grid-column: 3 / 5 !important;
+  }
+
+  html body.work-tab-sorting .sorting-action-menu,
+  html body.work-tab-sorting .sorting-action-menu > summary,
+  html body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-action-menu,
+  html body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .sorting-action-menu > summary {
+    position: static !important;
+    grid-column: 3 !important;
+    grid-row: 1 !important;
+    justify-self: end !important;
+    align-self: start !important;
+    width: 34px !important;
+    min-width: 34px !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: none !important;
+  }
+
+  html body.work-tab-sorting .sorting-work-card.shipping-mode-card .sorting-action-menu {
+    grid-column: 4 !important;
+  }
+
+  html body.work-tab-sorting .sorting-work-card .quick-edit-slot,
+  html body.work-tab-sorting .sorting-work-card .quick-edit-bar,
+  html body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .quick-edit-slot,
+  html body.work-tab-sorting .sorting-work-card-list.sorting-compact-list .quick-edit-bar,
+  html body.work-tab-sorting .sorting-work-card-body .reference-category-summary {
+    display: none !important;
   }
 }
 
@@ -26623,13 +28078,17 @@ textarea.sorting-inline-control {
     min-width: 0 !important;
   }
 
-  body.work-tab-sorting .sorting-density-toggle > button,
-  body.work-tab-sorting .sorting-work-toolbar select,
-  body.work-tab-sorting .sorting-work-toolbar .sorting-shipping-mode-button {
+  html body.work-view.work-tab-sorting .sorting-density-toggle > button,
+  html body.work-view.work-tab-sorting .sorting-work-toolbar input,
+  html body.work-view.work-tab-sorting .sorting-work-toolbar select,
+  html body.work-view.work-tab-sorting .sorting-work-toolbar button,
+  html body.work-view.work-tab-sorting .sorting-work-toolbar .quick-filter-check,
+  html body.work-view.work-tab-sorting .sorting-work-toolbar .sorting-shipping-mode-button {
     width: 100% !important;
     min-width: 0 !important;
     min-height: 52px !important;
     height: 52px !important;
+    max-height: 52px !important;
     box-sizing: border-box !important;
     text-align: center !important;
   }
