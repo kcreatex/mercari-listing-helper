@@ -11207,6 +11207,102 @@ body.analysis-view .sold-summary div {
   color: var(--muted);
   font-size: 12px;
   font-weight: 800;
+  white-space: pre-line;
+}
+
+.cloud-sync-status-card {
+  display: grid;
+  gap: 8px;
+  width: min(100%, var(--content-width));
+  margin: 14px auto 0;
+  padding: 12px;
+  border: 1px solid #eee4df;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 8px 22px rgba(79, 60, 50, 0.06);
+}
+
+body.settings-view .cloud-sync-status-card {
+  display: grid !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.cloud-sync-status-heading,
+.cloud-sync-status-time {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.cloud-sync-status-heading strong {
+  color: #302b29;
+  font-size: 14px;
+}
+
+.cloud-sync-status-badge {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  min-height: 28px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: #f3f1ef;
+  color: #6d6662;
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.cloud-sync-status-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.cloud-sync-status-note {
+  margin: 0;
+  color: #6c625e;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.45;
+}
+
+.cloud-sync-status-time {
+  padding-top: 4px;
+  border-top: 1px solid #f0e9e5;
+  color: #6c625e;
+  font-size: 12px;
+}
+
+.cloud-sync-status-time strong {
+  color: #302b29;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.cloud-sync-status-card[data-sync-status="synced"] .cloud-sync-status-badge {
+  background: #eaf7ef;
+  color: #16834c;
+}
+
+.cloud-sync-status-card[data-sync-status="cloud-update"] .cloud-sync-status-badge {
+  background: #fff3df;
+  color: #b76a00;
+}
+
+.cloud-sync-status-card[data-sync-status="failed"] .cloud-sync-status-badge {
+  background: #ffecea;
+  color: #c7392f;
+}
+
+.cloud-sync-status-card[data-sync-status="logged-out"] .cloud-sync-status-badge {
+  background: #f3f1ef;
+  color: #827974;
 }
 
 .cloud-sync-state {
@@ -24019,5 +24115,82 @@ textarea.sorting-inline-control {
 
   .sorting-inline-actions {
     grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Smartphone settings: keep daily sync visible, hide PC-only backup/recovery tools. */
+.mobile-cloud-reload-button {
+  display: none !important;
+}
+
+@media (max-width: 700px) {
+  .settings-backup-group,
+  .settings-maintenance,
+  .cloud-panel,
+  body.settings-view .settings-backup-group {
+    display: none !important;
+  }
+
+  body.settings-view .settings-maintenance,
+  body.settings-view .cloud-panel {
+    display: none !important;
+  }
+
+  .cloud-panel .data-recovery-panel,
+  .cloud-panel .data-recovery-results,
+  .cloud-panel .cloud-household-tools,
+  .cloud-panel .cloud-backup-warning,
+  #cloudLogoutButton,
+  #detectAllStorageDataButton,
+  #analyzeIndexedImageStoreButton,
+  #analyzeLocalImageRefsButton,
+  #diagnoseRecoveredImageCandidatesButton,
+  #diagnoseCloudAppStateButton,
+  #detectLocalSortingDataButton,
+  #detectCloudSortingDataButton,
+  #cloudHouseholdTools,
+  #cloudCopyHouseholdButton,
+  body.settings-view .cloud-panel .data-recovery-panel,
+  body.settings-view .cloud-panel .data-recovery-results,
+  body.settings-view .cloud-panel .cloud-household-tools,
+  body.settings-view .cloud-panel .cloud-backup-warning,
+  body.settings-view #cloudLogoutButton,
+  body.settings-view #detectAllStorageDataButton,
+  body.settings-view #analyzeIndexedImageStoreButton,
+  body.settings-view #analyzeLocalImageRefsButton,
+  body.settings-view #diagnoseRecoveredImageCandidatesButton,
+  body.settings-view #diagnoseCloudAppStateButton,
+  body.settings-view #detectLocalSortingDataButton,
+  body.settings-view #detectCloudSortingDataButton,
+  body.settings-view #cloudHouseholdTools,
+  body.settings-view #cloudCopyHouseholdButton {
+    display: none !important;
+  }
+
+  .cloud-panel-header,
+  body.settings-view .cloud-panel-header {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  #cloudReloadButton,
+  body.settings-view #cloudReloadButton {
+    display: inline-flex !important;
+    width: 100% !important;
+    margin-top: 8px !important;
+  }
+
+  #cloudReloadButton.hidden,
+  body.settings-view #cloudReloadButton.hidden {
+    display: none !important;
+  }
+
+  .mobile-cloud-reload-button:not(.hidden),
+  body.settings-view .mobile-cloud-reload-button:not(.hidden) {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    min-height: 44px !important;
+    margin-top: 12px !important;
   }
 }

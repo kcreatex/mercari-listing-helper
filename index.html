@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>メルカリ出品補助室</title>
-    <link rel="stylesheet" href="styles.css?v=sorting-density-compact-edit-20260630">
+    <link rel="stylesheet" href="styles.css?v=cloud-sync-card-visible-20260701">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
   <body class="work-view work-tab-form">
@@ -1251,6 +1251,21 @@
           </div>
         </div>
 
+        <section class="cloud-sync-status-card" id="cloudSyncStatusCard" aria-live="polite">
+          <div class="cloud-sync-status-heading">
+            <strong>☁ クラウド同期</strong>
+            <span class="cloud-sync-status-badge" id="cloudSyncStatusBadge">
+              <span class="cloud-sync-status-dot" id="cloudSyncStatusDot" aria-hidden="true"></span>
+              <span id="cloudSyncStatusText">未ログイン</span>
+            </span>
+          </div>
+          <p class="cloud-sync-status-note" id="cloudSyncStatusNote">ログインすると同期状態を確認できます。</p>
+          <div class="cloud-sync-status-time">
+            <span>最終同期</span>
+            <strong id="cloudSyncStatusTime">-</strong>
+          </div>
+        </section>
+
         <section class="settings-operations-summary" aria-labelledby="settingsSummaryTitle">
           <h3 id="settingsSummaryTitle">運用サマリー</h3>
           <div class="settings-summary-grid">
@@ -1371,6 +1386,8 @@
             </div>
           </details>
         </div>
+
+        <button class="ghost-button mobile-cloud-reload-button hidden" type="button" id="mobileCloudReloadButton">クラウドから再読み込み</button>
 
         <details class="settings-backup-group settings-accordion app-accordion">
           <summary>
@@ -1580,6 +1597,6 @@
       </div>
     </div>
 
-    <script src="app.js?v=sorting-density-compact-edit-20260630"></script>
+    <script src="app.js?v=cloud-sync-card-visible-20260701"></script>
   </body>
 </html>

@@ -100,7 +100,12 @@ const migrateToSupabaseButton = document.querySelector("#migrateToSupabaseButton
 const cloudLastSync = document.querySelector("#cloudLastSync");
 const cloudSyncState = document.querySelector("#cloudSyncState");
 const cloudReloadButton = document.querySelector("#cloudReloadButton");
+const mobileCloudReloadButton = document.querySelector("#mobileCloudReloadButton");
 const cloudFetchCount = document.querySelector("#cloudFetchCount");
+const cloudSyncStatusCard = document.querySelector("#cloudSyncStatusCard");
+const cloudSyncStatusText = document.querySelector("#cloudSyncStatusText");
+const cloudSyncStatusNote = document.querySelector("#cloudSyncStatusNote");
+const cloudSyncStatusTime = document.querySelector("#cloudSyncStatusTime");
 const detectAllStorageDataButton = document.querySelector("#detectAllStorageDataButton");
 const analyzeIndexedImageStoreButton = document.querySelector("#analyzeIndexedImageStoreButton");
 const analyzeLocalImageRefsButton = document.querySelector("#analyzeLocalImageRefsButton");
@@ -424,6 +429,7 @@ let isCloudReady = false;
 let hasCloudSaveWarning = false;
 let isApplyingCloudSnapshot = false;
 let lastCloudReloadRequestAt = 0;
+let cloudSyncStatusKind = "logged-out";
 let sortingRecoveryCandidates = [];
 let indexedImageRecoveryCandidate = null;
 let localImageRefsRecoveryCandidate = null;
@@ -3802,14 +3808,18 @@ function setCloudStatus(message, type = "") {
 }
 
 function formatCloudSyncTime(value) {
-  if (!value) {
-    return "最終同期 -";
-  }
+  const dateTime = formatCloudSyncDateTime(value);
+  return dateTime === "-" ? "最終同期 -" : `最終同期 ${dateTime}`;
+}
 
+function formatCloudSyncDateTime(value) {
+  if (!value) {
+    return "-";
+  }
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
-    return "最終同期 -";
+    return "-";
   }
 
   const year = date.getFullYear();
@@ -3817,7 +3827,11 @@ function formatCloudSyncTime(value) {
   const day = String(date.getDate()).padStart(2, "0");
   const hours = String(date.getHours()).padStart(2, "0");
   const minutes = String(date.getMinutes()).padStart(2, "0");
-  return `最終同期 ${year}/${month}/${day} ${hours}:${minutes}`;
+  return `${year}/${month}/${day} ${hours}:${minutes}`;
+}
+
+function formatCloudSyncDisplay(value) {
+  return `☁ 最終同期\n${formatCloudSyncDateTime(value)}`;
 }
 
 function updateCloudLastSyncDisplay() {
@@ -3825,7 +3839,49 @@ function updateCloudLastSyncDisplay() {
     return;
   }
 
-  cloudLastSync.textContent = formatCloudSyncTime(localStorage.getItem(CLOUD_LAST_SYNC_KEY));
+  cloudLastSync.textContent = formatCloudSyncDisplay(localStorage.getItem(CLOUD_LAST_SYNC_KEY));
+  updateCloudSyncStatusTime();
+}
+
+function updateCloudSyncStatusTime() {
+  if (!cloudSyncStatusTime) {
+    return;
+  }
+
+  cloudSyncStatusTime.textContent = formatCloudSyncDateTime(localStorage.getItem(CLOUD_LAST_SYNC_KEY));
+}
+
+function setCloudSyncStatus(kind, note = "") {
+  cloudSyncStatusKind = kind;
+
+  if (!cloudSyncStatusCard || !cloudSyncStatusText || !cloudSyncStatusNote) {
+    return;
+  }
+
+  const statusMap = {
+    synced: {
+      label: "同期済み",
+      note: "クラウドとこの端末は同期済みです。",
+    },
+    "cloud-update": {
+      label: "クラウド更新あり",
+      note: "新しいデータがあります。",
+    },
+    failed: {
+      label: "同期失敗",
+      note: "同期状態を確認できませんでした。",
+    },
+    "logged-out": {
+      label: "未ログイン",
+      note: "ログインすると同期状態を確認できます。",
+    },
+  };
+  const status = statusMap[kind] || statusMap["logged-out"];
+
+  cloudSyncStatusCard.dataset.syncStatus = kind;
+  cloudSyncStatusText.textContent = status.label;
+  cloudSyncStatusNote.textContent = note || status.note;
+  updateCloudSyncStatusTime();
 }
 
 function updateCloudFetchCount(count = null) {
@@ -3964,6 +4020,7 @@ function confirmCancel(message) {
 function markCloudSynced() {
   localStorage.setItem(CLOUD_LAST_SYNC_KEY, new Date().toISOString());
   updateCloudLastSyncDisplay();
+  setCloudSyncStatus("synced");
   logCloudDataSource("同期完了");
 }
 
@@ -3975,6 +4032,7 @@ function renderCloudAuthState() {
   cloudLogoutButton.classList.toggle("hidden", !cloudUser);
   migrateToSupabaseButton.classList.toggle("hidden", !isLoggedIn);
   cloudReloadButton?.classList.toggle("hidden", !isLoggedIn);
+  mobileCloudReloadButton?.classList.toggle("hidden", !isLoggedIn);
   cloudHouseholdTools?.classList.add("hidden");
   cloudPanel.classList.toggle("cloud-logged-in", isLoggedIn);
   cloudEmailInput.disabled = Boolean(cloudUser);
@@ -3989,16 +4047,21 @@ function renderCloudAuthState() {
   if (isLoggedIn) {
     setCloudStatus(email, "connected");
     updateCloudLastSyncDisplay();
+    if (!["cloud-update", "failed"].includes(cloudSyncStatusKind)) {
+      setCloudSyncStatus("synced");
+    }
     return;
   }
 
   if (cloudUser && !cloudHouseholdId) {
     setCloudStatus("共有グループ未設定", "warning");
+    setCloudSyncStatus("failed", "共有グループが未設定のため同期できません。");
     updateCloudFetchCount(null);
     return;
   }
 
   setCloudStatus("未ログイン");
+  setCloudSyncStatus("logged-out");
   updateCloudLastSyncDisplay();
   updateCloudFetchCount(null);
 }
@@ -4109,9 +4172,10 @@ async function initializeCloud() {
 
     if (cloudUser) {
       await loadCloudHousehold();
-      await loadItemsFromSupabase();
+      await reloadCloudData({ reason: "アプリ起動" });
     }
   } catch (error) {
+    setCloudSyncStatus("failed", "クラウド接続に失敗しました。");
     setCloudStatus(`Supabase接続に失敗しました。ローカル保存で継続します: ${error.message}`, "warning");
   } finally {
     renderCloudAuthState();
@@ -4178,6 +4242,60 @@ async function loadCloudHouseholdMembers() {
   cloudHouseholdMemberIds = Array.isArray(data)
     ? data.map((member) => String(member.user_id || "").trim()).filter(Boolean)
     : [];
+}
+
+function parseCloudSyncTimestamp(value) {
+  const timestamp = Date.parse(value || "");
+  return Number.isFinite(timestamp) ? timestamp : 0;
+}
+
+async function fetchCloudChangeSummary() {
+  if (!supabaseClient || !cloudHouseholdId) {
+    return {
+      cloudUpdatedAt: "",
+      cloudUpdatedAtMs: 0,
+      localSyncedAt: localStorage.getItem(CLOUD_LAST_SYNC_KEY) || "",
+      localSyncedAtMs: parseCloudSyncTimestamp(localStorage.getItem(CLOUD_LAST_SYNC_KEY)),
+      shouldReload: false,
+      strategy: "metadata-check",
+    };
+  }
+
+  const localSyncedAt = localStorage.getItem(CLOUD_LAST_SYNC_KEY) || "";
+  const { data, error } = await supabaseClient
+    .from("items")
+    .select("updated_at")
+    .eq("household_id", cloudHouseholdId)
+    .order("updated_at", { ascending: false })
+    .limit(1);
+
+  if (error) {
+    throw error;
+  }
+
+  const cloudUpdatedAt = Array.isArray(data) && data[0]?.updated_at
+    ? data[0].updated_at
+    : "";
+  const cloudUpdatedAtMs = parseCloudSyncTimestamp(cloudUpdatedAt);
+  const localSyncedAtMs = parseCloudSyncTimestamp(localSyncedAt);
+
+  return {
+    cloudUpdatedAt,
+    cloudUpdatedAtMs,
+    localSyncedAt,
+    localSyncedAtMs,
+    shouldReload: cloudUpdatedAtMs > localSyncedAtMs,
+    strategy: "metadata-check",
+  };
+}
+
+function logCloudChangeSummary(summary, reason = "") {
+  console.log("クラウド同期確認：更新時刻比較");
+  console.log(`確認理由：${reason || "-"}`);
+  console.log(`クラウド更新時刻：${formatCloudSyncDateTime(summary.cloudUpdatedAt)}`);
+  console.log(`ローカル同期時刻：${formatCloudSyncDateTime(summary.localSyncedAt)}`);
+  console.log(`同期方式：${summary.strategy || "metadata-check"}`);
+  console.log(`同期判定：${summary.shouldReload ? "クラウドが新しいため再読み込み" : "再読み込み不要"}`);
 }
 
 async function loadItemsFromSupabase() {
@@ -4435,6 +4553,26 @@ async function reloadCloudData({ reason = "手動同期", showToast = false, for
   lastCloudReloadRequestAt = now;
 
   await loadCloudHousehold();
+
+  if (!force) {
+    const cloudChangeSummary = await fetchCloudChangeSummary();
+    logCloudChangeSummary(cloudChangeSummary, reason);
+
+    if (cloudChangeSummary.shouldReload) {
+      setCloudSyncStatus("cloud-update");
+    }
+
+    if (!cloudChangeSummary.shouldReload) {
+      setCloudSyncStatus("synced");
+      renderCloudAuthState();
+      if (showToast) {
+        showSuccessMessage("クラウドは最新です");
+      }
+      logCloudDataSource(`${reason}: 更新なし`);
+      return;
+    }
+  }
+
   await loadItemsFromSupabase();
   render();
 
@@ -4452,6 +4590,7 @@ function reloadCloudDataIfReady(reason) {
   }
 
   reloadCloudData({ reason }).catch((error) => {
+    setCloudSyncStatus("failed", "クラウド同期に失敗しました。");
     setCloudStatus(`クラウド再読み込みに失敗しました: ${error.message}`, "warning");
     console.warn("Supabase再読み込みエラー:", error);
   });
@@ -4539,6 +4678,7 @@ function handleCloudSaveError(error) {
   }
 
   hasCloudSaveWarning = true;
+  setCloudSyncStatus("failed", "クラウド保存に失敗しました。端末内には保存済みです。");
   setCloudStatus(`クラウド保存に失敗しました。端末内には保存済みです: ${error.message}`, "warning");
   showErrorMessage("クラウド保存に失敗しました。端末内には保存済みです");
 }
@@ -12957,6 +13097,7 @@ function renderSettings() {
   shippingSettingsList.innerHTML = "";
   appraisalSettingsList.innerHTML = "";
   templateSettingsList.innerHTML = "";
+  updateCloudSyncStatusTime();
   renderSettingsOperationalSummary();
   categorySettingsCount.textContent = `${settings.categories.length}件`;
   storageSettingsCount.textContent = `${settings.storageLocations.length}件`;
@@ -14614,11 +14755,12 @@ cloudLoginForm.addEventListener("submit", async (event) => {
     supabaseSession = data.session;
     cloudUser = data.user;
     await loadCloudHousehold();
-    await loadItemsFromSupabase();
+    await reloadCloudData({ reason: "ログイン直後" });
     renderCloudAuthState();
     render();
   } catch (error) {
     isCloudReady = false;
+    setCloudSyncStatus("failed", "ログインまたはクラウド読み込みに失敗しました。");
     setCloudStatus(`ログインまたは読み込みに失敗しました。ローカル保存で継続します: ${error.message}`, "warning");
     showErrorMessage("ログインまたはクラウド読み込みに失敗しました。ローカル保存で継続します");
   } finally {
@@ -14647,21 +14789,38 @@ cloudLogoutButton.addEventListener("click", async () => {
 
 migrateToSupabaseButton.addEventListener("click", migrateLocalItemsToSupabase);
 
-cloudReloadButton?.addEventListener("click", async () => {
+async function handleManualCloudReload() {
   const shouldReload = await confirmCloudOverwriteAction("クラウドから再読み込み");
   if (!shouldReload) {
     return;
   }
 
-  cloudReloadButton.disabled = true;
+  [cloudReloadButton, mobileCloudReloadButton].forEach((button) => {
+    if (button) {
+      button.disabled = true;
+    }
+  });
   reloadCloudData({ reason: "手動同期", showToast: true, force: true })
     .catch((error) => {
+      setCloudSyncStatus("failed", "クラウド再読み込みに失敗しました。");
       setCloudStatus(`クラウド再読み込みに失敗しました: ${error.message}`, "warning");
       showErrorMessage("クラウド再読み込みに失敗しました");
     })
     .finally(() => {
-      cloudReloadButton.disabled = false;
+      [cloudReloadButton, mobileCloudReloadButton].forEach((button) => {
+        if (button) {
+          button.disabled = false;
+        }
+      });
     });
+}
+
+cloudReloadButton?.addEventListener("click", () => {
+  handleManualCloudReload();
+});
+
+mobileCloudReloadButton?.addEventListener("click", () => {
+  handleManualCloudReload();
 });
 
 detectAllStorageDataButton?.addEventListener("click", () => {
