@@ -12934,14 +12934,15 @@ function createMobileCard(item) {
         </div>
         <div class="mobile-card-row mobile-card-row-main">
           <span class="mobile-card-storage"></span>
+          <span class="mobile-card-shipping"></span>
         </div>
         <div class="mobile-card-row mobile-card-row-state">
           <span class="mobile-card-destination"></span>
-          <span class="mobile-card-shipping"></span>
         </div>
         <div class="mobile-card-row mobile-card-row-media">
           <span class="mobile-card-image-count"></span>
           <span class="mobile-card-reference-count"></span>
+          <span class="mobile-card-memo-state"></span>
         </div>
       </div>
       <div class="mobile-card-side">
@@ -12981,15 +12982,17 @@ function createMobileCard(item) {
   mobileProfitField.classList.toggle("profit-unset", mobileProfit === "");
   applyProfitLevel(mobileProfitField, mobileProfit);
   const storageField = card.querySelector(".mobile-card-storage");
-  storageField.textContent = storageText;
+  storageField.textContent = `📦${storageText}`;
   storageField.classList.toggle("muted-empty", !item.storageLocation);
   card.querySelector(".mobile-card-image-count").textContent = `📷${imageSummary.productCount}`;
   card.querySelector(".mobile-card-image-count").classList.toggle("image-badge-empty", imageSummary.productCount === 0);
   card.querySelector(".mobile-card-reference-count").textContent = `📚${imageSummary.referenceCount}`;
   card.querySelector(".mobile-card-reference-count").classList.toggle("image-badge-empty", imageSummary.referenceCount === 0);
-  card.querySelector(".mobile-card-destination").textContent = `売却先：${destinationText}`;
-  card.querySelector(".mobile-card-shipping").textContent = `発送：${shortenShippingStatus(shippingText)}`;
+  card.querySelector(".mobile-card-destination").textContent = `🏪${destinationText}`;
+  card.querySelector(".mobile-card-shipping").textContent = `🚚${shortenShippingStatus(shippingText)}`;
   card.querySelector(".mobile-card-shipping").classList.toggle("muted-empty", !shippingText);
+  card.querySelector(".mobile-card-memo-state").textContent = item.memo ? "📝あり" : "📝なし";
+  card.querySelector(".mobile-card-memo-state").classList.toggle("muted-empty", !item.memo);
   card.querySelector(".quick-edit-slot").append(createQuickEditBar("items"));
 
   return card;

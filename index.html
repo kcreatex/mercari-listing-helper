@@ -635,7 +635,7 @@
           width: 100% !important;
           max-width: 100% !important;
           padding: 6px !important;
-          margin: 6px 0 !important;
+          margin: 6px 0 24px !important;
           box-sizing: border-box !important;
           overflow: visible !important;
         }
@@ -687,6 +687,18 @@
           overflow: hidden !important;
           text-overflow: ellipsis !important;
           white-space: nowrap !important;
+        }
+
+        html body.work-view.work-tab-list .filter-result-count {
+          position: relative !important;
+          z-index: 1 !important;
+          display: block !important;
+          clear: both !important;
+          width: 100% !important;
+          margin: 8px 0 10px !important;
+          padding: 0 2px !important;
+          box-sizing: border-box !important;
+          line-height: 1.4 !important;
         }
 
         html body.work-view.work-tab-list .inventory-toolbar-section {
@@ -809,6 +821,18 @@
           white-space: nowrap !important;
         }
 
+        html body.work-view.work-tab-sorting .filter-result-count {
+          position: relative !important;
+          z-index: 1 !important;
+          display: block !important;
+          clear: both !important;
+          width: 100% !important;
+          margin: 8px 0 10px !important;
+          padding: 0 2px !important;
+          box-sizing: border-box !important;
+          line-height: 1.4 !important;
+        }
+
         html body.work-view.work-tab-sorting .sorting-filter-panel {
           margin: 6px 0 8px !important;
         }
@@ -837,6 +861,169 @@
           padding: 0 8px !important;
           box-sizing: border-box !important;
           font-size: 11px !important;
+        }
+      }
+
+      @media (max-width: 600px) {
+        html body.work-view.work-tab-list .mobile-card-list:not(.hidden) {
+          gap: 6px !important;
+        }
+
+        html body.work-view.work-tab-list .mobile-item-card {
+          display: grid !important;
+          min-height: 0 !important;
+          padding: 7px 8px !important;
+          border-radius: 9px !important;
+        }
+
+        html body.work-view.work-tab-list .mobile-card-layout {
+          position: relative !important;
+          display: grid !important;
+          grid-template-columns: 64px minmax(0, 1fr) 84px !important;
+          gap: 7px !important;
+          align-items: start !important;
+          width: 100% !important;
+          min-width: 0 !important;
+        }
+
+        html body.work-view.work-tab-list .mobile-card-thumb,
+        html body.work-view.work-tab-list .mobile-card-thumb .list-thumbnail-button,
+        html body.work-view.work-tab-list .mobile-card-thumb img,
+        html body.work-view.work-tab-list .mobile-card-thumb .thumbnail-placeholder {
+          grid-column: 1 !important;
+          grid-row: 1 !important;
+          width: 64px !important;
+          height: 64px !important;
+          min-width: 64px !important;
+          min-height: 64px !important;
+          max-width: 64px !important;
+          max-height: 64px !important;
+        }
+
+        html body.work-view.work-tab-list .mobile-card-content {
+          grid-column: 2 !important;
+          grid-row: 1 !important;
+          display: grid !important;
+          grid-template-rows: auto auto auto auto !important;
+          gap: 2px !important;
+          min-width: 0 !important;
+          align-content: start !important;
+          text-align: left !important;
+        }
+
+        html body.work-view.work-tab-list .mobile-card-side {
+          position: relative !important;
+          grid-column: 3 !important;
+          grid-row: 1 !important;
+          display: block !important;
+          width: 84px !important;
+          min-width: 84px !important;
+          height: 64px !important;
+          min-height: 64px !important;
+        }
+
+        html body.work-view.work-tab-list .mobile-card-name {
+          display: -webkit-box !important;
+          overflow: hidden !important;
+          margin: 0 !important;
+          max-height: 2.42em !important;
+          font-size: 12.5px !important;
+          font-weight: 900 !important;
+          line-height: 1.21 !important;
+          text-align: left !important;
+          -webkit-box-orient: vertical !important;
+          -webkit-line-clamp: 2 !important;
+        }
+
+        html body.work-view.work-tab-list .mobile-card-row,
+        html body.work-view.work-tab-list .mobile-card-row-main,
+        html body.work-view.work-tab-list .mobile-card-row-state,
+        html body.work-view.work-tab-list .mobile-card-row-media {
+          display: flex !important;
+          flex-wrap: nowrap !important;
+          align-items: center !important;
+          justify-content: flex-start !important;
+          gap: 3px 8px !important;
+          min-width: 0 !important;
+          margin: 0 !important;
+          overflow: hidden !important;
+          line-height: 1.18 !important;
+        }
+
+        html body.work-view.work-tab-list .mobile-card-storage,
+        html body.work-view.work-tab-list .mobile-card-destination,
+        html body.work-view.work-tab-list .mobile-card-shipping,
+        html body.work-view.work-tab-list .mobile-card-image-count,
+        html body.work-view.work-tab-list .mobile-card-reference-count,
+        html body.work-view.work-tab-list .mobile-card-memo-state {
+          display: inline-block !important;
+          min-width: 0 !important;
+          max-width: 100% !important;
+          overflow: hidden !important;
+          color: #5c554f !important;
+          font-size: 10.5px !important;
+          font-weight: 750 !important;
+          line-height: 1.18 !important;
+          text-overflow: ellipsis !important;
+          white-space: nowrap !important;
+        }
+
+        html body.work-view.work-tab-list .mobile-card-storage {
+          max-width: calc(58% - 4px) !important;
+        }
+
+        html body.work-view.work-tab-list .mobile-card-shipping {
+          max-width: calc(42% - 4px) !important;
+        }
+
+        html body.work-view.work-tab-list .mobile-card-destination {
+          max-width: 100% !important;
+        }
+
+        html body.work-view.work-tab-list .mobile-card-row-media {
+          gap: 8px !important;
+        }
+
+        html body.work-view.work-tab-list .mobile-card-profit-value {
+          position: absolute !important;
+          top: 0 !important;
+          right: 32px !important;
+          max-width: 52px !important;
+          overflow: hidden !important;
+          margin: 0 !important;
+          color: #0d766e !important;
+          font-size: 11.5px !important;
+          font-weight: 950 !important;
+          line-height: 1.2 !important;
+          text-align: right !important;
+          text-overflow: ellipsis !important;
+          white-space: nowrap !important;
+        }
+
+        html body.work-view.work-tab-list .mobile-more-actions {
+          position: absolute !important;
+          top: -2px !important;
+          right: 0 !important;
+          z-index: 20 !important;
+        }
+
+        html body.work-view.work-tab-list .mobile-more-actions,
+        html body.work-view.work-tab-list .mobile-more-actions > summary {
+          width: 30px !important;
+          min-width: 30px !important;
+          height: 30px !important;
+          min-height: 30px !important;
+        }
+
+        html body.work-view.work-tab-list .mobile-more-actions > summary {
+          padding: 0 !important;
+        }
+
+        html body.work-view.work-tab-list .mobile-card-primary-actions,
+        html body.work-view.work-tab-list .mobile-item-card .quick-edit-slot,
+        html body.work-view.work-tab-list .mobile-item-card .quick-edit-bar,
+        html body.work-view.work-tab-list .mobile-compact-table-card .quick-edit-slot {
+          display: none !important;
         }
       }
 
@@ -2571,6 +2758,6 @@
       </div>
     </div>
 
-    <script src="app.js?v=settings-summary-align2-20260701"></script>
+    <script src="app.js?v=mobile-card-density-20260703"></script>
   </body>
 </html>
