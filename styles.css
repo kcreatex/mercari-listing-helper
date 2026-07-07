@@ -7564,14 +7564,15 @@ body.shipping-view #shippingPriorityList {
 .surugaya-estimate-stats {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .surugaya-estimate-stats span {
   display: inline-flex;
   align-items: center;
-  min-height: 30px;
-  padding: 4px 10px;
+  gap: 6px;
+  min-height: 26px;
+  padding: 3px 9px;
   border: 1px solid #eadfd7;
   border-radius: 999px;
   background: #fff;
@@ -7580,18 +7581,90 @@ body.shipping-view #shippingPriorityList {
   font-weight: 850;
 }
 
+.surugaya-estimate-stats span strong,
+.surugaya-estimate-stats span b,
+.surugaya-estimate-stats span em {
+  font-style: normal;
+  white-space: nowrap;
+}
+
+.surugaya-estimate-stats span em {
+  color: #14783f;
+  font-weight: 950;
+}
+
+.surugaya-estimate-view-controls {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.28fr) minmax(0, 1fr);
+  gap: 8px;
+  align-items: end;
+}
+
+.surugaya-estimate-view-controls label {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.surugaya-estimate-view-controls select {
+  width: 100%;
+  min-height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.surugaya-estimate-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.surugaya-estimate-filter-chips button {
+  min-height: 34px;
+  padding: 0 10px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.surugaya-estimate-filter-chips button.active {
+  border-color: #d84033;
+  background: #fff1ed;
+  color: #b73027;
+  font-weight: 900;
+}
+
+.surugaya-estimate-order-note {
+  margin: 0;
+  padding: 7px 10px;
+  border: 1px solid #f1d0a6;
+  border-radius: 8px;
+  background: #fff9ef;
+  color: #815500;
+  font-size: 12px;
+  font-weight: 850;
+  line-height: 1.45;
+}
+
 .surugaya-estimate-list {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .surugaya-estimate-row {
   display: grid;
-  grid-template-columns: 44px 76px 96px 88px minmax(0, 1fr) minmax(220px, auto);
-  gap: 8px 12px;
+  grid-template-columns: 42px 104px 72px 92px minmax(0, 1fr) 74px 220px;
+  gap: 5px 10px;
   align-items: center;
   min-width: 0;
-  padding: 10px;
+  padding: 7px 9px;
   border: 1px solid #eadfd7;
   border-radius: 8px;
   background: #fff;
@@ -7613,6 +7686,9 @@ body.shipping-view #shippingPriorityList {
 }
 
 .surugaya-estimate-main {
+  grid-column: 5;
+  display: grid;
+  gap: 2px;
   min-width: 0;
 }
 
@@ -7659,30 +7735,57 @@ body.shipping-view #shippingPriorityList {
 }
 
 .surugaya-estimate-main strong {
+  display: -webkit-box;
   overflow: hidden;
   color: var(--text);
   font-size: 13px;
   line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.surugaya-estimate-main small {
+  display: block;
+  overflow: hidden;
+  color: #8a7d76;
+  font-size: 10.5px;
+  font-weight: 750;
+  line-height: 1.25;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .surugaya-estimate-amount {
   color: #14783f;
+  font-size: 14px;
   font-weight: 950;
   white-space: nowrap;
 }
 
+.surugaya-estimate-row.is-high-value .surugaya-estimate-amount {
+  color: #9a6a00;
+  font-size: 15px;
+}
+
+.surugaya-estimate-row.is-physical-estimate .surugaya-estimate-amount {
+  color: #14783f;
+}
+
+.surugaya-estimate-row.is-zero-estimate .surugaya-estimate-amount {
+  color: #b42318;
+}
+
 .surugaya-estimate-decision {
+  grid-column: 7;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
 }
 
 .surugaya-estimate-decision button {
-  min-height: 34px;
-  padding: 0 8px;
-  font-size: 12px;
+  min-height: 30px;
+  padding: 0 6px;
+  font-size: 11px;
   white-space: nowrap;
 }
 
@@ -7693,9 +7796,30 @@ body.shipping-view #shippingPriorityList {
   font-weight: 900;
 }
 
-.surugaya-estimate-memo,
 .surugaya-estimate-candidate {
+  grid-column: 5 / 7;
+}
+
+.surugaya-estimate-memo-toggle {
+  grid-column: 6;
+  min-height: 28px;
+  padding: 0 6px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.surugaya-estimate-memo-panel {
   grid-column: 5 / -1;
+}
+
+.surugaya-estimate-memo-panel.hidden {
+  display: none !important;
+}
+
+.surugaya-estimate-memo {
+  min-height: 32px;
+  padding: 5px 8px;
+  font-size: 12px;
 }
 
 .surugaya-estimate-candidate {
@@ -11336,6 +11460,7 @@ button:disabled {
   .grouped-profit-ranking-item,
   .import-summary-grid,
   .surugaya-estimate-input-grid,
+  .surugaya-estimate-view-controls,
   .surugaya-estimate-row,
   .quick-search-result {
     grid-template-columns: 1fr;
@@ -11344,6 +11469,18 @@ button:disabled {
   .surugaya-estimate-actions,
   .surugaya-estimate-decision {
     grid-template-columns: 1fr;
+  }
+
+  .surugaya-estimate-filter-chips {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .surugaya-estimate-filter-chips button {
+    width: 100%;
+    min-width: 0;
+    padding: 0 8px;
+    font-size: 11px;
   }
 
   .surugaya-estimate-main {
