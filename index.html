@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>メルカリ出品補助室</title>
-  <link rel="stylesheet" href="styles.css?v=surugaya-box-balance-20260707">
+  <link rel="stylesheet" href="styles.css?v=surugaya-amount-guard-20260707">
     <style id="mobile-sorting-final-overrides">
       @media (max-width: 600px) {
         html body.work-view.work-tab-sorting .sorting-work-toolbar {
@@ -3533,6 +3533,7 @@
               <button class="ghost-button" type="button" id="createSurugayaNoSendListButton" disabled>送らない商品リストを作成</button>
               <button class="ghost-button" type="button" id="createSurugayaPackingListButton" disabled>箱別発送リストを作成</button>
               <button class="ghost-button" type="button" id="createSurugayaBoxMemoButton" disabled>箱メモを作成</button>
+              <button class="ghost-button" type="button" id="reparseSurugayaEstimateAmountsButton" disabled>金額だけ再解析</button>
             </div>
           </div>
           <div class="surugaya-estimate-input-grid">
@@ -3586,6 +3587,7 @@
             <div class="surugaya-estimate-filter-chips" aria-label="専用フィルター">
               <button class="ghost-button active" type="button" data-estimate-filter="all">全件</button>
               <button class="ghost-button" type="button" data-estimate-filter="highValue">高額注意だけ</button>
+              <button class="ghost-button" type="button" data-estimate-filter="amountMismatch">金額確認が必要</button>
               <button class="ghost-button" type="button" data-estimate-filter="physicalZero">0円現物査定だけ</button>
               <button class="ghost-button" type="button" data-estimate-filter="unavailable">買取不可だけ</button>
               <button class="ghost-button" type="button" data-estimate-filter="zero">0円査定だけ</button>
@@ -4284,6 +4286,6 @@
 
     <button class="scroll-top-button hidden" type="button" id="scrollTopButton" aria-label="先頭へ戻る">↑</button>
 
-  <script src="app.js?v=surugaya-box-balance-20260707"></script>
+  <script src="app.js?v=surugaya-amount-guard-20260707"></script>
   </body>
 </html>
