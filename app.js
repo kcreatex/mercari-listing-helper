@@ -170,7 +170,9 @@ const surugayaEstimateDateInput = document.querySelector("#surugayaEstimateDate"
 const surugayaEstimateTextInput = document.querySelector("#surugayaEstimateText");
 const parseSurugayaEstimateButton = document.querySelector("#parseSurugayaEstimateButton");
 const saveSurugayaEstimateButton = document.querySelector("#saveSurugayaEstimateButton");
+const restoreSurugayaEstimateOrderButton = document.querySelector("#restoreSurugayaEstimateOrderButton");
 const createSurugayaShippingListButton = document.querySelector("#createSurugayaShippingListButton");
+const createSurugayaNoSendListButton = document.querySelector("#createSurugayaNoSendListButton");
 const surugayaEstimateSummary = document.querySelector("#surugayaEstimateSummary");
 const surugayaEstimateStats = document.querySelector("#surugayaEstimateStats");
 const surugayaEstimateList = document.querySelector("#surugayaEstimateList");
@@ -7214,30 +7216,49 @@ function normalizeEstimateText(value) {
 
 function parseSurugayaEstimateAmount(line) {
   const normalizedLine = normalizeEstimateText(line);
-  if (/買取不可|お値段がつきません|値段がつきません|不可|対象外|キャンセル/i.test(normalizedLine)) {
-    return { amount: null, rawAmount: "買取不可", kind: "unavailable" };
+  if (/^※不可品/.test(normalizedLine) || /買取不可|お値段がつきません|値段がつきません|不可|対象外|キャンセル/i.test(normalizedLine)) {
+    return { amount: null, rawAmount: "-", kind: "unavailable", decision: "no_send", reason: "買取不可" };
+  }
+
+  const leadingAmountMatch = normalizedLine.match(/^[\\￥¥]\s*([0-9][0-9,]*)/);
+  if (leadingAmountMatch) {
+    const amount = parseMoney(leadingAmountMatch[1]);
+    if (amount === 0 && /現物査定になります/.test(normalizedLine)) {
+      return { amount: 0, rawAmount: "0円", kind: "physical", decision: "send", reason: "現物査定" };
+    }
+    if (amount === 0) {
+      return { amount: 0, rawAmount: "0円", kind: "zero", decision: "no_send", reason: "0円査定" };
+    }
+    if (amount >= 1 && amount <= 99) {
+      return { amount, rawAmount: `${amount}円`, kind: "low", decision: "confirm", reason: "低額査定" };
+    }
+    if (amount >= 100) {
+      return { amount, rawAmount: `${amount}円`, kind: "priced", decision: "send", reason: "査定額あり" };
+    }
   }
 
   const yenMatch = normalizedLine.match(/(?:￥|¥)?\s*([0-9][0-9,]{0,8})\s*円/);
   if (yenMatch) {
     const amount = parseMoney(yenMatch[1]);
-    return { amount: amount === "" ? null : amount, rawAmount: `${yenMatch[1].replace(/,/g, "")}円`, kind: "priced" };
+    return { amount: amount === "" ? null : amount, rawAmount: `${yenMatch[1].replace(/,/g, "")}円`, kind: "priced", decision: amount > 0 ? "send" : "no_send", reason: amount > 0 ? "査定額あり" : "0円査定" };
   }
 
   const trailingNumberMatch = normalizedLine.match(/(?:^|[\s\t:：])(?:￥|¥)?\s*([0-9][0-9,]{0,6})\s*$/);
   if (trailingNumberMatch && !/JAN|型番|注文|申込|電話|郵便|〒/i.test(normalizedLine)) {
     const amount = parseMoney(trailingNumberMatch[1]);
-    return { amount: amount === "" ? null : amount, rawAmount: amount === "" ? "" : `${amount}円`, kind: "priced" };
+    return { amount: amount === "" ? null : amount, rawAmount: amount === "" ? "" : `${amount}円`, kind: "priced", decision: amount > 0 ? "send" : "no_send", reason: amount > 0 ? "査定額あり" : "0円査定" };
   }
 
-  return { amount: null, rawAmount: "金額不明", kind: "unknown" };
+  return { amount: null, rawAmount: "金額不明", kind: "unknown", decision: "confirm", reason: "金額不明" };
 }
 
 function stripEstimateAmountFromLine(line) {
   return normalizeEstimateText(line)
+    .replace(/^※不可品\s*/g, "")
+    .replace(/^[\\￥¥]\s*[0-9][0-9,]*\s*/g, "")
     .replace(/(?:￥|¥)?\s*[0-9][0-9,]{0,8}\s*円/g, "")
     .replace(/(?:^|[\s\t:：])(?:￥|¥)?\s*[0-9][0-9,]{0,6}\s*$/g, "")
-    .replace(/買取不可|お値段がつきません|値段がつきません|対象外|キャンセル/g, "")
+    .replace(/買取不可|お値段がつきません|値段がつきません|対象外|キャンセル|現物査定になります/g, "")
     .replace(/^[・\-\s\t\d.]+/, "")
     .replace(/^(商品名|品名|タイトル|名称)\s*[:：]\s*/, "")
     .replace(/\s{2,}/g, " ")
@@ -7250,6 +7271,9 @@ function isIgnorableEstimateLine(line) {
 }
 
 function getEstimateInitialDecision(amountInfo) {
+  if (amountInfo.decision) {
+    return amountInfo.decision;
+  }
   if (amountInfo.kind === "priced" && Number(amountInfo.amount) > 0) {
     return "send";
   }
@@ -7260,6 +7284,16 @@ function getEstimateInitialDecision(amountInfo) {
     return "no_send";
   }
   return "confirm";
+}
+
+function getSurugayaEstimateDecisionLabel(decision) {
+  if (decision === "send") {
+    return "送る";
+  }
+  if (decision === "no_send") {
+    return "送らない";
+  }
+  return "要判断";
 }
 
 function findEstimateItemCandidates(name) {
@@ -7296,6 +7330,7 @@ function createSurugayaEstimateRow({ name, amountInfo, rawLine, rowNumber }) {
   const title = String(name || "").trim() || `要確認 ${String(rowNumber).padStart(3, "0")}`;
   return {
     id: `estimate-${Date.now()}-${rowNumber}-${Math.random().toString(36).slice(2, 7)}`,
+    no: rowNumber,
     rowNumber,
     destination: "駿河屋",
     name: title,
@@ -7303,6 +7338,7 @@ function createSurugayaEstimateRow({ name, amountInfo, rawLine, rowNumber }) {
     rawAmount: amountInfo.rawAmount,
     amountKind: amountInfo.kind,
     decision: getEstimateInitialDecision(amountInfo),
+    reason: amountInfo.reason || (amountInfo.kind === "unknown" ? "金額不明" : ""),
     memo: amountInfo.kind === "unknown" ? "金額要確認" : "",
     rawLine: rawLine || "",
     candidates: findEstimateItemCandidates(title),
@@ -7365,8 +7401,17 @@ function getSurugayaEstimateStats() {
     } else {
       stats.confirmCount += 1;
     }
+    if (row.reason === "買取不可") {
+      stats.unavailableCount += 1;
+    }
+    if (row.reason === "現物査定") {
+      stats.physicalCount += 1;
+    }
+    if (row.reason === "0円査定") {
+      stats.zeroCount += 1;
+    }
     return stats;
-  }, { sendCount: 0, noSendCount: 0, confirmCount: 0, totalAmount: 0 });
+  }, { sendCount: 0, noSendCount: 0, confirmCount: 0, totalAmount: 0, unavailableCount: 0, physicalCount: 0, zeroCount: 0 });
 }
 
 function renderSurugayaEstimateStats() {
@@ -7375,17 +7420,20 @@ function renderSurugayaEstimateStats() {
   }
   const stats = getSurugayaEstimateStats();
   surugayaEstimateStats.innerHTML = `
-    <span>発送する：${stats.sendCount}件</span>
-    <span>発送しない：${stats.noSendCount}件</span>
-    <span>合計：${formatMoney(stats.totalAmount)}</span>
-    <span>要確認：${stats.confirmCount}件</span>
+    <span>送る：${stats.sendCount}点</span>
+    <span>送らない：${stats.noSendCount}点</span>
+    <span>要判断：${stats.confirmCount}点</span>
+    <span>発送予定合計額：${formatMoney(stats.totalAmount)}</span>
+    <span>買取不可：${stats.unavailableCount}点</span>
+    <span>現物査定：${stats.physicalCount}点</span>
+    <span>0円査定：${stats.zeroCount}点</span>
   `;
   if (surugayaEstimateSummary) {
     surugayaEstimateSummary.textContent = surugayaEstimateRows.length
-      ? `${surugayaEstimateRows.length}件を解析済み / 発送予定 ${stats.sendCount}件 ${formatMoney(stats.totalAmount)}`
+      ? `${surugayaEstimateRows.length}件を解析済み / 送る ${stats.sendCount}点 ${formatMoney(stats.totalAmount)}`
       : "見積もりメールやテキストを貼り付けると、発送判断リストを作成できます";
   }
-  [saveSurugayaEstimateButton, createSurugayaShippingListButton].forEach((button) => {
+  [saveSurugayaEstimateButton, restoreSurugayaEstimateOrderButton, createSurugayaShippingListButton, createSurugayaNoSendListButton].forEach((button) => {
     if (button) {
       button.disabled = surugayaEstimateRows.length === 0;
     }
@@ -7412,18 +7460,24 @@ function renderSurugayaEstimateRows() {
     card.className = `surugaya-estimate-row is-${row.decision}`;
     card.dataset.estimateId = row.id;
     card.innerHTML = `
+      <span class="surugaya-estimate-no"></span>
+      <span class="surugaya-estimate-judgement"></span>
+      <span class="surugaya-estimate-reason"></span>
+      <span class="surugaya-estimate-amount"></span>
       <div class="surugaya-estimate-main">
         <strong></strong>
-        <span class="surugaya-estimate-amount"></span>
       </div>
       <div class="surugaya-estimate-decision">
-        <button class="ghost-button" type="button" data-estimate-decision="send">発送する</button>
-        <button class="ghost-button" type="button" data-estimate-decision="no_send">発送しない</button>
-        <button class="ghost-button" type="button" data-estimate-decision="confirm">要確認</button>
+        <button class="ghost-button" type="button" data-estimate-decision="send">送る</button>
+        <button class="ghost-button" type="button" data-estimate-decision="no_send">送らない</button>
+        <button class="ghost-button" type="button" data-estimate-decision="confirm">要判断</button>
       </div>
       <input class="surugaya-estimate-memo" type="text" placeholder="メモ" data-estimate-memo="${row.id}">
       <div class="surugaya-estimate-candidate"></div>
     `;
+    card.querySelector(".surugaya-estimate-no").textContent = String(row.no || row.rowNumber || 0).padStart(3, "0");
+    card.querySelector(".surugaya-estimate-judgement").textContent = getSurugayaEstimateDecisionLabel(row.decision);
+    card.querySelector(".surugaya-estimate-reason").textContent = row.reason || "-";
     card.querySelector("strong").textContent = row.name;
     card.querySelector(".surugaya-estimate-amount").textContent = row.amountKind === "priced" && row.amount !== null
       ? formatMoney(row.amount)
@@ -7452,18 +7506,28 @@ function parseSurugayaEstimateInput() {
   }
 }
 
+function getSurugayaEstimateRowsInMailOrder(sourceRows = surugayaEstimateRows) {
+  return [...sourceRows].sort((a, b) => (Number(a.no || a.rowNumber) || 0) - (Number(b.no || b.rowNumber) || 0));
+}
+
 function createSurugayaShippingListText() {
-  const sendRows = surugayaEstimateRows.filter((row) => row.decision === "send");
-  const noSendRows = surugayaEstimateRows.filter((row) => row.decision !== "send");
+  const orderedRows = getSurugayaEstimateRowsInMailOrder();
+  const sendRows = orderedRows.filter((row) => row.decision === "send");
   const total = sendRows.reduce((sum, row) => sum + (Number(row.amount) || 0), 0);
-  const formatRow = (row) => `・${row.name}　${row.amountKind === "priced" && row.amount !== null ? formatMoney(row.amount) : row.rawAmount}${row.memo ? `（${row.memo}）` : ""}`;
+  const formatRow = (row) => `${String(row.no || row.rowNumber || "").padStart(3, "0")} ${row.name}　${row.amountKind !== "unavailable" && row.amount !== null ? formatMoney(row.amount) : row.rawAmount}　理由：${row.reason || "-"}`;
   return [
-    "【発送する】",
+    "【送る商品】",
     sendRows.length ? sendRows.map(formatRow).join("\n") : "なし",
     "",
     `合計：${sendRows.length}点 / ${formatMoney(total)}`,
-    "",
-    "【発送しない】",
+  ].join("\n");
+}
+
+function createSurugayaNoSendListText() {
+  const noSendRows = getSurugayaEstimateRowsInMailOrder().filter((row) => row.decision === "no_send");
+  const formatRow = (row) => `${String(row.no || row.rowNumber || "").padStart(3, "0")} ${row.name}　理由：${row.reason || "-"}`;
+  return [
+    "【送らない商品】",
     noSendRows.length ? noSendRows.map(formatRow).join("\n") : "なし",
   ].join("\n");
 }
@@ -7482,6 +7546,26 @@ function createSurugayaShippingList() {
   copyText(text, "発送リストを作成しました");
 }
 
+function createSurugayaNoSendList() {
+  if (!surugayaEstimateRows.length) {
+    showErrorMessage("先に見積もりを解析してください");
+    return;
+  }
+  const text = createSurugayaNoSendListText();
+  if (surugayaShippingListOutput) {
+    surugayaShippingListOutput.value = text;
+    surugayaShippingListOutput.focus();
+    surugayaShippingListOutput.select();
+  }
+  copyText(text, "送らない商品リストを作成しました");
+}
+
+function restoreSurugayaEstimateMailOrder() {
+  surugayaEstimateRows = getSurugayaEstimateRowsInMailOrder();
+  renderSurugayaEstimateRows();
+  showSuccessMessage("メール順に戻しました");
+}
+
 function saveCurrentSurugayaEstimate() {
   if (!surugayaEstimateRows.length) {
     showErrorMessage("保存する見積もり結果がありません");
@@ -7498,10 +7582,12 @@ function saveCurrentSurugayaEstimate() {
       estimateDate,
       destination: "駿河屋",
       name: row.name,
+      no: row.no || row.rowNumber,
       amount: row.amount,
       rawAmount: row.rawAmount,
       amountKind: row.amountKind,
       decision: row.decision,
+      reason: row.reason || "",
       memo: row.memo || "",
       rawLine: row.rawLine || "",
       candidates: row.candidates || [],
@@ -17032,7 +17118,9 @@ descriptionTemplateInput.addEventListener("change", applyDescriptionTemplate);
 parseImportButton?.addEventListener("click", parseImportInput);
 parseSurugayaEstimateButton?.addEventListener("click", parseSurugayaEstimateInput);
 saveSurugayaEstimateButton?.addEventListener("click", saveCurrentSurugayaEstimate);
+restoreSurugayaEstimateOrderButton?.addEventListener("click", restoreSurugayaEstimateMailOrder);
 createSurugayaShippingListButton?.addEventListener("click", createSurugayaShippingList);
+createSurugayaNoSendListButton?.addEventListener("click", createSurugayaNoSendList);
 surugayaEstimateList?.addEventListener("click", (event) => {
   const button = event.target.closest("[data-estimate-decision]");
   if (!button) {
@@ -17042,7 +17130,7 @@ surugayaEstimateList?.addEventListener("click", (event) => {
   if (!card) {
     return;
   }
-  updateSurugayaEstimateRow(card.dataset.estimateId, { decision: button.dataset.estimateDecision });
+  updateSurugayaEstimateRow(card.dataset.estimateId, { decision: button.dataset.estimateDecision, reason: "手動変更" });
 });
 surugayaEstimateList?.addEventListener("input", (event) => {
   const input = event.target.closest("[data-estimate-memo]");

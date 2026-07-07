@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>メルカリ出品補助室</title>
-  <link rel="stylesheet" href="styles.css?v=form-center-fix-20260704">
+  <link rel="stylesheet" href="styles.css?v=surugaya-estimate-rules-20260707">
     <style id="mobile-sorting-final-overrides">
       @media (max-width: 600px) {
         html body.work-view.work-tab-sorting .sorting-work-toolbar {
@@ -3527,7 +3527,9 @@
             <div class="import-action-grid surugaya-estimate-actions">
               <button class="primary-button" type="button" id="parseSurugayaEstimateButton">解析する</button>
               <button class="ghost-button" type="button" id="saveSurugayaEstimateButton" disabled>見積もり結果を保存</button>
-              <button class="ghost-button" type="button" id="createSurugayaShippingListButton" disabled>発送リストを作成</button>
+              <button class="ghost-button" type="button" id="restoreSurugayaEstimateOrderButton" disabled>メール順に戻す</button>
+              <button class="ghost-button" type="button" id="createSurugayaShippingListButton" disabled>送る商品リストを作成</button>
+              <button class="ghost-button" type="button" id="createSurugayaNoSendListButton" disabled>送らない商品リストを作成</button>
             </div>
           </div>
           <div class="surugaya-estimate-input-grid">
@@ -3541,10 +3543,13 @@
             </label>
           </div>
           <div class="surugaya-estimate-stats" id="surugayaEstimateStats" aria-live="polite">
-            <span>発送する：0件</span>
-            <span>発送しない：0件</span>
-            <span>合計：0円</span>
-            <span>要確認：0件</span>
+            <span>送る：0点</span>
+            <span>送らない：0点</span>
+            <span>要判断：0点</span>
+            <span>発送予定合計額：0円</span>
+            <span>買取不可：0点</span>
+            <span>現物査定：0点</span>
+            <span>0円査定：0点</span>
           </div>
           <div class="surugaya-estimate-list" id="surugayaEstimateList"></div>
           <label class="surugaya-estimate-output">
@@ -4236,6 +4241,6 @@
 
     <button class="scroll-top-button hidden" type="button" id="scrollTopButton" aria-label="先頭へ戻る">↑</button>
 
-  <script src="app.js?v=sorting-standard-stablegrid-20260704"></script>
+  <script src="app.js?v=surugaya-estimate-rules-20260707"></script>
   </body>
 </html>

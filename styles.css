@@ -7525,7 +7525,7 @@ body.shipping-view #shippingPriorityList {
 }
 
 .surugaya-estimate-actions {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
 .surugaya-estimate-input-grid {
@@ -7587,7 +7587,7 @@ body.shipping-view #shippingPriorityList {
 
 .surugaya-estimate-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(240px, auto);
+  grid-template-columns: 44px 76px 96px 88px minmax(0, 1fr) minmax(220px, auto);
   gap: 8px 12px;
   align-items: center;
   min-width: 0;
@@ -7603,7 +7603,8 @@ body.shipping-view #shippingPriorityList {
 }
 
 .surugaya-estimate-row.is-no_send {
-  background: #fafafa;
+  border-color: #f2b8b5;
+  background: #fff7f6;
 }
 
 .surugaya-estimate-row.is-confirm {
@@ -7612,11 +7613,49 @@ body.shipping-view #shippingPriorityList {
 }
 
 .surugaya-estimate-main {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) max-content;
-  gap: 8px;
-  align-items: center;
   min-width: 0;
+}
+
+.surugaya-estimate-no,
+.surugaya-estimate-judgement,
+.surugaya-estimate-reason,
+.surugaya-estimate-amount {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.surugaya-estimate-no {
+  color: #6f625d;
+}
+
+.surugaya-estimate-judgement {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 26px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #f3f4f6;
+}
+
+.surugaya-estimate-row.is-send .surugaya-estimate-judgement {
+  background: #dff7e6;
+  color: #14783f;
+}
+
+.surugaya-estimate-row.is-no_send .surugaya-estimate-judgement {
+  background: #ffe1df;
+  color: #b42318;
+}
+
+.surugaya-estimate-row.is-confirm .surugaya-estimate-judgement {
+  background: #fff0c2;
+  color: #916600;
 }
 
 .surugaya-estimate-main strong {
@@ -7656,7 +7695,7 @@ body.shipping-view #shippingPriorityList {
 
 .surugaya-estimate-memo,
 .surugaya-estimate-candidate {
-  grid-column: 1 / -1;
+  grid-column: 5 / -1;
 }
 
 .surugaya-estimate-candidate {
@@ -11309,6 +11348,11 @@ button:disabled {
 
   .surugaya-estimate-main {
     grid-template-columns: 1fr;
+  }
+
+  .surugaya-estimate-memo,
+  .surugaya-estimate-candidate {
+    grid-column: 1 / -1;
   }
 
   .surugaya-estimate-main strong,
