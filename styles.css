@@ -7524,14 +7524,102 @@ body.shipping-view #shippingPriorityList {
   background: #fffdf8;
 }
 
+.surugaya-workflow-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+  margin: 4px 0;
+}
+
+.surugaya-workflow-tabs button {
+  min-height: 32px;
+  padding: 0 8px;
+  border: 1px solid #eadfd7;
+  border-radius: 8px;
+  background: #fff;
+  color: #5f524c;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.surugaya-workflow-tabs button.active {
+  border-color: #d84033;
+  background: #fff1ed;
+  color: #b73027;
+}
+
+.surugaya-estimate-panel .import-result-heading {
+  align-items: center;
+  gap: 8px;
+}
+
+.surugaya-estimate-panel .import-result-heading h3 {
+  font-size: 14px;
+}
+
+.surugaya-estimate-panel .import-result-heading p {
+  font-size: 11px;
+  line-height: 1.35;
+}
+
 .surugaya-estimate-actions {
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  grid-template-columns: repeat(4, minmax(118px, 1fr));
+  gap: 5px;
+  min-width: min(100%, 620px);
+}
+
+.surugaya-estimate-actions button,
+.surugaya-management-actions summary {
+  min-height: 30px;
+  padding-inline: 8px;
+  font-size: 11px;
+}
+
+.surugaya-management-actions {
+  position: relative;
+  min-width: 0;
+}
+
+.surugaya-management-actions summary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 900;
+  list-style: none;
+}
+
+.surugaya-management-actions summary::-webkit-details-marker {
+  display: none;
+}
+
+.surugaya-management-actions div {
+  position: absolute;
+  right: 0;
+  z-index: 30;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(140px, 1fr));
+  gap: 5px;
+  width: min(420px, 90vw);
+  margin-top: 5px;
+  padding: 8px;
+  border: 1px solid #eadfd7;
+  border-radius: 8px;
+  background: #fffdf8;
+  box-shadow: 0 10px 24px rgba(59, 45, 36, 0.12);
 }
 
 .surugaya-estimate-input-grid {
   display: grid;
   grid-template-columns: minmax(160px, 0.28fr) minmax(0, 1fr);
-  gap: 10px;
+  gap: 8px;
   align-items: start;
 }
 
@@ -7557,7 +7645,8 @@ body.shipping-view #shippingPriorityList {
 }
 
 .surugaya-estimate-text-field textarea {
-  min-height: 150px;
+  height: 76px;
+  min-height: 76px;
   resize: vertical;
 }
 
@@ -7567,33 +7656,267 @@ body.shipping-view #shippingPriorityList {
   z-index: 20;
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  padding: 4px 0;
+  gap: 4px 6px;
+  align-items: center;
+  padding: 2px 0;
   background: #fffdf8;
 }
 
-.surugaya-estimate-stats span {
+.surugaya-estimate-stats > span {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 26px;
-  padding: 3px 9px;
+  min-width: max-content;
+  min-height: 24px;
+  padding: 2px 7px;
   border: 1px solid #eadfd7;
   border-radius: 999px;
   background: #fff;
   color: #3f3733;
+  font-size: 11px;
+  font-weight: 850;
+  line-height: 1.15;
+  overflow: visible;
+  white-space: nowrap;
+}
+
+.surugaya-estimate-stats > span.estimate-stat-send,
+.surugaya-estimate-stats > span.estimate-stat-total {
+  min-height: 34px;
+  padding: 5px 12px;
+  border-color: #dfd0c6;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(71, 52, 44, 0.06);
+  font-size: 13px;
+}
+
+.surugaya-estimate-stats > span.estimate-stat-send b,
+.surugaya-estimate-stats > span.estimate-stat-total b {
+  font-size: 14px;
+}
+
+@media (min-width: 900px) {
+  .surugaya-estimate-stats {
+    max-height: 72px;
+    overflow: visible;
+  }
+}
+
+.surugaya-estimate-stat-details {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  min-height: 24px;
+  margin-left: auto;
+}
+
+.surugaya-estimate-stat-details:not([open]) {
+  height: 24px;
+  overflow: hidden;
+}
+
+.surugaya-estimate-stat-details summary {
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  height: 24px;
+  min-height: 24px;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  color: #7b6d66;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 900;
+  list-style: none;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.surugaya-estimate-stat-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.surugaya-estimate-stat-details[open] {
+  flex-basis: 100%;
+  margin-left: 0;
+}
+
+.surugaya-estimate-stat-details span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 3px 8px;
+  border: 1px solid #eadfd7;
+  border-radius: 999px;
+  background: #fff;
+  color: #5f524c;
+  font-size: 11px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.surugaya-estimate-panel.is-packing-work-mode .surugaya-estimate-input-grid,
+.surugaya-estimate-panel.is-packing-work-mode .surugaya-filter-details,
+.surugaya-estimate-panel.is-packing-work-mode #parseSurugayaEstimateButton,
+.surugaya-estimate-panel.is-packing-work-mode #saveSurugayaEstimateButton,
+.surugaya-estimate-panel.is-packing-work-mode #restoreSurugayaEstimateOrderButton,
+.surugaya-estimate-panel.is-packing-work-mode #reparseSurugayaEstimateAmountsButton {
+  display: none !important;
+}
+
+.surugaya-estimate-panel[data-surugaya-screen="import"] #startSurugayaPackingButton,
+.surugaya-estimate-panel[data-surugaya-screen="import"] #createSurugayaShippingListButton,
+.surugaya-estimate-panel[data-surugaya-screen="import"] .surugaya-management-actions,
+.surugaya-estimate-panel[data-surugaya-screen="import"] .surugaya-estimate-view-controls,
+.surugaya-estimate-panel[data-surugaya-screen="import"] .surugaya-high-value-panel,
+.surugaya-estimate-panel[data-surugaya-screen="import"] .surugaya-box-summary,
+.surugaya-estimate-panel[data-surugaya-screen="import"] .surugaya-analysis-panel,
+.surugaya-estimate-panel[data-surugaya-screen="import"] .surugaya-estimate-list-header,
+.surugaya-estimate-panel[data-surugaya-screen="import"] .surugaya-estimate-list,
+.surugaya-estimate-panel[data-surugaya-screen="import"] .surugaya-estimate-output {
+  display: none !important;
+}
+
+.surugaya-estimate-panel[data-surugaya-screen="review"] #parseSurugayaEstimateButton,
+.surugaya-estimate-panel[data-surugaya-screen="review"] #saveSurugayaEstimateButton,
+.surugaya-estimate-panel[data-surugaya-screen="review"] #goSurugayaReviewButton,
+.surugaya-estimate-panel[data-surugaya-screen="review"] .surugaya-management-actions,
+.surugaya-estimate-panel[data-surugaya-screen="review"] .surugaya-estimate-input-grid,
+.surugaya-estimate-panel[data-surugaya-screen="review"] .surugaya-box-summary,
+.surugaya-estimate-panel[data-surugaya-screen="review"] .surugaya-analysis-panel,
+.surugaya-estimate-panel[data-surugaya-screen="review"] .surugaya-estimate-output {
+  display: none !important;
+}
+
+.surugaya-estimate-panel[data-surugaya-screen="packing"] #parseSurugayaEstimateButton,
+.surugaya-estimate-panel[data-surugaya-screen="packing"] #saveSurugayaEstimateButton,
+.surugaya-estimate-panel[data-surugaya-screen="packing"] #goSurugayaReviewButton,
+.surugaya-estimate-panel[data-surugaya-screen="packing"] #createSurugayaShippingListButton,
+.surugaya-estimate-panel[data-surugaya-screen="packing"] .surugaya-management-actions,
+.surugaya-estimate-panel[data-surugaya-screen="packing"] .surugaya-estimate-input-grid,
+.surugaya-estimate-panel[data-surugaya-screen="packing"] .surugaya-estimate-view-controls,
+.surugaya-estimate-panel[data-surugaya-screen="packing"] .surugaya-high-value-panel,
+.surugaya-estimate-panel[data-surugaya-screen="packing"] .surugaya-analysis-panel,
+.surugaya-estimate-panel[data-surugaya-screen="packing"] .surugaya-estimate-output {
+  display: none !important;
+}
+
+.surugaya-estimate-panel[data-surugaya-screen="summary"] #parseSurugayaEstimateButton,
+.surugaya-estimate-panel[data-surugaya-screen="summary"] #saveSurugayaEstimateButton,
+.surugaya-estimate-panel[data-surugaya-screen="summary"] #goSurugayaReviewButton,
+.surugaya-estimate-panel[data-surugaya-screen="summary"] #startSurugayaPackingButton,
+.surugaya-estimate-panel[data-surugaya-screen="summary"] #createSurugayaShippingListButton,
+.surugaya-estimate-panel[data-surugaya-screen="summary"] .surugaya-estimate-input-grid,
+.surugaya-estimate-panel[data-surugaya-screen="summary"] .surugaya-estimate-view-controls,
+.surugaya-estimate-panel[data-surugaya-screen="summary"] .surugaya-estimate-list-header,
+.surugaya-estimate-panel[data-surugaya-screen="summary"] .surugaya-estimate-list {
+  display: none !important;
+}
+
+.surugaya-import-diagnostic,
+.surugaya-high-excluded-warning {
+  flex-basis: 100%;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.surugaya-estimate-diff-details {
+  position: relative;
+  min-height: 34px;
+}
+
+.surugaya-estimate-diff-details:not([open]) {
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+  overflow: visible;
+}
+
+.surugaya-estimate-diff-details summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: max-content;
+  box-sizing: border-box;
+  height: 34px;
+  min-height: 34px;
+  padding: 5px 12px;
+  border: 1px solid #eadfd7;
+  border-radius: 999px;
+  background: #fff;
+  color: #3f3733;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 900;
+  list-style: none;
+  white-space: nowrap;
+}
+
+.surugaya-estimate-diff-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.surugaya-estimate-diff-details.has-difference summary {
+  border-color: #f1d0a6;
+  background: #fff8e8;
+  color: #815500;
+}
+
+.surugaya-estimate-diff-details summary em {
+  color: #9a6a00;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 950;
+}
+
+.surugaya-estimate-diff-details[open] {
+  flex-basis: 100%;
+}
+
+.surugaya-estimate-diff-body {
+  display: grid;
+  gap: 4px;
+  width: min(420px, 100%);
+  margin-top: 5px;
+  padding: 8px;
+  border: 1px solid #eadfd7;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(59, 45, 36, 0.08);
+}
+
+.surugaya-estimate-diff-body p {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0;
+  color: #4d403a;
   font-size: 12px;
   font-weight: 850;
 }
 
-.surugaya-estimate-stats span strong,
-.surugaya-estimate-stats span b,
-.surugaya-estimate-stats span em {
+.surugaya-estimate-diff-body b {
+  white-space: nowrap;
+}
+
+.surugaya-estimate-diff-body hr {
+  width: 100%;
+  height: 1px;
+  margin: 2px 0;
+  border: 0;
+  background: #eadfd7;
+}
+
+.surugaya-estimate-stats > span strong,
+.surugaya-estimate-stats > span b,
+.surugaya-estimate-stats > span em {
   font-style: normal;
   white-space: nowrap;
 }
 
-.surugaya-estimate-stats span em {
+.surugaya-estimate-stats > span em {
   color: #14783f;
   font-weight: 950;
 }
@@ -7602,6 +7925,129 @@ body.shipping-view #shippingPriorityList {
   border-color: #f2b8b5;
   background: #fff5f4;
   color: #b42318;
+}
+
+.surugaya-high-value-panel {
+  display: grid;
+  gap: 5px;
+}
+
+.surugaya-high-value-details {
+  border: 1px solid #eadfd7;
+  border-radius: 8px;
+  background: #fffdf7;
+}
+
+.surugaya-high-value-details summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 34px;
+  padding: 5px 8px;
+  color: #4d403a;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 900;
+  list-style: none;
+}
+
+.surugaya-high-value-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.surugaya-high-value-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: #4d403a;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.surugaya-high-value-heading span {
+  color: #916600;
+  white-space: nowrap;
+}
+
+.surugaya-high-value-table {
+  display: grid;
+  gap: 2px;
+  padding: 0 8px 8px;
+}
+
+.surugaya-high-value-row {
+  display: grid;
+  grid-template-columns: 64px 90px minmax(0, 1fr) 76px;
+  gap: 6px;
+  align-items: center;
+  min-height: 28px;
+  padding: 3px 6px;
+  border-radius: 5px;
+  background: #fff;
+  color: #443a36;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.surugaya-high-value-row.is-header {
+  min-height: 24px;
+  background: #f5eee7;
+  color: #6f625d;
+  font-weight: 950;
+}
+
+.surugaya-high-value-row b {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.surugaya-high-value-row strong {
+  color: #9a6a00;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.surugaya-high-value-row em {
+  justify-self: start;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-style: normal;
+  white-space: nowrap;
+}
+
+.surugaya-high-value-row.is-imported em {
+  background: #e8f7ee;
+  color: #14783f;
+}
+
+.surugaya-high-value-row.is-unchecked {
+  border-left: 3px solid #d84033;
+  background: #fff7f2;
+}
+
+.surugaya-high-value-row.is-unchecked em {
+  background: #ffe1df;
+  color: #b42318;
+}
+
+.surugaya-high-value-row.is-packed em {
+  background: #e8f7ee;
+  color: #14783f;
+}
+
+.surugaya-high-value-row.is-ultra-high {
+  border-left: 3px solid #d99a00;
+  background: #fff8db;
+  box-shadow: inset 0 0 0 1px #f0d278;
+}
+
+.surugaya-high-value-row.is-ultra-high strong {
+  color: #9a6400;
+  font-size: 13px;
 }
 
 .estimate-stat-progress i {
@@ -7624,54 +8070,220 @@ body.shipping-view #shippingPriorityList {
 
 .surugaya-estimate-view-controls {
   display: grid;
-  grid-template-columns: minmax(150px, 0.18fr) minmax(160px, 0.2fr) minmax(110px, 0.14fr) minmax(0, 1fr);
-  gap: 8px;
-  align-items: end;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+  align-items: start;
 }
 
-.surugaya-estimate-view-controls label {
-  display: grid;
-  gap: 4px;
+.surugaya-display-settings {
+  position: relative;
+  grid-column: 2;
   min-width: 0;
+  justify-self: end;
+}
+
+.surugaya-display-settings summary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 0 9px;
+  border: 1px solid #eadfd7;
+  border-radius: 999px;
+  background: #fff;
+  color: #6f625d;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 950;
+  list-style: none;
+  white-space: nowrap;
+}
+
+.surugaya-display-settings summary::-webkit-details-marker {
+  display: none;
+}
+
+.surugaya-display-settings-grid {
+  position: absolute;
+  right: 0;
+  z-index: 15;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  gap: 6px;
+  width: min(760px, calc(100vw - 40px));
+  margin-top: 6px;
+  padding: 8px;
+  border: 1px solid #eadfd7;
+  border-radius: 10px;
+  background: #fffdf8;
+  box-shadow: 0 14px 32px rgba(70, 52, 44, 0.16);
+}
+
+.surugaya-display-settings-grid label {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 4px;
+  align-items: center;
+  min-width: 0;
+  min-height: 28px;
+  padding: 2px 6px;
+  border: 1px solid #eadfd7;
+  border-radius: 8px;
+  background: #fff;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 850;
 }
 
 .surugaya-estimate-view-controls select {
   width: 100%;
-  min-height: 36px;
+  min-height: 24px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 6px;
   background: #fff;
   color: var(--text);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
 }
 
 .surugaya-estimate-view-controls input {
   width: 100%;
-  min-height: 36px;
+  min-height: 24px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 6px;
   background: #fff;
   color: var(--text);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
 }
 
 .surugaya-estimate-filter-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  display: grid;
+  grid-column: 1;
+  grid-row: 1;
+  grid-template-columns: minmax(160px, 0.55fr) minmax(250px, 1fr) auto;
+  gap: 5px;
+  align-items: start;
+  align-self: start;
   min-width: 0;
+  width: 100%;
+}
+
+.surugaya-filter-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+  gap: 3px 5px;
+  align-items: start;
+  align-content: flex-start;
+  min-width: 0;
+  width: 100%;
+}
+
+.surugaya-filter-group > span {
+  grid-column: 1 / -1;
+  color: #7b6d66;
+  font-size: 10px;
+  font-weight: 950;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.surugaya-estimate-filter-chips button,
+.surugaya-filter-details summary {
+  width: auto;
+  min-width: 0;
+  min-height: 28px;
+  padding: 0 7px;
+  overflow: hidden;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .surugaya-estimate-filter-chips button {
-  min-height: 34px;
-  padding: 0 10px;
+  width: 100%;
+}
+
+.surugaya-estimate-filter-chips button.is-emphasis {
+  min-height: 32px;
   font-size: 12px;
-  white-space: nowrap;
+  font-weight: 950;
+}
+
+.surugaya-filter-details {
+  grid-column: auto;
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  justify-self: end;
+}
+
+.surugaya-filter-details::before {
+  color: #7b6d66;
+  font-size: 10px;
+  font-weight: 950;
+  line-height: 1;
+  content: "その他";
+}
+
+.surugaya-filter-details[open] {
+  grid-column: 1 / -1;
+}
+
+.surugaya-filter-details[open] summary {
+  justify-self: end;
+  width: 132px;
+}
+
+.surugaya-filter-details summary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text);
+  cursor: pointer;
+  list-style: none;
+  font-weight: 900;
+}
+
+.surugaya-filter-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.surugaya-filter-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  width: 100%;
+  margin-top: 6px;
+  padding: 8px;
+  border: 1px solid #eadfd7;
+  border-radius: 8px;
+  background: #fffdf8;
+}
+
+.surugaya-filter-detail-grid section {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.surugaya-filter-detail-grid strong {
+  color: #6f625d;
+  font-size: 11px;
+  font-weight: 950;
+}
+
+.surugaya-filter-detail-grid button {
+  min-height: 28px;
+  font-size: 11px;
+}
+
+.surugaya-filter-detail-grid button.is-compact {
+  min-height: 28px;
+  font-size: 10.5px;
 }
 
 .surugaya-estimate-filter-chips button.active {
@@ -7780,9 +8392,70 @@ body.shipping-view #shippingPriorityList {
   white-space: normal;
 }
 
+.surugaya-analysis-panel {
+  display: grid;
+  gap: 8px;
+}
+
+.surugaya-analysis-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+}
+
+.surugaya-analysis-grid span {
+  display: grid;
+  gap: 3px;
+  min-height: 54px;
+  padding: 9px 10px;
+  border: 1px solid #eadfd7;
+  border-radius: 8px;
+  background: #fff;
+  color: #3f3733;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.surugaya-analysis-grid strong,
+.surugaya-analysis-grid b {
+  font-style: normal;
+  white-space: nowrap;
+}
+
+.surugaya-analysis-grid b {
+  color: #14783f;
+  font-size: 14px;
+  font-weight: 950;
+}
+
 .surugaya-estimate-list {
   display: grid;
   gap: 6px;
+}
+
+.surugaya-estimate-reset-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  grid-column: 1 / -1;
+  margin-top: -2px;
+}
+
+.surugaya-estimate-reset-actions button {
+  min-height: 34px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.surugaya-estimate-reset-actions p {
+  flex: 1 1 260px;
+  min-width: 0;
+  margin: 0;
+  color: #7b6d66;
+  font-size: 11px;
+  font-weight: 750;
+  line-height: 1.45;
 }
 
 .surugaya-estimate-list-header {
@@ -7846,6 +8519,293 @@ body.shipping-view #shippingPriorityList {
 .surugaya-estimate-row.is-amount-mismatch {
   border-color: #d84033;
   box-shadow: inset 4px 0 0 #d84033;
+}
+
+.surugaya-estimate-list.is-sheet-mode {
+  gap: 2px;
+}
+
+.surugaya-estimate-list-header.is-sheet-mode,
+.surugaya-estimate-list.is-sheet-mode .surugaya-estimate-sheet-row {
+  grid-template-columns: 62px 102px 94px 74px minmax(260px, 1fr) 48px 92px 70px;
+  gap: 4px 6px;
+}
+
+.surugaya-estimate-list-header.is-sheet-mode {
+  top: 42px;
+  min-height: 34px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: #fffaf0;
+  box-shadow: 0 2px 8px rgba(59, 45, 36, 0.06);
+}
+
+.surugaya-estimate-list.is-sheet-mode .surugaya-estimate-sheet-row {
+  align-items: center;
+  min-height: 42px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: #fff;
+}
+
+.surugaya-estimate-list.is-sheet-mode .surugaya-estimate-sheet-row.is-send {
+  background: #fbfffc;
+}
+
+.surugaya-estimate-list.is-sheet-mode .surugaya-estimate-sheet-row.is-physical-estimate {
+  border-color: #b9d7f6;
+  background: #f0f7ff;
+}
+
+.surugaya-estimate-list.is-sheet-mode .surugaya-estimate-sheet-row.is-zero-estimate {
+  border-color: #d8d8d8;
+  background: #f6f6f6;
+}
+
+.surugaya-estimate-list.is-sheet-mode .surugaya-estimate-sheet-row.is-no_send {
+  border-color: #f2b8b5;
+  background: #fff2f1;
+}
+
+.surugaya-estimate-list.is-sheet-mode .surugaya-estimate-sheet-row.is-confirm {
+  border-color: #edd28a;
+  background: #fff9dc;
+}
+
+.surugaya-estimate-list.is-sheet-mode .surugaya-estimate-sheet-row.is-high-value {
+  border-color: #d8aa28;
+  box-shadow: inset 3px 0 0 #c69200;
+}
+
+.surugaya-sheet-no,
+.surugaya-sheet-reason,
+.surugaya-sheet-quantity,
+.surugaya-sheet-memo {
+  min-width: 0;
+  overflow: hidden;
+  color: #5f524c;
+  font-size: 11px;
+  font-weight: 850;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.surugaya-sheet-no {
+  overflow: visible;
+  color: #6f625d;
+  text-overflow: clip;
+}
+
+.surugaya-sheet-name {
+  display: -webkit-box;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.25;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.surugaya-estimate-sheet-row.is-title-expanded .surugaya-sheet-name {
+  display: block;
+  overflow: visible;
+  -webkit-line-clamp: unset;
+}
+
+.surugaya-sheet-check,
+.surugaya-sheet-box {
+  width: 100%;
+  min-width: 0;
+  min-height: 28px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  color: #443a36;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.surugaya-sheet-check {
+  padding: 0 4px;
+}
+
+.surugaya-sheet-box {
+  padding: 0 6px;
+}
+
+.surugaya-estimate-list.is-sheet-mode .surugaya-sheet-amount {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 12px;
+  text-overflow: ellipsis;
+}
+
+.surugaya-estimate-list.is-sheet-mode .surugaya-estimate-price-editor,
+.surugaya-estimate-list.is-sheet-mode .surugaya-estimate-memo-panel {
+  grid-column: 3 / -1;
+}
+
+.surugaya-estimate-list.is-sheet-mode .surugaya-estimate-memo {
+  min-height: 30px;
+}
+
+.surugaya-estimate-list.is-packing-mode .surugaya-sheet-check,
+.surugaya-estimate-list.is-packing-mode .surugaya-sheet-box {
+  border-color: #b9d7f6;
+  background: #f8fbff;
+  font-weight: 900;
+}
+
+.surugaya-estimate-list.is-packing-mode .surugaya-estimate-sheet-row {
+  grid-template-columns: 62px 108px 86px minmax(320px, 1fr) 150px 64px;
+  min-height: 76px;
+  padding: 7px 8px;
+}
+
+.surugaya-estimate-list-header.is-packing-mode {
+  grid-template-columns: 62px 108px 86px minmax(320px, 1fr) 150px 64px;
+}
+
+.surugaya-estimate-list.is-packing-mode .surugaya-estimate-sheet-row .surugaya-sheet-reason,
+.surugaya-estimate-list.is-packing-mode .surugaya-estimate-sheet-row .surugaya-sheet-quantity {
+  display: none;
+}
+
+.surugaya-estimate-list.is-packing-mode .surugaya-sheet-name {
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.surugaya-estimate-list.is-packing-mode .surugaya-sheet-box {
+  min-height: 34px;
+  font-size: 13px;
+}
+
+.surugaya-sheet-packing-tools {
+  display: none;
+}
+
+.surugaya-mobile-work-actions {
+  display: none;
+}
+
+.surugaya-estimate-list.is-packing-mode .surugaya-sheet-packing-tools {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+  align-items: center;
+}
+
+.surugaya-sheet-box-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  min-width: 0;
+}
+
+.surugaya-sheet-box-quick button {
+  min-height: 28px;
+  padding: 0 8px;
+  font-size: 11px;
+}
+
+.surugaya-sheet-packing-status {
+  justify-self: end;
+  color: #4d403a;
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.surugaya-sheet-packing-status.is-high-unchecked {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #fff4d6;
+  color: #9a6400;
+}
+
+.surugaya-sheet-packing-status.is-high-packed {
+  color: #14783f;
+}
+
+@media (max-width: 600px) {
+  .surugaya-estimate-list-header.is-sheet-mode,
+  .surugaya-estimate-list.is-sheet-mode .surugaya-estimate-sheet-row {
+    grid-template-columns: 48px 82px 76px 56px minmax(0, 1fr);
+    gap: 3px 4px;
+  }
+
+  .surugaya-estimate-list-header.is-sheet-mode {
+    top: 0;
+    min-height: 32px;
+    padding: 4px 6px;
+  }
+
+  .surugaya-estimate-list-header.is-sheet-mode span:nth-child(n+6),
+  .surugaya-estimate-list.is-sheet-mode .surugaya-sheet-quantity,
+  .surugaya-estimate-list.is-sheet-mode .surugaya-sheet-box,
+  .surugaya-estimate-list.is-sheet-mode .surugaya-sheet-memo {
+    display: none;
+  }
+
+  .surugaya-estimate-list.is-sheet-mode .surugaya-estimate-sheet-row {
+    min-height: 46px;
+    padding: 5px 6px;
+  }
+
+  .surugaya-estimate-list-header.is-packing-mode,
+  .surugaya-estimate-list.is-packing-mode .surugaya-estimate-sheet-row {
+    grid-template-columns: 46px 76px minmax(0, 1fr) 84px;
+  }
+
+  .surugaya-estimate-list-header.is-packing-mode span:nth-child(3),
+  .surugaya-estimate-list-header.is-packing-mode span:nth-child(6),
+  .surugaya-estimate-list.is-packing-mode .surugaya-sheet-amount,
+  .surugaya-estimate-list.is-packing-mode .surugaya-sheet-memo {
+    display: none;
+  }
+
+  .surugaya-estimate-list.is-packing-mode .surugaya-sheet-name {
+    font-size: 13px;
+  }
+
+  .surugaya-estimate-list.is-packing-mode .surugaya-sheet-packing-tools {
+    grid-template-columns: 1fr;
+  }
+
+  .surugaya-sheet-packing-status {
+    justify-self: start;
+    white-space: normal;
+  }
+
+  .surugaya-sheet-no,
+  .surugaya-sheet-reason {
+    font-size: 10px;
+  }
+
+  .surugaya-sheet-name {
+    font-size: 11px;
+    line-height: 1.25;
+  }
+
+  .surugaya-sheet-check {
+    min-height: 30px;
+    font-size: 10px;
+  }
+
+  .surugaya-estimate-list.is-sheet-mode .surugaya-sheet-amount {
+    font-size: 11px;
+  }
+
+  .surugaya-estimate-list.is-sheet-mode .surugaya-estimate-price-editor,
+  .surugaya-estimate-list.is-sheet-mode .surugaya-estimate-memo-panel {
+    grid-column: 1 / -1;
+  }
 }
 
 .surugaya-estimate-judge-block {
@@ -11879,15 +12839,213 @@ button:disabled {
   }
 
   .surugaya-estimate-filter-chips {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .surugaya-display-settings {
+    grid-column: 1;
+    justify-self: start;
+  }
+
+  .surugaya-display-settings-grid {
+    left: 0;
+    right: auto;
+    grid-template-columns: 1fr;
+    width: min(320px, calc(100vw - 32px));
+  }
+
+  .surugaya-filter-group {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(82px, auto));
+    flex: 0 0 auto;
+    align-items: start;
+    gap: 3px 6px;
+    min-width: max-content;
+  }
+
+  .surugaya-filter-group > span {
+    grid-column: 1 / -1;
+    font-size: 10px;
   }
 
   .surugaya-estimate-filter-chips button {
-    width: 100%;
-    min-width: 0;
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 82px;
     padding: 0 8px;
     font-size: 11px;
+  }
+
+  .surugaya-filter-details {
+    display: grid;
+    gap: 3px;
+    flex: 0 0 auto;
+    min-width: 120px;
+  }
+
+  .surugaya-filter-details summary {
+    min-width: 120px;
+  }
+
+  .surugaya-filter-detail-grid {
+    grid-template-columns: 1fr;
+    min-width: 220px;
+  }
+
+  .surugaya-estimate-panel.is-mobile-work-mode .surugaya-estimate-stats {
+    position: sticky;
+    top: 0;
+    z-index: 25;
+    gap: 3px;
+  }
+
+  .surugaya-estimate-panel.is-mobile-work-mode .surugaya-estimate-stats > span:not(.estimate-stat-send):not(.estimate-stat-total),
+  .surugaya-estimate-panel.is-mobile-work-mode .surugaya-estimate-diff-details,
+  .surugaya-estimate-panel.is-mobile-work-mode .surugaya-estimate-stat-details,
+  .surugaya-estimate-panel.is-mobile-work-mode .surugaya-high-value-panel,
+  .surugaya-estimate-panel.is-mobile-work-mode .surugaya-estimate-order-note,
+  .surugaya-estimate-panel.is-mobile-work-mode .surugaya-estimate-filter-chips {
+    display: none !important;
+  }
+
+  .surugaya-estimate-panel.is-mobile-work-mode .surugaya-display-settings {
+    justify-self: end;
+  }
+
+  .surugaya-estimate-panel.is-mobile-work-mode .surugaya-estimate-list-header {
+    display: none !important;
+  }
+
+  .surugaya-estimate-panel.is-mobile-work-mode .surugaya-estimate-list {
+    gap: 10px;
+  }
+
+  .surugaya-estimate-panel.is-mobile-work-mode .surugaya-estimate-list.is-sheet-mode .surugaya-estimate-sheet-row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 0;
+    padding: 12px;
+    border-radius: 10px;
+    box-shadow: 0 8px 22px rgba(55, 39, 31, 0.08);
+  }
+
+  .surugaya-estimate-panel.is-mobile-work-mode .surugaya-sheet-no,
+  .surugaya-estimate-panel.is-mobile-work-mode .surugaya-sheet-reason,
+  .surugaya-estimate-panel.is-mobile-work-mode .surugaya-sheet-memo,
+  .surugaya-estimate-panel.is-mobile-work-mode .surugaya-sheet-packing-tools {
+    display: none !important;
+  }
+
+  .surugaya-estimate-panel.is-mobile-work-mode .surugaya-sheet-name {
+    order: 1;
+    font-size: 17px;
+    line-height: 1.45;
+    -webkit-line-clamp: 3;
+  }
+
+  .surugaya-estimate-panel.is-mobile-work-mode .surugaya-sheet-amount {
+    order: 2;
+    align-self: flex-start;
+    min-height: 36px;
+    padding: 0 12px;
+    border-radius: 999px;
+    font-size: 18px !important;
+    font-weight: 950;
+  }
+
+  .surugaya-estimate-panel.is-mobile-work-mode .surugaya-sheet-check,
+  .surugaya-estimate-panel.is-mobile-work-mode .surugaya-sheet-box {
+    width: 100%;
+    min-height: 44px;
+    border-radius: 9px;
+    font-size: 15px;
+  }
+
+  .surugaya-estimate-panel.is-mobile-work-mode .surugaya-sheet-check {
+    order: 3;
+  }
+
+  .surugaya-estimate-panel.is-mobile-work-mode .surugaya-sheet-quantity {
+    order: 4;
+    display: inline-flex;
+    align-self: flex-start;
+    min-height: 26px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: #f5eee7;
+    color: #5f524c;
+    font-size: 13px;
+  }
+
+  .surugaya-estimate-panel.is-mobile-work-mode .surugaya-sheet-box {
+    order: 5;
+  }
+
+  .surugaya-estimate-panel.is-mobile-work-mode .surugaya-mobile-work-actions {
+    order: 6;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .surugaya-estimate-panel.is-mobile-work-mode .surugaya-mobile-work-actions button {
+    min-height: 54px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 950;
+  }
+
+  .surugaya-estimate-panel.is-mobile-work-mode .surugaya-mobile-work-actions button.active {
+    border-color: #14783f;
+    background: #e8f7ee;
+    color: #116238;
+  }
+
+  .surugaya-estimate-panel.is-mobile-work-mode .surugaya-estimate-price-editor,
+  .surugaya-estimate-panel.is-mobile-work-mode .surugaya-estimate-memo-panel {
+    order: 7;
+    width: 100%;
+  }
+
+  .surugaya-high-value-panel {
+    gap: 4px;
+  }
+
+  .surugaya-high-value-details summary {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
+    min-height: 34px;
+    padding: 5px 6px;
+  }
+
+  .surugaya-high-value-row {
+    grid-template-columns: 46px 70px minmax(0, 1fr) 58px;
+    gap: 4px;
+    padding: 4px;
+    font-size: 10px;
+  }
+
+  .surugaya-high-value-row b {
+    display: -webkit-box;
+    white-space: normal;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .surugaya-high-value-row strong {
+    font-size: 10.5px;
+  }
+
+  .surugaya-high-value-row em {
+    padding: 2px 5px;
   }
 
   .surugaya-estimate-main {
@@ -33828,5 +34986,24 @@ body.settings-view .settings-maintenance.settings-accordion > summary .settings-
     max-width: 100% !important;
     margin-left: auto !important;
     margin-right: auto !important;
+  }
+}
+
+/* Final override for Surugaya spreadsheet-style checklist mode. */
+@media (max-width: 600px) {
+  .surugaya-estimate-list-header.is-sheet-mode,
+  .surugaya-estimate-list.is-sheet-mode .surugaya-estimate-sheet-row {
+    grid-template-columns: 48px 82px 76px 56px minmax(0, 1fr) !important;
+  }
+
+  .surugaya-estimate-list-header.is-sheet-mode span {
+    display: inline-block !important;
+  }
+
+  .surugaya-estimate-list-header.is-sheet-mode span:nth-child(n+6),
+  .surugaya-estimate-list.is-sheet-mode .surugaya-sheet-quantity,
+  .surugaya-estimate-list.is-sheet-mode .surugaya-sheet-box,
+  .surugaya-estimate-list.is-sheet-mode .surugaya-sheet-memo {
+    display: none !important;
   }
 }

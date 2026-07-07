@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>メルカリ出品補助室</title>
-  <link rel="stylesheet" href="styles.css?v=surugaya-checklist-final-20260707">
+  <title>メルカリ出品補助室</title>
+  <link rel="stylesheet" href="styles.css?v=surugaya-mobile-work-ui-20260707">
     <style id="mobile-sorting-final-overrides">
       @media (max-width: 600px) {
         html body.work-view.work-tab-sorting .sorting-work-toolbar {
@@ -3527,14 +3527,26 @@
             <div class="import-action-grid surugaya-estimate-actions">
               <button class="primary-button" type="button" id="parseSurugayaEstimateButton">解析する</button>
               <button class="ghost-button" type="button" id="saveSurugayaEstimateButton" disabled>見積もり結果を保存</button>
-              <button class="ghost-button" type="button" id="restoreSurugayaEstimateOrderButton" disabled>メール順に戻す</button>
+              <button class="primary-button" type="button" id="goSurugayaReviewButton" disabled>確認作業へ進む</button>
               <button class="ghost-button" type="button" id="startSurugayaPackingButton" disabled>📦梱包開始</button>
               <button class="ghost-button" type="button" id="createSurugayaShippingListButton" disabled>送る商品リストを作成</button>
-              <button class="ghost-button" type="button" id="createSurugayaNoSendListButton" disabled>送らない商品リストを作成</button>
-              <button class="ghost-button" type="button" id="createSurugayaPackingListButton" disabled>箱別発送リストを作成</button>
-              <button class="ghost-button" type="button" id="createSurugayaBoxMemoButton" disabled>箱メモを作成</button>
-              <button class="ghost-button" type="button" id="reparseSurugayaEstimateAmountsButton" disabled>金額だけ再解析</button>
+              <details class="surugaya-management-actions">
+                <summary>管理メニュー</summary>
+                <div>
+                  <button class="ghost-button" type="button" id="restoreSurugayaEstimateOrderButton" disabled>メール順に戻す</button>
+                  <button class="ghost-button" type="button" id="createSurugayaNoSendListButton" disabled>送らない商品リストを作成</button>
+                  <button class="ghost-button" type="button" id="createSurugayaPackingListButton" disabled>箱別発送リストを作成</button>
+                  <button class="ghost-button" type="button" id="createSurugayaBoxMemoButton" disabled>箱メモを作成</button>
+                  <button class="ghost-button" type="button" id="reparseSurugayaEstimateAmountsButton" disabled>金額だけ再解析</button>
+                </div>
+              </details>
             </div>
+          </div>
+          <div class="surugaya-workflow-tabs" role="tablist" aria-label="駿河屋見積もり作業画面">
+            <button class="active" type="button" data-surugaya-screen="import">① 取込・解析</button>
+            <button type="button" data-surugaya-screen="review">② 査定確認</button>
+            <button type="button" data-surugaya-screen="packing">③ 箱詰め作業</button>
+            <button type="button" data-surugaya-screen="summary">④ 集計・分析</button>
           </div>
           <div class="surugaya-estimate-input-grid">
             <label>
@@ -3545,6 +3557,11 @@
               見積もり本文
               <textarea id="surugayaEstimateText" rows="8" placeholder="駿河屋の見積もり本文をそのまま貼り付け"></textarea>
             </label>
+            <div class="surugaya-estimate-reset-actions">
+              <button class="ghost-button" type="button" id="clearSurugayaEstimateImportButton">現在の取込をクリア</button>
+              <button class="text-button hidden" type="button" id="undoClearSurugayaEstimateImportButton">元に戻す</button>
+              <p>駿河屋メール本文・今回解析した見積もり一覧・一時チェック状態だけをクリアします。商品一覧や保存済み履歴には影響しません。</p>
+            </div>
           </div>
           <div class="surugaya-estimate-stats" id="surugayaEstimateStats" aria-live="polite">
             <span><strong>📦発送予定</strong><b>0点</b><em>0円</em></span>
@@ -3555,58 +3572,85 @@
             <span>現物査定：0点</span>
             <span>0円査定：0点</span>
           </div>
+          <div class="surugaya-high-value-panel hidden" id="surugayaHighValuePanel" aria-live="polite"></div>
           <div class="surugaya-estimate-view-controls" aria-label="駿河屋見積もり表示切替">
-            <label>
-              作業モード
-              <select id="surugayaEstimateWorkMode">
-                <option value="review">通常確認</option>
-                <option value="packing">最終発送チェック</option>
-                <option value="noSendReview">買取不可・送らない確認</option>
-                <option value="searching">探し中だけ</option>
-              </select>
-            </label>
-            <label>
-              表示モード
-              <select id="surugayaEstimateDisplayMode">
-                <option value="mail">メール順</option>
-                <option value="amountDesc">金額が高い順</option>
-                <option value="amountAsc">金額が低い順</option>
-                <option value="confirmFirst">要判断優先</option>
-                <option value="unpackedFirst">未梱包順</option>
-                <option value="boxNumber">箱番号順</option>
-              </select>
-            </label>
-            <label>
-              高額注意
-              <input id="surugayaEstimateHighValueThreshold" type="number" min="0" step="100" value="3000">
-            </label>
-            <label>
-              箱最低金額
-              <input id="surugayaEstimateBoxMinimum" type="number" min="0" step="100" value="1500">
-            </label>
+            <details class="surugaya-display-settings">
+              <summary>表示設定▼</summary>
+              <div class="surugaya-display-settings-grid">
+                <label>
+                  作業モード
+                  <select id="surugayaEstimateWorkMode">
+                    <option value="review">通常確認</option>
+                    <option value="packing">箱詰め作業</option>
+                    <option value="mobileWork">📱スマホ作業モード</option>
+                    <option value="amountCheck">金額確認</option>
+                    <option value="noSendReview">送らない確認</option>
+                  </select>
+                </label>
+                <label>
+                  表示モード
+                  <select id="surugayaEstimateDisplayMode">
+                    <option value="sheet" selected>表形式チェック</option>
+                    <option value="detailCard">カード表示</option>
+                    <option value="highValueList">高額商品一覧</option>
+                  </select>
+                </label>
+                <label>
+                  高額注意
+                  <input id="surugayaEstimateHighValueThreshold" type="number" min="0" step="100" value="3000">
+                </label>
+                <label>
+                  箱最低金額
+                  <input id="surugayaEstimateBoxMinimum" type="number" min="0" step="100" value="1500">
+                </label>
+              </div>
+            </details>
             <div class="surugaya-estimate-filter-chips" aria-label="専用フィルター">
-              <button class="ghost-button active" type="button" data-estimate-filter="all">全件</button>
-              <button class="ghost-button" type="button" data-estimate-filter="unchecked">未チェック</button>
-              <button class="ghost-button" type="button" data-estimate-filter="checked">チェック済み</button>
-              <button class="ghost-button" type="button" data-estimate-filter="send">送る</button>
-              <button class="ghost-button" type="button" data-estimate-filter="noSend">送らない</button>
-              <button class="ghost-button" type="button" data-estimate-filter="hold">保留</button>
-              <button class="ghost-button" type="button" data-estimate-filter="packed">箱詰め済み</button>
-              <button class="ghost-button" type="button" data-estimate-filter="searching">見つからない</button>
-              <button class="ghost-button" type="button" data-estimate-filter="boxUnset">箱未設定</button>
-              <button class="ghost-button" type="button" data-estimate-filter="highValue">高額注意だけ</button>
-              <button class="ghost-button" type="button" data-estimate-filter="amountMismatch">金額確認が必要</button>
-              <button class="ghost-button" type="button" data-estimate-filter="manualPrice">手動修正済み</button>
-              <button class="ghost-button" type="button" data-estimate-filter="physicalZero">0円現物査定だけ</button>
-              <button class="ghost-button" type="button" data-estimate-filter="unavailable">買取不可だけ</button>
-              <button class="ghost-button" type="button" data-estimate-filter="zero">0円査定だけ</button>
-              <button class="ghost-button" type="button" data-estimate-filter="junk">ジャンク</button>
-              <button class="ghost-button" type="button" data-estimate-filter="duplicate">重複商品</button>
-              <button class="ghost-button" type="button" data-estimate-filter="confirm">要判断だけ</button>
+              <div class="surugaya-filter-group is-primary" aria-label="確認">
+                <span>確認状態</span>
+                <button class="ghost-button active" type="button" data-estimate-filter="all">全体</button>
+                <button class="ghost-button is-emphasis" type="button" data-estimate-filter="unchecked">未チェック</button>
+              </div>
+              <div class="surugaya-filter-group" aria-label="発送判断">
+                <span>発送判断</span>
+                <button class="ghost-button is-emphasis" type="button" data-estimate-filter="send">送る</button>
+                <button class="ghost-button" type="button" data-estimate-filter="noSend">送らない</button>
+                <button class="ghost-button" type="button" data-estimate-filter="hold">保留</button>
+              </div>
+              <details class="surugaya-filter-details">
+                <summary>詳細フィルター▼</summary>
+                <div class="surugaya-filter-detail-grid">
+                  <section>
+                    <strong>確認</strong>
+                    <button class="ghost-button" type="button" data-estimate-filter="checked">チェック済み</button>
+                    <button class="ghost-button" type="button" data-estimate-filter="packed">箱詰め済み</button>
+                    <button class="ghost-button" type="button" data-estimate-filter="searching">見つからない</button>
+                    <button class="ghost-button" type="button" data-estimate-filter="boxUnset">箱未設定</button>
+                  </section>
+                  <section>
+                    <strong>査定確認</strong>
+                    <button class="ghost-button" type="button" data-estimate-filter="highValue">高額</button>
+                    <button class="ghost-button" type="button" data-estimate-filter="amountMismatch">金額確認</button>
+                    <button class="ghost-button" type="button" data-estimate-filter="unavailable">買取不可</button>
+                    <button class="ghost-button" type="button" data-estimate-filter="highUnchecked">高額未確認</button>
+                    <button class="ghost-button" type="button" data-estimate-filter="confirm">要判断</button>
+                    <button class="ghost-button" type="button" data-estimate-filter="importLeak">取込漏れ候補</button>
+                    <button class="ghost-button" type="button" data-estimate-filter="manualPrice">手動修正済み</button>
+                  </section>
+                  <section>
+                    <strong>査定結果</strong>
+                    <button class="ghost-button is-compact" type="button" data-estimate-filter="zero">0円</button>
+                    <button class="ghost-button is-compact" type="button" data-estimate-filter="physicalZero">現物</button>
+                    <button class="ghost-button is-compact" type="button" data-estimate-filter="junk">ジャンク</button>
+                    <button class="ghost-button is-compact" type="button" data-estimate-filter="duplicate">重複</button>
+                  </section>
+                </div>
+              </details>
             </div>
           </div>
           <p class="surugaya-estimate-order-note hidden" id="surugayaEstimateOrderNote">現在は金額順チェック表示です。出力はメール順のまま作成されます。</p>
           <div class="surugaya-box-summary hidden" id="surugayaBoxSummary" aria-live="polite"></div>
+          <div class="surugaya-analysis-panel hidden" id="surugayaAnalysisPanel" aria-live="polite"></div>
           <div class="surugaya-estimate-list-header" aria-hidden="true">
             <span>チェック</span>
             <span>No / 金額</span>
@@ -4303,6 +4347,6 @@
 
     <button class="scroll-top-button hidden" type="button" id="scrollTopButton" aria-label="先頭へ戻る">↑</button>
 
-  <script src="app.js?v=surugaya-checklist-final-20260707"></script>
+  <script src="app.js?v=surugaya-mobile-work-ui-20260707"></script>
   </body>
 </html>
