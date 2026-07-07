@@ -7785,13 +7785,31 @@ body.shipping-view #shippingPriorityList {
   gap: 6px;
 }
 
+.surugaya-estimate-list-header {
+  position: sticky;
+  top: 42px;
+  z-index: 19;
+  display: grid;
+  grid-template-columns: 94px 92px minmax(0, 1fr) 132px;
+  gap: 6px;
+  align-items: center;
+  min-width: 0;
+  padding: 5px 10px;
+  border: 1px solid #eadfd7;
+  border-radius: 8px;
+  background: #fffdf8;
+  color: #6f625d;
+  font-size: 11px;
+  font-weight: 950;
+}
+
 .surugaya-estimate-row {
   display: grid;
-  grid-template-columns: 120px minmax(0, 1fr) 148px;
-  gap: 6px 12px;
+  grid-template-columns: 94px 92px minmax(0, 1fr) 132px;
+  gap: 5px 8px;
   align-items: start;
   min-width: 0;
-  padding: 7px 10px;
+  padding: 6px 10px;
   border: 1px solid #eadfd7;
   border-radius: 8px;
   background: #fff;
@@ -7832,8 +7850,47 @@ body.shipping-view #shippingPriorityList {
 
 .surugaya-estimate-judge-block {
   display: grid;
-  gap: 2px;
+  gap: 1px;
   min-width: 0;
+}
+
+.surugaya-estimate-work-cell {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 3px;
+  min-width: 0;
+}
+
+.surugaya-estimate-work-cell button,
+.surugaya-estimate-work-cell label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 24px;
+  padding: 0 3px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  color: #554944;
+  font-size: 10px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.surugaya-estimate-work-cell button.active {
+  border-color: #d84033;
+  background: #fff1ed;
+  color: #b73027;
+}
+
+.surugaya-estimate-work-cell label {
+  gap: 2px;
+}
+
+.surugaya-estimate-work-cell input {
+  width: 14px;
+  height: 14px;
 }
 
 .surugaya-estimate-main {
@@ -7916,12 +7973,51 @@ body.shipping-view #shippingPriorityList {
 }
 
 .surugaya-estimate-amount {
+  width: fit-content;
+  border: 0;
+  background: transparent;
   overflow: visible;
   color: #14783f;
-  font-size: 14px;
+  cursor: pointer;
+  font-size: 13px;
   font-weight: 950;
+  padding: 0;
   text-overflow: clip;
   white-space: nowrap;
+}
+
+.surugaya-estimate-amount:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.surugaya-estimate-amount.is-manual {
+  color: #b73027;
+}
+
+.surugaya-estimate-price-editor {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 3px;
+}
+
+.surugaya-estimate-price-editor.hidden {
+  display: none !important;
+}
+
+.surugaya-estimate-price-editor input {
+  min-width: 0;
+  min-height: 28px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  font-size: 12px;
+}
+
+.surugaya-estimate-price-editor button {
+  min-height: 28px;
+  padding: 0 6px;
+  font-size: 11px;
 }
 
 .surugaya-estimate-row.is-high-value .surugaya-estimate-amount {
@@ -11798,7 +11894,17 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 
+  .surugaya-estimate-list-header {
+    top: 0;
+    grid-template-columns: 76px 72px minmax(0, 1fr);
+  }
+
+  .surugaya-estimate-list-header span:nth-child(4) {
+    display: none;
+  }
+
   .surugaya-estimate-judge-block,
+  .surugaya-estimate-work-cell,
   .surugaya-estimate-main,
   .surugaya-estimate-actions-cell,
   .surugaya-estimate-memo-panel,
@@ -11811,6 +11917,10 @@ button:disabled {
     grid-template-columns: auto auto;
     align-items: center;
     gap: 3px 8px;
+  }
+
+  .surugaya-estimate-work-cell {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .surugaya-estimate-no,
