@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>メルカリ出品補助室</title>
-  <link rel="stylesheet" href="styles.css?v=surugaya-estimate-displaymode-20260707">
+  <link rel="stylesheet" href="styles.css?v=surugaya-box-balance-20260707">
     <style id="mobile-sorting-final-overrides">
       @media (max-width: 600px) {
         html body.work-view.work-tab-sorting .sorting-work-toolbar {
@@ -3528,8 +3528,11 @@
               <button class="primary-button" type="button" id="parseSurugayaEstimateButton">解析する</button>
               <button class="ghost-button" type="button" id="saveSurugayaEstimateButton" disabled>見積もり結果を保存</button>
               <button class="ghost-button" type="button" id="restoreSurugayaEstimateOrderButton" disabled>メール順に戻す</button>
+              <button class="ghost-button" type="button" id="startSurugayaPackingButton" disabled>📦梱包開始</button>
               <button class="ghost-button" type="button" id="createSurugayaShippingListButton" disabled>送る商品リストを作成</button>
               <button class="ghost-button" type="button" id="createSurugayaNoSendListButton" disabled>送らない商品リストを作成</button>
+              <button class="ghost-button" type="button" id="createSurugayaPackingListButton" disabled>箱別発送リストを作成</button>
+              <button class="ghost-button" type="button" id="createSurugayaBoxMemoButton" disabled>箱メモを作成</button>
             </div>
           </div>
           <div class="surugaya-estimate-input-grid">
@@ -3553,16 +3556,36 @@
           </div>
           <div class="surugaya-estimate-view-controls" aria-label="駿河屋見積もり表示切替">
             <label>
+              作業モード
+              <select id="surugayaEstimateWorkMode">
+                <option value="review">通常確認</option>
+                <option value="packing">最終発送チェック</option>
+                <option value="noSendReview">買取不可・送らない確認</option>
+                <option value="searching">探し中だけ</option>
+              </select>
+            </label>
+            <label>
               表示モード
               <select id="surugayaEstimateDisplayMode">
                 <option value="mail">メール順</option>
                 <option value="amountDesc">金額が高い順</option>
                 <option value="amountAsc">金額が低い順</option>
                 <option value="confirmFirst">要判断優先</option>
+                <option value="unpackedFirst">未梱包順</option>
+                <option value="boxNumber">箱番号順</option>
               </select>
+            </label>
+            <label>
+              高額注意
+              <input id="surugayaEstimateHighValueThreshold" type="number" min="0" step="100" value="3000">
+            </label>
+            <label>
+              箱最低金額
+              <input id="surugayaEstimateBoxMinimum" type="number" min="0" step="100" value="1500">
             </label>
             <div class="surugaya-estimate-filter-chips" aria-label="専用フィルター">
               <button class="ghost-button active" type="button" data-estimate-filter="all">全件</button>
+              <button class="ghost-button" type="button" data-estimate-filter="highValue">高額注意だけ</button>
               <button class="ghost-button" type="button" data-estimate-filter="physicalZero">0円現物査定だけ</button>
               <button class="ghost-button" type="button" data-estimate-filter="unavailable">買取不可だけ</button>
               <button class="ghost-button" type="button" data-estimate-filter="zero">0円査定だけ</button>
@@ -3570,6 +3593,7 @@
             </div>
           </div>
           <p class="surugaya-estimate-order-note hidden" id="surugayaEstimateOrderNote">現在は金額順チェック表示です。出力はメール順のまま作成されます。</p>
+          <div class="surugaya-box-summary hidden" id="surugayaBoxSummary" aria-live="polite"></div>
           <div class="surugaya-estimate-list" id="surugayaEstimateList"></div>
           <label class="surugaya-estimate-output">
             発送リスト
@@ -4260,6 +4284,6 @@
 
     <button class="scroll-top-button hidden" type="button" id="scrollTopButton" aria-label="先頭へ戻る">↑</button>
 
-  <script src="app.js?v=surugaya-estimate-displaymode-20260707"></script>
+  <script src="app.js?v=surugaya-box-balance-20260707"></script>
   </body>
 </html>

@@ -4,6 +4,7 @@ const SETTINGS_KEY = "mercari-listing-helper-settings";
 const TEMPLATES_KEY = "mercari-listing-helper-templates";
 const SORTING_STORAGE_KEY = "mercari-listing-helper-destination-sorting";
 const SURUGAYA_ESTIMATE_STORAGE_KEY = "mercari-listing-helper-surugaya-estimates";
+const SURUGAYA_ESTIMATE_DRAFT_KEY = "mercari-listing-helper-surugaya-estimate-draft";
 const UI_STATE_KEY = "mercari-listing-helper-ui-state";
 const CLOUD_LAST_SYNC_KEY = "mercari-listing-helper-cloud-last-sync";
 const CLOUD_SELECTED_HOUSEHOLD_KEY = "mercari-listing-helper-selected-household";
@@ -171,12 +172,19 @@ const surugayaEstimateTextInput = document.querySelector("#surugayaEstimateText"
 const parseSurugayaEstimateButton = document.querySelector("#parseSurugayaEstimateButton");
 const saveSurugayaEstimateButton = document.querySelector("#saveSurugayaEstimateButton");
 const restoreSurugayaEstimateOrderButton = document.querySelector("#restoreSurugayaEstimateOrderButton");
+const startSurugayaPackingButton = document.querySelector("#startSurugayaPackingButton");
 const createSurugayaShippingListButton = document.querySelector("#createSurugayaShippingListButton");
 const createSurugayaNoSendListButton = document.querySelector("#createSurugayaNoSendListButton");
+const createSurugayaPackingListButton = document.querySelector("#createSurugayaPackingListButton");
+const createSurugayaBoxMemoButton = document.querySelector("#createSurugayaBoxMemoButton");
+const surugayaEstimateWorkModeInput = document.querySelector("#surugayaEstimateWorkMode");
 const surugayaEstimateDisplayModeInput = document.querySelector("#surugayaEstimateDisplayMode");
+const surugayaEstimateHighValueThresholdInput = document.querySelector("#surugayaEstimateHighValueThreshold");
+const surugayaEstimateBoxMinimumInput = document.querySelector("#surugayaEstimateBoxMinimum");
 const surugayaEstimateOrderNote = document.querySelector("#surugayaEstimateOrderNote");
 const surugayaEstimateSummary = document.querySelector("#surugayaEstimateSummary");
 const surugayaEstimateStats = document.querySelector("#surugayaEstimateStats");
+const surugayaBoxSummary = document.querySelector("#surugayaBoxSummary");
 const surugayaEstimateList = document.querySelector("#surugayaEstimateList");
 const surugayaShippingListOutput = document.querySelector("#surugayaShippingListOutput");
 const backupControlsTop = document.querySelector(".backup-controls-top");
@@ -455,10 +463,14 @@ let indexedImageRecoveryCandidate = null;
 let localImageRefsRecoveryCandidate = null;
 let recoveredImageCandidateDiagnostics = [];
 let importParsedItems = [];
-let surugayaEstimateRows = [];
+let surugayaEstimateRows = loadSurugayaEstimateDraft();
 let openSurugayaEstimateMemoId = "";
+let surugayaEstimateWorkMode = "review";
 let surugayaEstimateDisplayMode = "mail";
 let surugayaEstimateFilter = "all";
+let surugayaEstimateHighValueThreshold = 3000;
+let surugayaEstimateBoxMinimum = 1500;
+let surugayaBoxMemos = loadSurugayaBoxMemos();
 let savedSurugayaEstimates = loadSurugayaEstimates();
 let lastCloudSaveBackupAt = 0;
 let isSettingsDirty = false;
@@ -7212,6 +7224,35 @@ function saveSurugayaEstimates() {
   localStorage.setItem(SURUGAYA_ESTIMATE_STORAGE_KEY, JSON.stringify(savedSurugayaEstimates.slice(0, 50)));
 }
 
+function loadSurugayaEstimateDraft() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(SURUGAYA_ESTIMATE_DRAFT_KEY) || "[]");
+    const rows = Array.isArray(parsed) ? parsed : parsed?.rows;
+    return Array.isArray(rows) ? rows.map(normalizeSurugayaEstimateRow) : [];
+  } catch {
+    return [];
+  }
+}
+
+function loadSurugayaBoxMemos() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(SURUGAYA_ESTIMATE_DRAFT_KEY) || "[]");
+    return parsed && !Array.isArray(parsed) && parsed.boxMemos && typeof parsed.boxMemos === "object"
+      ? parsed.boxMemos
+      : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveSurugayaEstimateDraft() {
+  localStorage.setItem(SURUGAYA_ESTIMATE_DRAFT_KEY, JSON.stringify({
+    rows: surugayaEstimateRows.map(normalizeSurugayaEstimateRow),
+    boxMemos: surugayaBoxMemos,
+    updatedAt: new Date().toISOString(),
+  }));
+}
+
 function normalizeEstimateText(value) {
   return String(value || "")
     .replace(/[０-９]/g, (char) => String.fromCharCode(char.charCodeAt(0) - 0xfee0))
@@ -7293,12 +7334,36 @@ function getEstimateInitialDecision(amountInfo) {
 
 function getSurugayaEstimateDecisionLabel(decision) {
   if (decision === "send") {
-    return "送る";
+    return "🟢送る";
   }
   if (decision === "no_send") {
-    return "送らない";
+    return "🔴送らない";
   }
-  return "要判断";
+  return "🟡要判断";
+}
+
+function normalizeSurugayaEstimateRow(row) {
+  return {
+    ...row,
+    packed: Boolean(row?.packed),
+    boxNumber: String(row?.boxNumber || "").trim(),
+    highValueChecked: Boolean(row?.highValueChecked),
+    searchStatus: row?.searchStatus === "searching" ? "searching" : "",
+    history: Array.isArray(row?.history) ? row.history : [],
+  };
+}
+
+function addSurugayaEstimateHistory(row, text) {
+  return {
+    ...row,
+    history: [
+      ...(Array.isArray(row.history) ? row.history : []),
+      {
+        at: new Date().toISOString(),
+        text,
+      },
+    ].slice(-30),
+  };
 }
 
 function findEstimateItemCandidates(name) {
@@ -7333,7 +7398,7 @@ function findEstimateItemCandidates(name) {
 
 function createSurugayaEstimateRow({ name, amountInfo, rawLine, rowNumber }) {
   const title = String(name || "").trim() || `要確認 ${String(rowNumber).padStart(3, "0")}`;
-  return {
+  return normalizeSurugayaEstimateRow({
     id: `estimate-${Date.now()}-${rowNumber}-${Math.random().toString(36).slice(2, 7)}`,
     no: rowNumber,
     rowNumber,
@@ -7347,7 +7412,7 @@ function createSurugayaEstimateRow({ name, amountInfo, rawLine, rowNumber }) {
     memo: amountInfo.kind === "unknown" ? "金額要確認" : "",
     rawLine: rawLine || "",
     candidates: findEstimateItemCandidates(title),
-  };
+  });
 }
 
 function parseSurugayaEstimateText(text) {
@@ -7398,6 +7463,7 @@ function parseSurugayaEstimateText(text) {
 
 function getSurugayaEstimateStats() {
   return surugayaEstimateRows.reduce((stats, row) => {
+    const normalizedRow = normalizeSurugayaEstimateRow(row);
     const amount = Number(row.amount) || 0;
     if (row.amount !== null && row.amount !== undefined && Number.isFinite(Number(row.amount))) {
       stats.estimateTotalAmount += amount;
@@ -7405,11 +7471,26 @@ function getSurugayaEstimateStats() {
     if (row.decision === "send") {
       stats.sendCount += 1;
       stats.sendAmount += amount;
+      if (normalizedRow.packed) {
+        stats.packedCount += 1;
+      }
+      if (Number(row.amount) >= surugayaEstimateHighValueThreshold) {
+        stats.highValueSendCount += 1;
+        if (!normalizedRow.highValueChecked) {
+          stats.highValueUncheckedCount += 1;
+        }
+      }
     } else if (row.decision === "no_send") {
       stats.noSendCount += 1;
       stats.excludedAmount += amount;
+      if (row.reason === "手動変更") {
+        stats.manualNoSendCount += 1;
+      }
     } else {
       stats.confirmCount += 1;
+    }
+    if (normalizedRow.searchStatus === "searching") {
+      stats.searchingCount += 1;
     }
     if (row.reason === "買取不可") {
       stats.unavailableCount += 1;
@@ -7421,7 +7502,136 @@ function getSurugayaEstimateStats() {
       stats.zeroCount += 1;
     }
     return stats;
-  }, { sendCount: 0, noSendCount: 0, confirmCount: 0, estimateTotalAmount: 0, sendAmount: 0, excludedAmount: 0, unavailableCount: 0, physicalCount: 0, zeroCount: 0 });
+  }, { sendCount: 0, noSendCount: 0, confirmCount: 0, estimateTotalAmount: 0, sendAmount: 0, excludedAmount: 0, unavailableCount: 0, physicalCount: 0, zeroCount: 0, manualNoSendCount: 0, packedCount: 0, searchingCount: 0, highValueSendCount: 0, highValueUncheckedCount: 0 });
+}
+
+function getSurugayaPackingBoxes() {
+  const boxes = new Map();
+  getSurugayaEstimateRowsInMailOrder()
+    .filter((row) => row.decision === "send")
+    .forEach((row) => {
+      const normalizedRow = normalizeSurugayaEstimateRow(row);
+      const boxNumber = normalizedRow.boxNumber || "未設定";
+      const box = boxes.get(boxNumber) || {
+        boxNumber,
+        rows: [],
+        count: 0,
+        amount: 0,
+        packedCount: 0,
+      };
+      box.rows.push(row);
+      box.count += 1;
+      box.amount += Number(row.amount) || 0;
+      if (normalizedRow.packed) {
+        box.packedCount += 1;
+      }
+      boxes.set(boxNumber, box);
+    });
+
+  return [...boxes.values()].sort((a, b) => {
+    if (a.boxNumber === "未設定") {
+      return -1;
+    }
+    if (b.boxNumber === "未設定") {
+      return 1;
+    }
+    return a.boxNumber.localeCompare(b.boxNumber, "ja", { numeric: true });
+  });
+}
+
+function getNextSurugayaBoxNumber() {
+  const numbers = getSurugayaPackingBoxes()
+    .map((box) => String(box.boxNumber || "").match(/箱\s*([0-9]+)/)?.[1])
+    .map((value) => Number(value))
+    .filter((value) => Number.isFinite(value));
+  const nextNumber = numbers.length ? Math.max(...numbers) + 1 : 1;
+  return `箱${nextNumber}`;
+}
+
+function getSurugayaBoxCondition(box) {
+  if (!box.amount) {
+    return { kind: "zero", label: "要注意：0円のみ" };
+  }
+  if (box.amount < surugayaEstimateBoxMinimum) {
+    return { kind: "warning", label: `送料注意：あと${formatMoney(surugayaEstimateBoxMinimum - box.amount)}必要` };
+  }
+  return { kind: "ok", label: "条件OK" };
+}
+
+function getSurugayaBoxBalanceSuggestions(targetBox, boxes) {
+  if (!targetBox || targetBox.boxNumber === "未設定" || targetBox.amount >= surugayaEstimateBoxMinimum) {
+    return [];
+  }
+  const shortage = surugayaEstimateBoxMinimum - targetBox.amount;
+  const targetBoxNumber = targetBox.boxNumber;
+  const candidateRows = getSurugayaEstimateRowsInMailOrder()
+    .filter((row) => row.decision === "send")
+    .filter((row) => normalizeSurugayaEstimateRow(row).boxNumber !== targetBoxNumber)
+    .filter((row) => Number(row.amount) > 0)
+    .filter((row) => Number(row.amount) < surugayaEstimateHighValueThreshold)
+    .map((row) => ({
+      row,
+      sourceBox: normalizeSurugayaEstimateRow(row).boxNumber || "未梱包",
+      amount: Number(row.amount) || 0,
+    }))
+    .sort((a, b) => {
+      const aEnough = a.amount >= shortage ? 0 : 1;
+      const bEnough = b.amount >= shortage ? 0 : 1;
+      return aEnough - bEnough || Math.abs(shortage - a.amount) - Math.abs(shortage - b.amount) || (a.row.no || 0) - (b.row.no || 0);
+    });
+
+  return candidateRows.slice(0, 3);
+}
+
+function renderSurugayaBoxSummary() {
+  if (!surugayaBoxSummary) {
+    return;
+  }
+  const boxes = getSurugayaPackingBoxes();
+  surugayaBoxSummary.classList.toggle("hidden", surugayaEstimateWorkMode !== "packing" || boxes.length === 0);
+  if (surugayaEstimateWorkMode !== "packing" || boxes.length === 0) {
+    surugayaBoxSummary.innerHTML = "";
+    return;
+  }
+
+  const unsetBox = boxes.find((box) => box.boxNumber === "未設定");
+  const unsetWarning = unsetBox
+    ? `<div class="surugaya-box-unset-warning">⚠️箱未設定の商品が${unsetBox.count}点あります</div>`
+    : "";
+
+  surugayaBoxSummary.innerHTML = `${unsetWarning}${boxes.map((box) => {
+    const isUnset = box.boxNumber === "未設定";
+    const condition = getSurugayaBoxCondition(box);
+    const isUnderMinimum = !isUnset && condition.kind !== "ok";
+    const suggestions = getSurugayaBoxBalanceSuggestions(box, boxes);
+    const status = isUnset
+      ? "箱未設定"
+      : condition.label;
+    const memo = String(surugayaBoxMemos[box.boxNumber] || "");
+    return `
+      <section class="surugaya-box-card ${isUnderMinimum || isUnset ? "is-warning" : "is-ok"}">
+        <strong>📦${box.boxNumber}</strong>
+        <span>商品数：${box.count}点</span>
+        <span>梱包済：${box.packedCount}/${box.count}点</span>
+        <span>予定査定額：${formatMoney(box.amount)}</span>
+        <em>${status}</em>
+        <label class="surugaya-box-memo-field">
+          箱メモ
+          <textarea rows="2" data-surugaya-box-memo="${box.boxNumber}" placeholder="例：ぬいぐるみ中心 / No.001〜030あたり">${escapeHtml(memo)}</textarea>
+        </label>
+        ${suggestions.length ? `
+          <div class="surugaya-box-suggestions">
+            <b>移動候補</b>
+            ${suggestions.map((suggestion) => `
+              <button class="text-button" type="button" data-surugaya-move-to-box="${box.boxNumber}" data-surugaya-move-row="${suggestion.row.id}">
+                ${suggestion.sourceBox}から No.${String(suggestion.row.no || suggestion.row.rowNumber || "").padStart(3, "0")} ${formatMoney(suggestion.amount)} を${box.boxNumber}へ
+              </button>
+            `).join("")}
+          </div>
+        ` : ""}
+      </section>
+    `;
+  }).join("")}`;
 }
 
 function renderSurugayaEstimateStats() {
@@ -7429,21 +7639,29 @@ function renderSurugayaEstimateStats() {
     return;
   }
   const stats = getSurugayaEstimateStats();
+  const packingProgress = stats.sendCount ? Math.round((stats.packedCount / stats.sendCount) * 100) : 0;
   surugayaEstimateStats.innerHTML = `
     <span class="estimate-stat-send"><strong>📦発送予定</strong><b>${stats.sendCount}点</b><em>${formatMoney(stats.sendAmount)}</em></span>
+    <span class="estimate-stat-packed"><strong>☑梱包済</strong><b>${stats.packedCount}/${stats.sendCount}点</b></span>
+    <span class="estimate-stat-left"><strong>残り</strong><b>${Math.max(stats.sendCount - stats.packedCount, 0)}点</b></span>
+    <span class="estimate-stat-progress"><strong>進捗</strong><b>${packingProgress}%</b><i style="--progress:${packingProgress}%"></i></span>
     <span class="estimate-stat-nosend"><strong>❌送らない</strong><b>${stats.noSendCount}点</b><em>${formatMoney(stats.excludedAmount)}</em></span>
     <span class="estimate-stat-confirm"><strong>⚠️要判断</strong><b>${stats.confirmCount}点</b></span>
     <span class="estimate-stat-total"><strong>💰見積総額</strong><em>${formatMoney(stats.estimateTotalAmount)}</em></span>
+    <span><strong>差額</strong><em>-${formatMoney(stats.excludedAmount).replace("-", "")}</em></span>
     <span>買取不可：${stats.unavailableCount}点</span>
     <span>現物査定：${stats.physicalCount}点</span>
     <span>0円査定：${stats.zeroCount}点</span>
+    <span>自分で送らない：${stats.manualNoSendCount}点</span>
+    <span>🔍探し中：${stats.searchingCount}点</span>
+    <span class="${stats.highValueUncheckedCount ? "estimate-stat-alert" : ""}">🔥高額未確認：${stats.highValueUncheckedCount}/${stats.highValueSendCount}点</span>
   `;
   if (surugayaEstimateSummary) {
     surugayaEstimateSummary.textContent = surugayaEstimateRows.length
       ? `${surugayaEstimateRows.length}件を解析済み / 発送予定 ${stats.sendCount}点 ${formatMoney(stats.sendAmount)} / 見積総額 ${formatMoney(stats.estimateTotalAmount)}`
       : "見積もりメールやテキストを貼り付けると、発送判断リストを作成できます";
   }
-  [saveSurugayaEstimateButton, restoreSurugayaEstimateOrderButton, createSurugayaShippingListButton, createSurugayaNoSendListButton].forEach((button) => {
+  [saveSurugayaEstimateButton, restoreSurugayaEstimateOrderButton, startSurugayaPackingButton, createSurugayaShippingListButton, createSurugayaNoSendListButton, createSurugayaPackingListButton, createSurugayaBoxMemoButton].forEach((button) => {
     if (button) {
       button.disabled = surugayaEstimateRows.length === 0;
     }
@@ -7473,6 +7691,19 @@ function getSurugayaEstimateAmountLabel(row) {
 }
 
 function matchesSurugayaEstimateFilter(row) {
+  const normalizedRow = normalizeSurugayaEstimateRow(row);
+  if (surugayaEstimateWorkMode === "packing" && row.decision !== "send") {
+    return false;
+  }
+  if (surugayaEstimateWorkMode === "noSendReview" && row.decision !== "no_send") {
+    return false;
+  }
+  if (surugayaEstimateWorkMode === "searching" && normalizedRow.searchStatus !== "searching") {
+    return false;
+  }
+  if (surugayaEstimateFilter === "highValue") {
+    return Number(row.amount) >= surugayaEstimateHighValueThreshold;
+  }
   if (surugayaEstimateFilter === "physicalZero") {
     return row.reason === "現物査定";
   }
@@ -7506,6 +7737,20 @@ function getSurugayaEstimateDisplayRows() {
       return aPriority - bPriority || withMailFallback(a, b);
     });
   }
+  if (surugayaEstimateDisplayMode === "unpackedFirst") {
+    return [...rows].sort((a, b) => {
+      const aPacked = normalizeSurugayaEstimateRow(a).packed ? 1 : 0;
+      const bPacked = normalizeSurugayaEstimateRow(b).packed ? 1 : 0;
+      return aPacked - bPacked || withMailFallback(a, b);
+    });
+  }
+  if (surugayaEstimateDisplayMode === "boxNumber") {
+    return [...rows].sort((a, b) => {
+      const aBox = normalizeSurugayaEstimateRow(a).boxNumber || "未設定";
+      const bBox = normalizeSurugayaEstimateRow(b).boxNumber || "未設定";
+      return aBox.localeCompare(bBox, "ja", { numeric: true }) || withMailFallback(a, b);
+    });
+  }
   return getSurugayaEstimateRowsInMailOrder(rows);
 }
 
@@ -7515,16 +7760,26 @@ function renderSurugayaEstimateRows() {
   }
   surugayaEstimateList.innerHTML = "";
   renderSurugayaEstimateStats();
+  renderSurugayaBoxSummary();
 
   if (surugayaEstimateOrderNote) {
     const isAmountCheckMode = ["amountDesc", "amountAsc"].includes(surugayaEstimateDisplayMode);
     const isCheckMode = isAmountCheckMode || surugayaEstimateDisplayMode === "confirmFirst";
-    surugayaEstimateOrderNote.classList.toggle("hidden", !isCheckMode || !surugayaEstimateRows.length);
-    surugayaEstimateOrderNote.textContent = isAmountCheckMode
-      ? "現在は金額順チェック表示です。出力はメール順のまま作成されます。"
-      : surugayaEstimateDisplayMode === "confirmFirst"
-        ? "現在は要判断優先表示です。出力はメール順のまま作成されます。"
-        : "";
+    const stats = getSurugayaEstimateStats();
+    const notes = [];
+    if (isAmountCheckMode) {
+      notes.push("現在は金額順チェック表示です。出力はメール順のまま作成されます。");
+    } else if (surugayaEstimateDisplayMode === "confirmFirst") {
+      notes.push("現在は要判断優先表示です。出力はメール順のまま作成されます。");
+    }
+    if (surugayaEstimateWorkMode === "packing") {
+      notes.push(`発送前チェック中：梱包済 ${stats.packedCount}/${stats.sendCount}点 / 残り ${Math.max(stats.sendCount - stats.packedCount, 0)}点`);
+      if (stats.highValueUncheckedCount > 0) {
+        notes.push("高額商品の確認が終わっていません。");
+      }
+    }
+    surugayaEstimateOrderNote.classList.toggle("hidden", (!isCheckMode && surugayaEstimateWorkMode !== "packing") || !surugayaEstimateRows.length);
+    surugayaEstimateOrderNote.textContent = notes.join(" ");
   }
 
   if (!surugayaEstimateRows.length) {
@@ -7545,27 +7800,59 @@ function renderSurugayaEstimateRows() {
   }
 
   visibleRows.forEach((row) => {
+    const normalizedRow = normalizeSurugayaEstimateRow(row);
     const card = document.createElement("article");
     card.className = `surugaya-estimate-row is-${row.decision}`;
     card.classList.toggle("is-high-value", Number(row.amount) >= 1000);
+    card.classList.toggle("is-high-warning", Number(row.amount) >= surugayaEstimateHighValueThreshold && row.decision === "send" && !normalizedRow.highValueChecked);
     card.classList.toggle("is-physical-estimate", row.reason === "現物査定");
     card.classList.toggle("is-zero-estimate", row.reason === "0円査定");
+    card.classList.toggle("is-searching", normalizedRow.searchStatus === "searching");
+    card.classList.toggle("is-packed", normalizedRow.packed);
     card.dataset.estimateId = row.id;
     card.innerHTML = `
-      <span class="surugaya-estimate-no"></span>
-      <span class="surugaya-estimate-amount"></span>
-      <span class="surugaya-estimate-judgement"></span>
-      <span class="surugaya-estimate-reason"></span>
+      <div class="surugaya-estimate-judge-block">
+        <span class="surugaya-estimate-no"></span>
+        <span class="surugaya-estimate-amount"></span>
+        <span class="surugaya-estimate-judgement"></span>
+        <span class="surugaya-estimate-reason"></span>
+      </div>
       <div class="surugaya-estimate-main">
-        <strong></strong>
+        <strong data-estimate-title-toggle="${row.id}"></strong>
         <small></small>
+        <div class="surugaya-estimate-safety-row"></div>
+        <div class="surugaya-estimate-history"></div>
       </div>
-      <div class="surugaya-estimate-decision">
-        <button class="ghost-button" type="button" data-estimate-decision="send">送る</button>
-        <button class="ghost-button" type="button" data-estimate-decision="no_send">送らない</button>
-        <button class="ghost-button" type="button" data-estimate-decision="confirm">要判断</button>
+      <div class="surugaya-estimate-actions-cell">
+        <button class="text-button surugaya-estimate-memo-toggle" type="button" data-estimate-memo-toggle="${row.id}"></button>
+        <button class="ghost-button surugaya-estimate-change-toggle" type="button" data-estimate-change-toggle="${row.id}">変更</button>
+        <button class="ghost-button surugaya-estimate-search-toggle" type="button" data-estimate-search-toggle="${row.id}"></button>
+        <div class="surugaya-estimate-decision hidden">
+          <button class="ghost-button" type="button" data-estimate-decision="send">送る</button>
+          <button class="ghost-button" type="button" data-estimate-decision="no_send">送らない</button>
+          <button class="ghost-button" type="button" data-estimate-decision="confirm">要判断</button>
+        </div>
       </div>
-      <button class="text-button surugaya-estimate-memo-toggle" type="button" data-estimate-memo-toggle="${row.id}"></button>
+      <div class="surugaya-estimate-packing-panel">
+        <label class="surugaya-estimate-pack-check">
+          <input type="checkbox" data-estimate-packed="${row.id}">
+          <span></span>
+        </label>
+        <div class="surugaya-estimate-box-buttons">
+          <button class="ghost-button" type="button" data-estimate-box-quick="箱1">📦箱1へ入れた</button>
+          <button class="ghost-button" type="button" data-estimate-box-quick="箱2">📦箱2へ入れた</button>
+          <button class="ghost-button" type="button" data-estimate-box-add="${row.id}">📦箱追加</button>
+          <button class="ghost-button danger-button" type="button" data-estimate-missing="${row.id}">🔍見つからない</button>
+        </div>
+        <label class="surugaya-estimate-box-field">
+          箱
+          <input type="text" placeholder="箱1" data-estimate-box="${row.id}">
+        </label>
+        <label class="surugaya-estimate-high-check">
+          <input type="checkbox" data-estimate-high-check="${row.id}">
+          <span>高額確認</span>
+        </label>
+      </div>
       <div class="surugaya-estimate-memo-panel ${openSurugayaEstimateMemoId === row.id ? "" : "hidden"}">
         <input class="surugaya-estimate-memo" type="text" placeholder="メモ" data-estimate-memo="${row.id}">
       </div>
@@ -7575,16 +7862,44 @@ function renderSurugayaEstimateRows() {
     card.querySelector(".surugaya-estimate-judgement").textContent = getSurugayaEstimateDecisionLabel(row.decision);
     card.querySelector(".surugaya-estimate-reason").textContent = row.reason || "-";
     card.querySelector("strong").textContent = row.name;
+    card.querySelector("strong").title = row.name;
     const supportInfo = getSurugayaEstimateSupportInfo(row);
     const supportInfoElement = card.querySelector(".surugaya-estimate-main small");
     supportInfoElement.textContent = supportInfo;
     supportInfoElement.classList.toggle("hidden", !supportInfo);
+    const safetyParts = [];
+    if (normalizedRow.packed) {
+      safetyParts.push("☑梱包済み");
+    } else if (row.decision === "send") {
+      safetyParts.push("□未梱包");
+    }
+    if (normalizedRow.boxNumber) {
+      safetyParts.push(`📦${normalizedRow.boxNumber}`);
+    }
+    if (normalizedRow.searchStatus === "searching") {
+      safetyParts.push("🔍探し中");
+    }
+    if (Number(row.amount) >= surugayaEstimateHighValueThreshold && row.decision === "send") {
+      safetyParts.push(normalizedRow.highValueChecked ? "🔥高額確認済み" : "🔥高額注意");
+    }
+    card.querySelector(".surugaya-estimate-safety-row").textContent = safetyParts.join(" / ");
+    const latestHistory = normalizedRow.history.at(-1);
+    card.querySelector(".surugaya-estimate-history").textContent = latestHistory ? `履歴：${latestHistory.text}` : "";
     card.querySelector(".surugaya-estimate-amount").textContent = getSurugayaEstimateAmountLabel(row);
     card.querySelectorAll("[data-estimate-decision]").forEach((button) => {
       button.classList.toggle("active", button.dataset.estimateDecision === row.decision);
     });
-    card.querySelector(".surugaya-estimate-memo-toggle").textContent = row.memo ? "📝 あり" : "📝 なし";
+    card.querySelector(".surugaya-estimate-memo-toggle").textContent = row.memo ? "📝メモあり" : "📝";
+    card.querySelector(".surugaya-estimate-memo-toggle").classList.toggle("has-memo", Boolean(row.memo));
+    card.querySelector(".surugaya-estimate-search-toggle").textContent = normalizedRow.searchStatus === "searching" ? "🔍探し中" : "🔍";
+    card.querySelector(".surugaya-estimate-search-toggle").classList.toggle("active", normalizedRow.searchStatus === "searching");
     card.querySelector(".surugaya-estimate-memo").value = row.memo || "";
+    card.querySelector("[data-estimate-packed]").checked = normalizedRow.packed;
+    card.querySelector(".surugaya-estimate-pack-check span").textContent = normalizedRow.packed ? "☑梱包済み" : "□未梱包";
+    card.querySelector("[data-estimate-box]").value = normalizedRow.boxNumber;
+    card.querySelector("[data-estimate-high-check]").checked = normalizedRow.highValueChecked;
+    card.querySelector(".surugaya-estimate-high-check").classList.toggle("hidden", !(Number(row.amount) >= surugayaEstimateHighValueThreshold && row.decision === "send"));
+    card.querySelector(".surugaya-estimate-packing-panel").classList.toggle("hidden", surugayaEstimateWorkMode !== "packing");
     card.querySelector(".surugaya-estimate-candidate").textContent = row.candidates.length
       ? `候補：${row.candidates.map((item) => item.storageLocation ? `${item.title}（${item.storageLocation}）` : item.title).join(" / ")}`
       : "候補：なし";
@@ -7594,6 +7909,8 @@ function renderSurugayaEstimateRows() {
 
 function parseSurugayaEstimateInput() {
   surugayaEstimateRows = parseSurugayaEstimateText(surugayaEstimateTextInput?.value || "");
+  surugayaBoxMemos = {};
+  saveSurugayaEstimateDraft();
   if (surugayaShippingListOutput) {
     surugayaShippingListOutput.value = "";
   }
@@ -7631,6 +7948,75 @@ function createSurugayaNoSendListText() {
   ].join("\n");
 }
 
+function createSurugayaPackingListText() {
+  const boxes = getSurugayaPackingBoxes().filter((box) => box.boxNumber !== "未設定");
+  if (!boxes.length) {
+    return "箱に入れた商品がまだありません。";
+  }
+  return boxes.map((box) => {
+    const rowsText = box.rows
+      .map((row) => [
+        `No.${String(row.no || row.rowNumber || "").padStart(3, "0")}`,
+        row.amount !== null && row.amount !== undefined ? formatMoney(row.amount) : row.rawAmount,
+        row.name,
+        getSurugayaEstimateSupportInfo(row) || "数量：-",
+      ].join("\n"))
+      .join("\n\n");
+    const warning = box.amount < surugayaEstimateBoxMinimum
+      ? `\n注意：${formatMoney(surugayaEstimateBoxMinimum)}未満です。あと${formatMoney(surugayaEstimateBoxMinimum - box.amount)}必要。`
+      : "";
+    return [
+      `【${box.boxNumber}】`,
+      "",
+      `合計：${formatMoney(box.amount)}`,
+      `商品数：${box.count}点`,
+      `梱包済：${box.packedCount}/${box.count}点${warning}`,
+      "",
+      "内容：",
+      rowsText,
+    ].join("\n");
+  }).join("\n\n");
+}
+
+function createSurugayaBoxMemoText() {
+  const boxes = getSurugayaPackingBoxes().filter((box) => box.boxNumber !== "未設定");
+  if (!boxes.length) {
+    return "箱メモを作成できる箱がまだありません。";
+  }
+  return boxes.map((box) => {
+    const condition = getSurugayaBoxCondition(box);
+    const memo = String(surugayaBoxMemos[box.boxNumber] || "").trim() || "-";
+    return [
+      `【${box.boxNumber}】`,
+      `合計予定額：${formatMoney(box.amount)}`,
+      `商品数：${box.count}点`,
+      `状態：${condition.label}`,
+      `メモ：${memo}`,
+    ].join("\n");
+  }).join("\n\n");
+}
+
+function startSurugayaPackingMode() {
+  if (!surugayaEstimateRows.some((row) => row.decision === "send")) {
+    showErrorMessage("梱包対象の「送る」商品がありません");
+    return;
+  }
+  surugayaEstimateWorkMode = "packing";
+  surugayaEstimateDisplayMode = "unpackedFirst";
+  surugayaEstimateFilter = "all";
+  if (surugayaEstimateWorkModeInput) {
+    surugayaEstimateWorkModeInput.value = "packing";
+  }
+  if (surugayaEstimateDisplayModeInput) {
+    surugayaEstimateDisplayModeInput.value = "unpackedFirst";
+  }
+  document.querySelectorAll("[data-estimate-filter]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.estimateFilter === "all");
+  });
+  renderSurugayaEstimateRows();
+  showSuccessMessage("梱包モードを開始しました");
+}
+
 function createSurugayaShippingList() {
   if (!surugayaEstimateRows.length) {
     showErrorMessage("先に見積もりを解析してください");
@@ -7659,6 +8045,34 @@ function createSurugayaNoSendList() {
   copyText(text, "送らない商品リストを作成しました");
 }
 
+function createSurugayaPackingList() {
+  if (!surugayaEstimateRows.length) {
+    showErrorMessage("先に見積もりを解析してください");
+    return;
+  }
+  const text = createSurugayaPackingListText();
+  if (surugayaShippingListOutput) {
+    surugayaShippingListOutput.value = text;
+    surugayaShippingListOutput.focus();
+    surugayaShippingListOutput.select();
+  }
+  copyText(text, "箱別発送リストを作成しました");
+}
+
+function createSurugayaBoxMemo() {
+  if (!surugayaEstimateRows.length) {
+    showErrorMessage("先に見積もりを解析してください");
+    return;
+  }
+  const text = createSurugayaBoxMemoText();
+  if (surugayaShippingListOutput) {
+    surugayaShippingListOutput.value = text;
+    surugayaShippingListOutput.focus();
+    surugayaShippingListOutput.select();
+  }
+  copyText(text, "箱メモを作成しました");
+}
+
 function restoreSurugayaEstimateMailOrder() {
   surugayaEstimateDisplayMode = "mail";
   surugayaEstimateFilter = "all";
@@ -7684,20 +8098,29 @@ function saveCurrentSurugayaEstimate() {
     destination: "駿河屋",
     savedAt: new Date().toISOString(),
     summary: getSurugayaEstimateStats(),
-    rows: surugayaEstimateRows.map((row) => ({
-      estimateDate,
-      destination: "駿河屋",
-      name: row.name,
-      no: row.no || row.rowNumber,
-      amount: row.amount,
-      rawAmount: row.rawAmount,
-      amountKind: row.amountKind,
-      decision: row.decision,
-      reason: row.reason || "",
-      memo: row.memo || "",
-      rawLine: row.rawLine || "",
-      candidates: row.candidates || [],
-    })),
+    boxMemos: surugayaBoxMemos,
+    rows: surugayaEstimateRows.map((row) => {
+      const normalizedRow = normalizeSurugayaEstimateRow(row);
+      return {
+        estimateDate,
+        destination: "駿河屋",
+        name: row.name,
+        no: row.no || row.rowNumber,
+        amount: row.amount,
+        rawAmount: row.rawAmount,
+        amountKind: row.amountKind,
+        decision: row.decision,
+        reason: row.reason || "",
+        memo: row.memo || "",
+        packed: normalizedRow.packed,
+        boxNumber: normalizedRow.boxNumber,
+        highValueChecked: normalizedRow.highValueChecked,
+        searchStatus: normalizedRow.searchStatus,
+        history: normalizedRow.history,
+        rawLine: row.rawLine || "",
+        candidates: row.candidates || [],
+      };
+    }),
   };
   savedSurugayaEstimates = [payload, ...savedSurugayaEstimates].slice(0, 50);
   saveSurugayaEstimates();
@@ -7705,7 +8128,20 @@ function saveCurrentSurugayaEstimate() {
 }
 
 function updateSurugayaEstimateRow(id, patch) {
-  surugayaEstimateRows = surugayaEstimateRows.map((row) => row.id === id ? { ...row, ...patch } : row);
+  surugayaEstimateRows = surugayaEstimateRows.map((row) => row.id === id ? normalizeSurugayaEstimateRow({ ...row, ...patch }) : row);
+  saveSurugayaEstimateDraft();
+  renderSurugayaEstimateRows();
+}
+
+function updateSurugayaEstimateRowWithHistory(id, patch, historyText) {
+  surugayaEstimateRows = surugayaEstimateRows.map((row) => {
+    if (row.id !== id) {
+      return row;
+    }
+    const nextRow = normalizeSurugayaEstimateRow({ ...row, ...patch });
+    return historyText ? addSurugayaEstimateHistory(nextRow, historyText) : nextRow;
+  });
+  saveSurugayaEstimateDraft();
   renderSurugayaEstimateRows();
 }
 
@@ -17225,10 +17661,27 @@ parseImportButton?.addEventListener("click", parseImportInput);
 parseSurugayaEstimateButton?.addEventListener("click", parseSurugayaEstimateInput);
 saveSurugayaEstimateButton?.addEventListener("click", saveCurrentSurugayaEstimate);
 restoreSurugayaEstimateOrderButton?.addEventListener("click", restoreSurugayaEstimateMailOrder);
+startSurugayaPackingButton?.addEventListener("click", startSurugayaPackingMode);
 createSurugayaShippingListButton?.addEventListener("click", createSurugayaShippingList);
 createSurugayaNoSendListButton?.addEventListener("click", createSurugayaNoSendList);
+createSurugayaPackingListButton?.addEventListener("click", createSurugayaPackingList);
+createSurugayaBoxMemoButton?.addEventListener("click", createSurugayaBoxMemo);
 surugayaEstimateDisplayModeInput?.addEventListener("change", () => {
   surugayaEstimateDisplayMode = surugayaEstimateDisplayModeInput.value || "mail";
+  renderSurugayaEstimateRows();
+});
+surugayaEstimateWorkModeInput?.addEventListener("change", () => {
+  surugayaEstimateWorkMode = surugayaEstimateWorkModeInput.value || "review";
+  renderSurugayaEstimateRows();
+});
+surugayaEstimateHighValueThresholdInput?.addEventListener("input", () => {
+  const threshold = Number(surugayaEstimateHighValueThresholdInput.value);
+  surugayaEstimateHighValueThreshold = Number.isFinite(threshold) && threshold >= 0 ? threshold : 3000;
+  renderSurugayaEstimateRows();
+});
+surugayaEstimateBoxMinimumInput?.addEventListener("input", () => {
+  const minimum = Number(surugayaEstimateBoxMinimumInput.value);
+  surugayaEstimateBoxMinimum = Number.isFinite(minimum) && minimum >= 0 ? minimum : 1500;
   renderSurugayaEstimateRows();
 });
 document.querySelectorAll("[data-estimate-filter]").forEach((button) => {
@@ -17240,13 +17693,78 @@ document.querySelectorAll("[data-estimate-filter]").forEach((button) => {
     renderSurugayaEstimateRows();
   });
 });
+surugayaBoxSummary?.addEventListener("input", (event) => {
+  const memoInput = event.target.closest("[data-surugaya-box-memo]");
+  if (!memoInput) {
+    return;
+  }
+  surugayaBoxMemos = {
+    ...surugayaBoxMemos,
+    [memoInput.dataset.surugayaBoxMemo]: memoInput.value,
+  };
+  saveSurugayaEstimateDraft();
+});
+surugayaBoxSummary?.addEventListener("click", (event) => {
+  const moveButton = event.target.closest("[data-surugaya-move-to-box]");
+  if (!moveButton) {
+    return;
+  }
+  const targetBox = moveButton.dataset.surugayaMoveToBox;
+  const rowId = moveButton.dataset.surugayaMoveRow;
+  updateSurugayaEstimateRowWithHistory(rowId, { boxNumber: targetBox, packed: true }, `${targetBox}へ移動`);
+});
 surugayaEstimateList?.addEventListener("click", (event) => {
+  const titleButton = event.target.closest("[data-estimate-title-toggle]");
+  if (titleButton) {
+    titleButton.closest("[data-estimate-id]")?.classList.toggle("is-title-expanded");
+    return;
+  }
+
   const memoButton = event.target.closest("[data-estimate-memo-toggle]");
   if (memoButton) {
     openSurugayaEstimateMemoId = openSurugayaEstimateMemoId === memoButton.dataset.estimateMemoToggle
       ? ""
       : memoButton.dataset.estimateMemoToggle;
     renderSurugayaEstimateRows();
+    return;
+  }
+
+  const changeButton = event.target.closest("[data-estimate-change-toggle]");
+  if (changeButton) {
+    const card = changeButton.closest("[data-estimate-id]");
+    const decisionPanel = card?.querySelector(".surugaya-estimate-decision");
+    decisionPanel?.classList.toggle("hidden");
+    return;
+  }
+
+  const searchButton = event.target.closest("[data-estimate-search-toggle]");
+  if (searchButton) {
+    const card = searchButton.closest("[data-estimate-id]");
+    const id = card?.dataset.estimateId;
+    const row = surugayaEstimateRows.find((currentRow) => currentRow.id === id);
+    const nextStatus = normalizeSurugayaEstimateRow(row).searchStatus === "searching" ? "" : "searching";
+    updateSurugayaEstimateRowWithHistory(id, { searchStatus: nextStatus }, nextStatus ? "探し中に変更" : "探し中を解除");
+    return;
+  }
+
+  const quickBoxButton = event.target.closest("[data-estimate-box-quick]");
+  if (quickBoxButton) {
+    const card = quickBoxButton.closest("[data-estimate-id]");
+    const boxNumber = quickBoxButton.dataset.estimateBoxQuick || "箱1";
+    updateSurugayaEstimateRowWithHistory(card?.dataset.estimateId, { boxNumber, packed: true }, `${boxNumber}へ梱包`);
+    return;
+  }
+
+  const addBoxButton = event.target.closest("[data-estimate-box-add]");
+  if (addBoxButton) {
+    const boxNumber = getNextSurugayaBoxNumber();
+    updateSurugayaEstimateRowWithHistory(addBoxButton.dataset.estimateBoxAdd, { boxNumber, packed: true }, `${boxNumber}を追加して梱包`);
+    return;
+  }
+
+  const missingButton = event.target.closest("[data-estimate-missing]");
+  if (missingButton) {
+    updateSurugayaEstimateRowWithHistory(missingButton.dataset.estimateMissing, { searchStatus: "searching", packed: false }, "商品が見つからない");
     return;
   }
 
@@ -17258,7 +17776,10 @@ surugayaEstimateList?.addEventListener("click", (event) => {
   if (!card) {
     return;
   }
-  updateSurugayaEstimateRow(card.dataset.estimateId, { decision: button.dataset.estimateDecision, reason: "手動変更" });
+  const row = surugayaEstimateRows.find((currentRow) => currentRow.id === card.dataset.estimateId);
+  const before = getSurugayaEstimateDecisionLabel(row?.decision).replace(/[🟢🔴🟡]/g, "");
+  const after = getSurugayaEstimateDecisionLabel(button.dataset.estimateDecision).replace(/[🟢🔴🟡]/g, "");
+  updateSurugayaEstimateRowWithHistory(card.dataset.estimateId, { decision: button.dataset.estimateDecision, reason: "手動変更" }, `${before} → ${after}変更`);
 });
 surugayaEstimateList?.addEventListener("input", (event) => {
   const input = event.target.closest("[data-estimate-memo]");
@@ -17267,8 +17788,31 @@ surugayaEstimateList?.addEventListener("input", (event) => {
   }
   const id = input.dataset.estimateMemo;
   surugayaEstimateRows = surugayaEstimateRows.map((row) => row.id === id ? { ...row, memo: input.value } : row);
-  input.closest("[data-estimate-id]")?.querySelector("[data-estimate-memo-toggle]")?.replaceChildren(document.createTextNode(input.value ? "📝 あり" : "📝 なし"));
+  saveSurugayaEstimateDraft();
+  const memoToggle = input.closest("[data-estimate-id]")?.querySelector("[data-estimate-memo-toggle]");
+  if (memoToggle) {
+    memoToggle.replaceChildren(document.createTextNode(input.value ? "📝メモあり" : "📝"));
+    memoToggle.classList.toggle("has-memo", Boolean(input.value));
+  }
   renderSurugayaEstimateStats();
+});
+surugayaEstimateList?.addEventListener("change", (event) => {
+  const packedInput = event.target.closest("[data-estimate-packed]");
+  if (packedInput) {
+    updateSurugayaEstimateRowWithHistory(packedInput.dataset.estimatePacked, { packed: packedInput.checked }, packedInput.checked ? "梱包済みに変更" : "未梱包に戻しました");
+    return;
+  }
+
+  const highInput = event.target.closest("[data-estimate-high-check]");
+  if (highInput) {
+    updateSurugayaEstimateRowWithHistory(highInput.dataset.estimateHighCheck, { highValueChecked: highInput.checked }, highInput.checked ? "高額確認済みに変更" : "高額確認を解除");
+    return;
+  }
+
+  const boxInput = event.target.closest("[data-estimate-box]");
+  if (boxInput) {
+    updateSurugayaEstimateRowWithHistory(boxInput.dataset.estimateBox, { boxNumber: boxInput.value.trim() }, boxInput.value.trim() ? `箱番号を${boxInput.value.trim()}に変更` : "箱番号をクリア");
+  }
 });
 importResultList?.addEventListener("change", (event) => {
   const select = event.target.closest("select[data-import-match-index]");
