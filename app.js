@@ -3,6 +3,7 @@ const INVENTORY_OPTIONS_OPEN_KEY = "mercari-listing-helper-inventory-options-ope
 const SETTINGS_KEY = "mercari-listing-helper-settings";
 const TEMPLATES_KEY = "mercari-listing-helper-templates";
 const SORTING_STORAGE_KEY = "mercari-listing-helper-destination-sorting";
+const SURUGAYA_ESTIMATE_STORAGE_KEY = "mercari-listing-helper-surugaya-estimates";
 const UI_STATE_KEY = "mercari-listing-helper-ui-state";
 const CLOUD_LAST_SYNC_KEY = "mercari-listing-helper-cloud-last-sync";
 const CLOUD_SELECTED_HOUSEHOLD_KEY = "mercari-listing-helper-selected-household";
@@ -144,6 +145,9 @@ const inventoryDisplaySection = document.querySelector(".inventory-display-secti
 const inventoryOptionSummary = document.querySelector("#inventoryOptionSummary");
 const inventoryFilterSummary = document.querySelector("#inventoryFilterSummary");
 const inventoryResultCount = document.querySelector("#inventoryResultCount");
+const inventoryActiveFilterBar = document.querySelector("#inventoryActiveFilterBar");
+const inventoryStorageQuickFilter = document.querySelector("#inventoryStorageQuickFilter");
+const scrollTopButton = document.querySelector("#scrollTopButton");
 const exportButton = document.querySelector("#exportButton");
 const importButton = document.querySelector("#importButton");
 const exportButtonTop = document.querySelector("#exportButtonTop");
@@ -162,6 +166,15 @@ const fillBlankImportFieldsButton = document.querySelector("#fillBlankImportFiel
 const applyImportMatchesButton = document.querySelector("#applyImportMatchesButton");
 const registerImportNewItemsButton = document.querySelector("#registerImportNewItemsButton");
 const addImportSortingButton = document.querySelector("#addImportSortingButton");
+const surugayaEstimateDateInput = document.querySelector("#surugayaEstimateDate");
+const surugayaEstimateTextInput = document.querySelector("#surugayaEstimateText");
+const parseSurugayaEstimateButton = document.querySelector("#parseSurugayaEstimateButton");
+const saveSurugayaEstimateButton = document.querySelector("#saveSurugayaEstimateButton");
+const createSurugayaShippingListButton = document.querySelector("#createSurugayaShippingListButton");
+const surugayaEstimateSummary = document.querySelector("#surugayaEstimateSummary");
+const surugayaEstimateStats = document.querySelector("#surugayaEstimateStats");
+const surugayaEstimateList = document.querySelector("#surugayaEstimateList");
+const surugayaShippingListOutput = document.querySelector("#surugayaShippingListOutput");
 const backupControlsTop = document.querySelector(".backup-controls-top");
 const importFileInput = document.querySelector("#importFileInput");
 const tableWrap = document.querySelector("#tableWrap");
@@ -289,6 +302,8 @@ const sortingImageOnlyFilter = document.querySelector("#sortingImageOnlyFilter")
 const sortingStorageUnsetFilter = document.querySelector("#sortingStorageUnsetFilter");
 const sortingShippingModeButton = document.querySelector("#sortingShippingModeButton");
 const sortingResultCount = document.querySelector("#sortingResultCount");
+const sortingActiveFilterBar = document.querySelector("#sortingActiveFilterBar");
+const sortingStorageQuickFilter = document.querySelector("#sortingStorageQuickFilter");
 const sortingSummaryGrid = document.querySelector("#sortingSummaryGrid");
 const sortingWorkCardList = document.querySelector("#sortingWorkCardList");
 const sortingShippingRecommendation = document.querySelector("#sortingShippingRecommendation");
@@ -306,6 +321,7 @@ const analysisShippingCompletedList = document.querySelector("#analysisShippingC
 const shippingManagementStatusFilter = document.querySelector("#shippingManagementStatusFilter");
 const shippingManagementList = document.querySelector("#shippingManagementList");
 const boxSearchList = document.querySelector("#boxSearchList");
+const storageSearchLocationList = document.querySelector("#storageSearchLocationList");
 const togglePackingListButton = document.querySelector("#togglePackingListButton");
 const packingListCsvButton = document.querySelector("#packingListCsvButton");
 const packingListPanel = document.querySelector("#packingListPanel");
@@ -435,6 +451,8 @@ let indexedImageRecoveryCandidate = null;
 let localImageRefsRecoveryCandidate = null;
 let recoveredImageCandidateDiagnostics = [];
 let importParsedItems = [];
+let surugayaEstimateRows = [];
+let savedSurugayaEstimates = loadSurugayaEstimates();
 let lastCloudSaveBackupAt = 0;
 let isSettingsDirty = false;
 let toastTimer = null;
@@ -491,7 +509,6 @@ function applyDetailsOpenState(selector, state = {}) {
 function collectUiStatePatch() {
   return {
     currentView,
-    scrollY: window.scrollY || 0,
     inventory: {
       search: searchInput?.value || "",
       status: statusFilter?.value || "",
@@ -525,7 +542,11 @@ function collectUiStatePatch() {
       completedIds: Array.from(completedImportResultIds),
       scrollTop: importResultList?.scrollTop || 0,
     },
-    accordions: getDetailsOpenState("details.app-accordion, details.settings-accordion, details.form-details"),
+    scroll: {
+      list: document.body.classList.contains("work-tab-list") ? getCurrentScrollTop() : (uiState.scroll?.list || 0),
+      sorting: document.body.classList.contains("work-tab-sorting") ? getCurrentScrollTop() : (uiState.scroll?.sorting || 0),
+    },
+    accordions: getDetailsOpenState("details.settings-accordion, details.form-details"),
   };
 }
 
@@ -535,6 +556,7 @@ function saveUiState() {
     ...collectUiStatePatch(),
     savedAt: new Date().toISOString(),
   };
+  delete uiState.scrollY;
   try {
     localStorage.setItem(UI_STATE_KEY, JSON.stringify(uiState));
   } catch (error) {
@@ -566,13 +588,114 @@ function restoreUiControlValues() {
 }
 
 function restoreUiAfterInitialRender() {
-  applyDetailsOpenState("details.app-accordion, details.settings-accordion, details.form-details", uiState.accordions);
-  if (Number.isFinite(Number(uiState.scrollY))) {
-    window.scrollTo({ top: Number(uiState.scrollY), behavior: "auto" });
-  }
+  applyDetailsOpenState("details.settings-accordion, details.form-details", uiState.accordions);
   if (importResultList && Number.isFinite(Number(uiState.import?.scrollTop))) {
     importResultList.scrollTop = Number(uiState.import.scrollTop);
   }
+  requestAnimationFrame(() => {
+    if (document.body.classList.contains("work-tab-list") && Number(uiState.scroll?.list) > 0) {
+      window.scrollTo({ top: Number(uiState.scroll.list), left: 0, behavior: "auto" });
+    }
+    if (document.body.classList.contains("work-tab-sorting") && Number(uiState.scroll?.sorting) > 0) {
+      window.scrollTo({ top: Number(uiState.scroll.sorting), left: 0, behavior: "auto" });
+    }
+    updateScrollTopButton();
+  });
+}
+
+const SCROLL_TOP_BUTTON_THRESHOLD = 300;
+
+function getCurrentScrollTop() {
+  return window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
+}
+
+function getCurrentTopAnchor() {
+  if (document.body.classList.contains("work-tab-list")) {
+    return document.querySelector("#listTitle");
+  }
+
+  if (document.body.classList.contains("work-tab-sorting")) {
+    return document.querySelector("#sortingListTitle") || document.querySelector("#sortingTitle");
+  }
+
+  if (document.body.classList.contains("work-tab-box")) {
+    return document.querySelector("#boxSearchTitle");
+  }
+
+  if (document.body.classList.contains("shipping-view")) {
+    return document.querySelector("#shippingManagementTitle");
+  }
+
+  return document.querySelector("main") || document.body;
+}
+
+function canShowScrollTopButton() {
+  return (
+    document.body.classList.contains("work-tab-list") ||
+    document.body.classList.contains("work-tab-sorting") ||
+    document.body.classList.contains("work-tab-box") ||
+    document.body.classList.contains("shipping-view")
+  );
+}
+
+function updateScrollTopButton() {
+  if (!scrollTopButton) {
+    return;
+  }
+
+  const shouldShow = canShowScrollTopButton() && getCurrentScrollTop() > SCROLL_TOP_BUTTON_THRESHOLD;
+  scrollTopButton.classList.toggle("hidden", !shouldShow);
+}
+
+function scrollCurrentViewToTop(behavior = "smooth") {
+  const anchor = getCurrentTopAnchor();
+  if (anchor) {
+    anchor.scrollIntoView({ behavior, block: "start" });
+  } else {
+    window.scrollTo({ top: 0, left: 0, behavior });
+  }
+  window.setTimeout(updateScrollTopButton, behavior === "smooth" ? 220 : 0);
+}
+
+function closeTransientWorkUi() {
+  closeItemActionMenus?.();
+  closeSortingActionMenus?.();
+  closeSortingInlineEditor?.();
+  document.querySelectorAll(".row-action-menu[open], .detail-more-action-menu[open]").forEach((menu) => {
+    menu.open = false;
+  });
+}
+
+function normalizePageLayoutState() {
+  if (document.body.classList.contains("modal-scroll-locked")) {
+    document.body.classList.remove("modal-scroll-locked");
+  }
+  document.documentElement.style.overflow = "";
+  document.body.style.overflow = "";
+  document.body.style.top = "";
+  document.body.style.width = "";
+  document.body.style.transform = "";
+  lockedScrollY = 0;
+}
+
+function stabilizeAfterViewSwitch(view) {
+  closeTransientWorkUi();
+  normalizePageLayoutState();
+
+  if (view === "box" || view === "shipping") {
+    document.querySelectorAll(".sorting-filter-panel[open]").forEach((details) => {
+      details.open = false;
+    });
+  }
+
+  requestAnimationFrame(() => {
+    updateScrollTopButton();
+    positionOpenItemActionMenus?.();
+    if (view === "box" || view === "shipping") {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    }
+    requestAnimationFrame(updateScrollTopButton);
+  });
 }
 
 function getInventorySortSummary() {
@@ -1074,6 +1197,42 @@ function isStorageUnset(target) {
   ];
 
   return values.every(isBlankStorageValue);
+}
+
+function getStorageSearchValues(target) {
+  if (!target || typeof target !== "object") {
+    return [];
+  }
+
+  return [
+    target.storageLocation,
+    target.storage_location,
+    target.storageLocationId,
+    target.storage_location_id,
+    target.storageMemo,
+    target.storage_memo,
+    target.boxNumber,
+    target.box_number,
+    target.name,
+    target.title,
+    target.itemTitle,
+    target.memo,
+    target["保管場所"],
+    target["箱番号"],
+  ];
+}
+
+function matchesStorageSearchKeyword(target, keyword) {
+  const normalizedKeyword = String(keyword || "").trim().toLowerCase();
+  if (!normalizedKeyword) {
+    return true;
+  }
+
+  if (normalizedKeyword === "未設定") {
+    return isStorageUnset(target);
+  }
+
+  return getStorageSearchValues(target).some((value) => String(value || "").toLowerCase().includes(normalizedKeyword));
 }
 
 function getImportStorageTarget(importedItem) {
@@ -7033,6 +7192,331 @@ async function addImportItemsToSorting() {
   showSuccessMessage(`${addedCount}件を仕分けへ追加しました`);
 }
 
+function loadSurugayaEstimates() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(SURUGAYA_ESTIMATE_STORAGE_KEY) || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveSurugayaEstimates() {
+  localStorage.setItem(SURUGAYA_ESTIMATE_STORAGE_KEY, JSON.stringify(savedSurugayaEstimates.slice(0, 50)));
+}
+
+function normalizeEstimateText(value) {
+  return String(value || "")
+    .replace(/[０-９]/g, (char) => String.fromCharCode(char.charCodeAt(0) - 0xfee0))
+    .replace(/[，]/g, ",")
+    .trim();
+}
+
+function parseSurugayaEstimateAmount(line) {
+  const normalizedLine = normalizeEstimateText(line);
+  if (/買取不可|お値段がつきません|値段がつきません|不可|対象外|キャンセル/i.test(normalizedLine)) {
+    return { amount: null, rawAmount: "買取不可", kind: "unavailable" };
+  }
+
+  const yenMatch = normalizedLine.match(/(?:￥|¥)?\s*([0-9][0-9,]{0,8})\s*円/);
+  if (yenMatch) {
+    const amount = parseMoney(yenMatch[1]);
+    return { amount: amount === "" ? null : amount, rawAmount: `${yenMatch[1].replace(/,/g, "")}円`, kind: "priced" };
+  }
+
+  const trailingNumberMatch = normalizedLine.match(/(?:^|[\s\t:：])(?:￥|¥)?\s*([0-9][0-9,]{0,6})\s*$/);
+  if (trailingNumberMatch && !/JAN|型番|注文|申込|電話|郵便|〒/i.test(normalizedLine)) {
+    const amount = parseMoney(trailingNumberMatch[1]);
+    return { amount: amount === "" ? null : amount, rawAmount: amount === "" ? "" : `${amount}円`, kind: "priced" };
+  }
+
+  return { amount: null, rawAmount: "金額不明", kind: "unknown" };
+}
+
+function stripEstimateAmountFromLine(line) {
+  return normalizeEstimateText(line)
+    .replace(/(?:￥|¥)?\s*[0-9][0-9,]{0,8}\s*円/g, "")
+    .replace(/(?:^|[\s\t:：])(?:￥|¥)?\s*[0-9][0-9,]{0,6}\s*$/g, "")
+    .replace(/買取不可|お値段がつきません|値段がつきません|対象外|キャンセル/g, "")
+    .replace(/^[・\-\s\t\d.]+/, "")
+    .replace(/^(商品名|品名|タイトル|名称)\s*[:：]\s*/, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+function isIgnorableEstimateLine(line) {
+  const normalizedLine = normalizeEstimateText(line);
+  return !normalizedLine || /^(合計|小計|総合計|点数|件数|査定結果|見積|お見積|買取見積|駿河屋|送付|注意|-----|={3,})/.test(normalizedLine);
+}
+
+function getEstimateInitialDecision(amountInfo) {
+  if (amountInfo.kind === "priced" && Number(amountInfo.amount) > 0) {
+    return "send";
+  }
+  if (amountInfo.kind === "priced" && Number(amountInfo.amount) === 0) {
+    return "no_send";
+  }
+  if (amountInfo.kind === "unavailable") {
+    return "no_send";
+  }
+  return "confirm";
+}
+
+function findEstimateItemCandidates(name) {
+  const normalizedName = normalizeImportComparable(name);
+  if (!normalizedName) {
+    return [];
+  }
+
+  return items
+    .map((item) => {
+      const title = getListingTitle(item);
+      const normalizedTitle = normalizeImportComparable(title);
+      if (!normalizedTitle) {
+        return null;
+      }
+      let score = 0;
+      if (normalizedTitle === normalizedName) {
+        score = 100;
+      } else if (normalizedTitle.includes(normalizedName) || normalizedName.includes(normalizedTitle)) {
+        score = 78;
+      } else {
+        const tokens = normalizedName.split(/\s+/).filter((token) => token.length >= 2);
+        const matched = tokens.filter((token) => normalizedTitle.includes(token)).length;
+        score = tokens.length ? Math.round((matched / tokens.length) * 65) : 0;
+      }
+      return score >= 35 ? { id: item.id, title, storageLocation: item.storageLocation || "", score } : null;
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3);
+}
+
+function createSurugayaEstimateRow({ name, amountInfo, rawLine, rowNumber }) {
+  const title = String(name || "").trim() || `要確認 ${String(rowNumber).padStart(3, "0")}`;
+  return {
+    id: `estimate-${Date.now()}-${rowNumber}-${Math.random().toString(36).slice(2, 7)}`,
+    rowNumber,
+    destination: "駿河屋",
+    name: title,
+    amount: amountInfo.amount,
+    rawAmount: amountInfo.rawAmount,
+    amountKind: amountInfo.kind,
+    decision: getEstimateInitialDecision(amountInfo),
+    memo: amountInfo.kind === "unknown" ? "金額要確認" : "",
+    rawLine: rawLine || "",
+    candidates: findEstimateItemCandidates(title),
+  };
+}
+
+function parseSurugayaEstimateText(text) {
+  const lines = String(text || "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const rows = [];
+  let pendingName = "";
+
+  lines.forEach((line) => {
+    if (isIgnorableEstimateLine(line)) {
+      return;
+    }
+
+    const amountInfo = parseSurugayaEstimateAmount(line);
+    const titlePart = stripEstimateAmountFromLine(line);
+    if (amountInfo.kind !== "unknown") {
+      rows.push(createSurugayaEstimateRow({
+        name: titlePart || pendingName,
+        amountInfo,
+        rawLine: line,
+        rowNumber: rows.length + 1,
+      }));
+      pendingName = "";
+      return;
+    }
+
+    if (pendingName) {
+      rows.push(createSurugayaEstimateRow({
+        name: pendingName,
+        amountInfo: { amount: null, rawAmount: "金額不明", kind: "unknown" },
+        rawLine: pendingName,
+        rowNumber: rows.length + 1,
+      }));
+    }
+    pendingName = titlePart || line;
+  });
+
+  if (pendingName) {
+    rows.push(createSurugayaEstimateRow({
+      name: pendingName,
+      amountInfo: { amount: null, rawAmount: "金額不明", kind: "unknown" },
+      rawLine: pendingName,
+      rowNumber: rows.length + 1,
+    }));
+  }
+
+  return rows;
+}
+
+function getSurugayaEstimateStats() {
+  return surugayaEstimateRows.reduce((stats, row) => {
+    if (row.decision === "send") {
+      stats.sendCount += 1;
+      stats.totalAmount += Number(row.amount) || 0;
+    } else if (row.decision === "no_send") {
+      stats.noSendCount += 1;
+    } else {
+      stats.confirmCount += 1;
+    }
+    return stats;
+  }, { sendCount: 0, noSendCount: 0, confirmCount: 0, totalAmount: 0 });
+}
+
+function renderSurugayaEstimateStats() {
+  if (!surugayaEstimateStats) {
+    return;
+  }
+  const stats = getSurugayaEstimateStats();
+  surugayaEstimateStats.innerHTML = `
+    <span>発送する：${stats.sendCount}件</span>
+    <span>発送しない：${stats.noSendCount}件</span>
+    <span>合計：${formatMoney(stats.totalAmount)}</span>
+    <span>要確認：${stats.confirmCount}件</span>
+  `;
+  if (surugayaEstimateSummary) {
+    surugayaEstimateSummary.textContent = surugayaEstimateRows.length
+      ? `${surugayaEstimateRows.length}件を解析済み / 発送予定 ${stats.sendCount}件 ${formatMoney(stats.totalAmount)}`
+      : "見積もりメールやテキストを貼り付けると、発送判断リストを作成できます";
+  }
+  [saveSurugayaEstimateButton, createSurugayaShippingListButton].forEach((button) => {
+    if (button) {
+      button.disabled = surugayaEstimateRows.length === 0;
+    }
+  });
+}
+
+function renderSurugayaEstimateRows() {
+  if (!surugayaEstimateList) {
+    return;
+  }
+  surugayaEstimateList.innerHTML = "";
+  renderSurugayaEstimateStats();
+
+  if (!surugayaEstimateRows.length) {
+    const empty = document.createElement("div");
+    empty.className = "import-empty-state";
+    empty.textContent = "見積もり本文を貼り付けて解析してください";
+    surugayaEstimateList.append(empty);
+    return;
+  }
+
+  surugayaEstimateRows.forEach((row) => {
+    const card = document.createElement("article");
+    card.className = `surugaya-estimate-row is-${row.decision}`;
+    card.dataset.estimateId = row.id;
+    card.innerHTML = `
+      <div class="surugaya-estimate-main">
+        <strong></strong>
+        <span class="surugaya-estimate-amount"></span>
+      </div>
+      <div class="surugaya-estimate-decision">
+        <button class="ghost-button" type="button" data-estimate-decision="send">発送する</button>
+        <button class="ghost-button" type="button" data-estimate-decision="no_send">発送しない</button>
+        <button class="ghost-button" type="button" data-estimate-decision="confirm">要確認</button>
+      </div>
+      <input class="surugaya-estimate-memo" type="text" placeholder="メモ" data-estimate-memo="${row.id}">
+      <div class="surugaya-estimate-candidate"></div>
+    `;
+    card.querySelector("strong").textContent = row.name;
+    card.querySelector(".surugaya-estimate-amount").textContent = row.amountKind === "priced" && row.amount !== null
+      ? formatMoney(row.amount)
+      : row.rawAmount;
+    card.querySelectorAll("[data-estimate-decision]").forEach((button) => {
+      button.classList.toggle("active", button.dataset.estimateDecision === row.decision);
+    });
+    card.querySelector(".surugaya-estimate-memo").value = row.memo || "";
+    card.querySelector(".surugaya-estimate-candidate").textContent = row.candidates.length
+      ? `候補：${row.candidates.map((item) => item.storageLocation ? `${item.title}（${item.storageLocation}）` : item.title).join(" / ")}`
+      : "候補：なし";
+    surugayaEstimateList.append(card);
+  });
+}
+
+function parseSurugayaEstimateInput() {
+  surugayaEstimateRows = parseSurugayaEstimateText(surugayaEstimateTextInput?.value || "");
+  if (surugayaShippingListOutput) {
+    surugayaShippingListOutput.value = "";
+  }
+  renderSurugayaEstimateRows();
+  if (surugayaEstimateRows.length) {
+    showSuccessMessage(`${surugayaEstimateRows.length}件の見積もりを解析しました`);
+  } else {
+    showErrorMessage("解析できる見積もり行が見つかりませんでした");
+  }
+}
+
+function createSurugayaShippingListText() {
+  const sendRows = surugayaEstimateRows.filter((row) => row.decision === "send");
+  const noSendRows = surugayaEstimateRows.filter((row) => row.decision !== "send");
+  const total = sendRows.reduce((sum, row) => sum + (Number(row.amount) || 0), 0);
+  const formatRow = (row) => `・${row.name}　${row.amountKind === "priced" && row.amount !== null ? formatMoney(row.amount) : row.rawAmount}${row.memo ? `（${row.memo}）` : ""}`;
+  return [
+    "【発送する】",
+    sendRows.length ? sendRows.map(formatRow).join("\n") : "なし",
+    "",
+    `合計：${sendRows.length}点 / ${formatMoney(total)}`,
+    "",
+    "【発送しない】",
+    noSendRows.length ? noSendRows.map(formatRow).join("\n") : "なし",
+  ].join("\n");
+}
+
+function createSurugayaShippingList() {
+  if (!surugayaEstimateRows.length) {
+    showErrorMessage("先に見積もりを解析してください");
+    return;
+  }
+  const text = createSurugayaShippingListText();
+  if (surugayaShippingListOutput) {
+    surugayaShippingListOutput.value = text;
+    surugayaShippingListOutput.focus();
+    surugayaShippingListOutput.select();
+  }
+  copyText(text, "発送リストを作成しました");
+}
+
+function saveCurrentSurugayaEstimate() {
+  if (!surugayaEstimateRows.length) {
+    showErrorMessage("保存する見積もり結果がありません");
+    return;
+  }
+  const estimateDate = surugayaEstimateDateInput?.value || formatDateInputValue();
+  const payload = {
+    id: `surugaya-estimate-${Date.now()}`,
+    estimateDate,
+    destination: "駿河屋",
+    savedAt: new Date().toISOString(),
+    summary: getSurugayaEstimateStats(),
+    rows: surugayaEstimateRows.map((row) => ({
+      estimateDate,
+      destination: "駿河屋",
+      name: row.name,
+      amount: row.amount,
+      rawAmount: row.rawAmount,
+      amountKind: row.amountKind,
+      decision: row.decision,
+      memo: row.memo || "",
+      rawLine: row.rawLine || "",
+      candidates: row.candidates || [],
+    })),
+  };
+  savedSurugayaEstimates = [payload, ...savedSurugayaEstimates].slice(0, 50);
+  saveSurugayaEstimates();
+  showSuccessMessage(`見積もり結果${payload.rows.length}件を保存しました`);
+}
+
+function updateSurugayaEstimateRow(id, patch) {
+  surugayaEstimateRows = surugayaEstimateRows.map((row) => row.id === id ? { ...row, ...patch } : row);
+  renderSurugayaEstimateRows();
+}
+
 function downloadJsonFile(fileName, data) {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -9859,11 +10343,12 @@ function updateImagePreview(imageData) {
   imagePreview.innerHTML = "";
 
   if (!imageData) {
-    imagePreview.textContent = "画像未選択";
+    imagePreview.classList.add("hidden");
     removeImageButton.classList.add("hidden");
     return;
   }
 
+  imagePreview.classList.remove("hidden");
   const image = document.createElement("img");
   image.src = imageData;
   image.alt = "選択中の商品画像";
@@ -10179,7 +10664,32 @@ function updateSortingResultCount({ visible, filtered, searched, total }) {
     return;
   }
 
+  const isPcSortingView = window.matchMedia("(min-width: 769px)").matches;
+  if (isPcSortingView) {
+    const hasSearch = hasSortingFreeTextSearch();
+    sortingResultCount.textContent = hasSearch
+      ? `検索結果 ${visible}件 / 全${total}件`
+      : `${visible}件表示 / 全${total}件`;
+    return;
+  }
+
   sortingResultCount.textContent = formatVisibleCountLabel({ visible, filtered, searched, total });
+}
+
+function getSortingStorageQuickValueSet() {
+  const groupLimit = Math.max(sortingItems.length, 16);
+  return new Set(getStorageQuickGroups(sortingItems, groupLimit).map((group) => group.name));
+}
+
+function isSortingStorageQuickValue(value) {
+  const normalizedValue = String(value || "").trim();
+  return Boolean(normalizedValue) && getSortingStorageQuickValueSet().has(normalizedValue);
+}
+
+function hasSortingFreeTextSearch() {
+  const itemKeyword = String(sortingItemSearchInput?.value || "").trim();
+  const storageKeyword = String(sortingBoxSearchInput?.value || "").trim();
+  return Boolean(itemKeyword || (storageKeyword && !isSortingStorageQuickValue(storageKeyword)));
 }
 
 function updateImportVisibleCount(visible, total) {
@@ -10314,7 +10824,7 @@ function getFilteredSortingItems() {
     const matchesDestination = !sortingDestinationFilter.value || destinationLabel === sortingDestinationFilter.value;
     const matchesStatus = !sortingStatusFilter.value || item.status === sortingStatusFilter.value;
     const matchesGenre = !sortingGenreFilter.value || item.genre === sortingGenreFilter.value;
-    const matchesBox = !boxKeyword || String(item.boxNumber || "").toLowerCase().includes(boxKeyword);
+    const matchesBox = matchesStorageSearchKeyword(item, boxKeyword);
     const matchesKeyword = valuesMatchKeyword(getSortingSearchValues(item), keyword);
     const imageSummary = getSortingDisplayImageSummary(item);
     const matchesImage = !sortingImageOnly || imageSummary.productCount > 0 || imageSummary.referenceCount > 0;
@@ -10386,10 +10896,6 @@ function getSortingOfferLevelClass(bestOffer) {
 }
 
 function getEffectiveSortingDensityMode() {
-  if (isMobileViewport()) {
-    return "standard";
-  }
-
   return sortingDensityMode === "standard" ? "standard" : "compact";
 }
 
@@ -10437,6 +10943,14 @@ function createSortingWorkCard(item) {
       <span class="sorting-work-memo-state"></span>
     </div>
     <div class="sorting-work-destination" data-action="quick-edit-destination" title="売却先を編集"></div>
+    <div class="sorting-work-compact-line" aria-hidden="true">
+      <span class="sorting-work-compact-storage"></span>
+      <span class="sorting-work-compact-destination"></span>
+      <span class="sorting-work-compact-status"></span>
+      <span class="sorting-work-compact-shipping"></span>
+      <span class="sorting-work-compact-main-image"></span>
+      <span class="sorting-work-compact-reference-image"></span>
+    </div>
     <div class="quick-edit-slot"></div>
     <details class="row-action-menu sorting-action-menu">
       <summary aria-label="操作メニュー">⋯</summary>
@@ -10468,11 +10982,18 @@ function createSortingWorkCard(item) {
   card.querySelector(".sorting-work-status").textContent = `⚪${item.status || "未確認"}`;
   card.querySelector(".sorting-work-shipping").textContent = `📦${shortenShippingStatus(item.shippingStatus || "未仕分け")}`;
   card.querySelector(".sorting-work-destination").textContent = `🏪 ${getSortingDestinationLabel(item.destination)}`;
+  const compactImageSummary = getSortingDisplayImageSummary(item);
+  card.querySelector(".sorting-work-compact-storage").textContent = `📍${item.storageLocation || "未設定"}`;
+  card.querySelector(".sorting-work-compact-destination").textContent = `🏪${getSortingDestinationLabel(item.destination)}`;
+  card.querySelector(".sorting-work-compact-status").textContent = `⚪${item.status || "未確認"}`;
+  card.querySelector(".sorting-work-compact-shipping").textContent = `🚚${shortenShippingStatus(item.shippingStatus || "未仕分け")}`;
+  card.querySelector(".sorting-work-compact-main-image").textContent = `📷${compactImageSummary.productCount}`;
+  card.querySelector(".sorting-work-compact-reference-image").textContent = `📚${compactImageSummary.referenceCount}`;
   const hasSortingMemo = Boolean(String(item.memo || sourceItem?.memo || "").trim());
   card.querySelector(".sorting-work-memo-state").textContent = hasSortingMemo ? "📝あり" : "📝なし";
   card.querySelector(".sorting-work-memo-state").classList.toggle("muted-empty", !hasSortingMemo);
   appendImageStateBadges(card.querySelector(".sorting-work-card-body"), item, {
-    summary: getSortingDisplayImageSummary(item),
+    summary: compactImageSummary,
   });
   card.querySelector(".quick-edit-slot").append(createQuickEditBar("sorting"));
   if (sourceItem) {
@@ -10799,27 +11320,107 @@ function renderBoxSearchList() {
   const keyword = sortingBoxSearchInput.value.trim().toLowerCase();
   boxSearchList.innerHTML = "";
 
+  renderStorageSearchLocationList(keyword);
+
   if (!keyword) {
     const emptyMessage = document.createElement("p");
     emptyMessage.className = "muted";
-    emptyMessage.textContent = "箱番号を入力すると中身を確認できます。";
+    emptyMessage.textContent = "保管場所を選ぶか検索すると、その場所にある商品を確認できます。";
     boxSearchList.append(emptyMessage);
     return;
   }
 
-  const matchedItems = sortingItems.filter((item) => String(item.boxNumber || "").toLowerCase().includes(keyword));
+  const matchedSortingItems = sortingItems.filter((item) => matchesStorageSearchKeyword(item, keyword));
+  const matchedProductItems = items.filter((item) => matchesStorageSearchKeyword(item, keyword));
+  const matchedItems = [...matchedSortingItems, ...matchedProductItems];
 
   if (matchedItems.length === 0) {
     const emptyMessage = document.createElement("p");
     emptyMessage.className = "muted";
-    emptyMessage.textContent = "該当する箱番号の商品はありません。";
+    emptyMessage.textContent = "該当する保管場所の商品はありません。";
     boxSearchList.append(emptyMessage);
     return;
   }
 
-  matchedItems.forEach((item) => {
+  matchedSortingItems.forEach((item) => {
     boxSearchList.append(createShippingItemRow(item));
   });
+
+  matchedProductItems.forEach((item) => {
+    boxSearchList.append(createStorageSearchProductRow(item));
+  });
+}
+
+function createStorageSearchProductRow(item) {
+  const row = document.createElement("div");
+  row.className = "shipping-list-item shipping-detail-item storage-search-product-item";
+  row.innerHTML = `
+    <strong></strong>
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+  `;
+  const strong = row.querySelector("strong");
+  const spans = row.querySelectorAll("span");
+  strong.textContent = getListingTitle(item) || "-";
+  spans[0].textContent = "商品一覧";
+  spans[1].textContent = formatStatusDisplay(getItemStatus(item));
+  spans[2].textContent = item.storageLocation || "保管場所未設定";
+  spans[3].textContent = item.memo || "-";
+  return row;
+}
+
+function getStorageSearchSummaries() {
+  const summaries = new Map();
+  const ensureSummary = (name) => {
+    const normalized = String(name || "").trim() || "未設定";
+    const current = summaries.get(normalized) || {
+      name: normalized,
+      itemCount: 0,
+      sortingCount: 0,
+    };
+    summaries.set(normalized, current);
+    return current;
+  };
+
+  getStorageLocationOptions().forEach((name) => ensureSummary(name));
+  ensureSummary("未設定");
+
+  items.forEach((item) => {
+    ensureSummary(item.storageLocation).itemCount += 1;
+  });
+
+  sortingItems.forEach((item) => {
+    ensureSummary(item.storageLocation || item.boxNumber).sortingCount += 1;
+  });
+
+  return [...summaries.values()].sort((first, second) => {
+    const firstTotal = first.itemCount + first.sortingCount;
+    const secondTotal = second.itemCount + second.sortingCount;
+    return secondTotal - firstTotal || first.name.localeCompare(second.name, "ja");
+  });
+}
+
+function renderStorageSearchLocationList(keyword = "") {
+  if (!storageSearchLocationList) {
+    return;
+  }
+
+  const normalizedKeyword = String(keyword || "").trim().toLowerCase();
+  storageSearchLocationList.innerHTML = "";
+
+  getStorageSearchSummaries()
+    .filter((summary) => !normalizedKeyword || summary.name.toLowerCase().includes(normalizedKeyword))
+    .forEach((summary) => {
+      const button = document.createElement("button");
+      const total = summary.itemCount + summary.sortingCount;
+      button.type = "button";
+      button.className = "storage-search-location-button";
+      button.dataset.storageSearchValue = summary.name;
+      button.innerHTML = `<strong>📦 ${summary.name}</strong><span>${total}件</span>`;
+      storageSearchLocationList.append(button);
+    });
 }
 
 function getPackingListItems() {
@@ -10827,7 +11428,7 @@ function getPackingListItems() {
 
   return sortingItems.filter((item) => {
     const matchesStatus = PACKING_LIST_STATUSES.includes(item.shippingStatus);
-    const matchesBox = !boxKeyword || String(item.boxNumber || "").toLowerCase().includes(boxKeyword);
+    const matchesBox = matchesStorageSearchKeyword(item, boxKeyword);
     return matchesStatus && matchesBox;
   });
 }
@@ -11104,7 +11705,7 @@ function renderSorting() {
   const sortingBoxKeyword = String(sortingBoxSearchInput?.value || "").trim().toLowerCase();
   const searchedSortingCount = sortingItems.filter((item) => {
     const matchesKeyword = valuesMatchKeyword(getSortingSearchValues(item), sortingKeyword);
-    const matchesBox = !sortingBoxKeyword || String(item.boxNumber || "").toLowerCase().includes(sortingBoxKeyword);
+    const matchesBox = matchesStorageSearchKeyword(item, sortingBoxKeyword);
     return matchesKeyword && matchesBox;
   }).length;
   const filteredItems = sortSortingItems(getFilteredSortingItems());
@@ -11117,6 +11718,34 @@ function renderSorting() {
     searched: searchedSortingCount,
     total: sortingItems.length,
   });
+  const sortingStorageQuickValue = String(sortingBoxSearchInput?.value || "").trim();
+  const isStorageChipOnlyValue = isSortingStorageQuickValue(sortingStorageQuickValue);
+  renderStorageQuickFilter(
+    sortingStorageQuickFilter,
+    getStorageQuickGroups(sortingItems),
+    sortingStorageQuickValue,
+    { scope: "sorting" },
+  );
+  const isPcSortingView = window.matchMedia("(min-width: 769px)").matches;
+  const isManualSortingStorageSearch = sortingStorageQuickValue && !isStorageChipOnlyValue;
+  const sortingComplexFilterLabels = [
+    sortingItemSearchInput?.value ? `検索 ${sortingItemSearchInput.value}` : "",
+    isManualSortingStorageSearch ? `📦 ${sortingStorageQuickValue}` : "",
+    sortingDestinationFilter?.value ? `売却先 ${sortingDestinationFilter.value}` : "",
+    sortingStatusFilter?.value ? `状態 ${sortingStatusFilter.value}` : "",
+    sortingGenreFilter?.value ? `ジャンル ${sortingGenreFilter.value}` : "",
+    sortingImageOnly ? "画像付きだけ" : "",
+    sortingStorageUnsetOnly ? "保管場所未設定だけ" : "",
+    isSortingShippingMode ? "発送モード" : "",
+  ].filter(Boolean);
+  const shouldShowStorageInActiveBar = sortingStorageQuickValue
+    && !isManualSortingStorageSearch
+    && (!isPcSortingView || !isStorageChipOnlyValue || sortingComplexFilterLabels.length > 0);
+  updateActiveFilterBar(sortingActiveFilterBar, [
+    ...sortingComplexFilterLabels,
+    shouldShowStorageInActiveBar ? `📦 ${sortingStorageQuickValue}` : "",
+    (!isPcSortingView || sortingComplexFilterLabels.length > 0) && displayItems.length !== sortingItems.length ? `${displayItems.length}件表示中` : "",
+  ]);
   updateSortingDensityControls();
   sortingTableBody.innerHTML = "";
   sortingWorkCardList.innerHTML = "";
@@ -11990,7 +12619,7 @@ function renderQuickSearchResults() {
       `;
     } else {
       actions.innerHTML = `
-        <button class="text-button" type="button" data-action="quick-box">箱検索へ</button>
+        <button class="text-button" type="button" data-action="quick-box">保管場所検索へ</button>
       `;
     }
 
@@ -12285,6 +12914,19 @@ function render() {
     searched: searchedItemCount,
     total: items.length,
   });
+  renderStorageQuickFilter(
+    inventoryStorageQuickFilter,
+    getStorageQuickGroups(items),
+    storageFilter?.value || "",
+    { scope: "inventory" },
+  );
+  updateActiveFilterBar(inventoryActiveFilterBar, [
+    storageFilter?.value ? `📦 ${storageFilter.value}` : "",
+    statusFilter?.value ? `状態 ${statusFilter.options[statusFilter.selectedIndex]?.textContent || statusFilter.value}` : "",
+    inventoryImageOnly ? "画像付きだけ" : "",
+    inventoryStorageUnsetOnly ? "保管場所未設定だけ" : "",
+    sortedActiveItems.length !== items.length ? `${sortedActiveItems.length}件表示中` : "",
+  ]);
   const soldItems = sortSoldItems(filteredItems.filter((item) => getItemStatus(item) === "売却済み"));
   const allSoldItems = items.filter((item) => getItemStatus(item) === "売却済み");
   itemCount.textContent = String(items.length);
@@ -12618,6 +13260,70 @@ function getStorageLocationGroups(sourceItems) {
   return [...groups.values()].sort((first, second) => {
     return second.items.length - first.items.length || first.name.localeCompare(second.name, "ja");
   });
+}
+
+function getStorageQuickGroups(sourceItems, limit = 16) {
+  return getStorageLocationGroups(sourceItems).slice(0, limit);
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function renderStorageQuickFilter(container, groups, activeValue, { scope = "inventory" } = {}) {
+  if (!container) {
+    return;
+  }
+
+  container.innerHTML = "";
+  const title = document.createElement("span");
+  title.className = "storage-quick-filter-title";
+  title.textContent = "📦 保管場所";
+  container.append(title);
+
+  const allButton = document.createElement("button");
+  allButton.type = "button";
+  allButton.className = "storage-quick-filter-chip";
+  allButton.classList.toggle("active", !activeValue);
+  allButton.dataset.storageQuickScope = scope;
+  allButton.dataset.storageQuickValue = "";
+  allButton.textContent = "すべて";
+  container.append(allButton);
+
+  groups.forEach((group) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "storage-quick-filter-chip";
+    button.classList.toggle("active", group.name === activeValue);
+    button.dataset.storageQuickScope = scope;
+    button.dataset.storageQuickValue = group.name;
+    button.innerHTML = `<span>${escapeHtml(group.name)}</span><b>${group.items.length}</b>`;
+    container.append(button);
+  });
+}
+
+function updateActiveFilterBar(bar, labels = []) {
+  if (!bar) {
+    return;
+  }
+
+  const activeLabels = labels.filter(Boolean);
+  bar.classList.toggle("hidden", activeLabels.length === 0);
+
+  if (activeLabels.length === 0) {
+    bar.textContent = "";
+    return;
+  }
+
+  bar.innerHTML = `
+    <span>${activeLabels.map(escapeHtml).join(" / ")}</span>
+    <button class="text-button active-filter-clear" type="button" data-action="clear-active-filter">×解除</button>
+  `;
 }
 
 function createStorageItemRow(item) {
@@ -13931,6 +14637,12 @@ function setActiveNavigation(view, tab = "form") {
   view = normalizeViewForDevice(view);
   const workViews = ["form", "list", "import", "sorting", "box"];
   const workTab = workViews.includes(view) ? view : tab;
+  if (document.body.classList.contains("work-tab-list")) {
+    uiState.scroll = { ...(uiState.scroll || {}), list: getCurrentScrollTop() };
+  }
+  if (document.body.classList.contains("work-tab-sorting")) {
+    uiState.scroll = { ...(uiState.scroll || {}), sorting: getCurrentScrollTop() };
+  }
   currentView = view;
 
   document.body.classList.remove(
@@ -13973,6 +14685,7 @@ function setActiveNavigation(view, tab = "form") {
   sideNavLinks.forEach((link) => {
     link.classList.toggle("active", link.dataset.view === view);
   });
+  stabilizeAfterViewSwitch(view);
   scheduleSaveUiState();
 }
 
@@ -14572,6 +15285,28 @@ document.addEventListener("click", (event) => {
 });
 window.addEventListener("resize", positionOpenItemActionMenus);
 window.addEventListener("scroll", positionOpenItemActionMenus, true);
+window.addEventListener("scroll", updateScrollTopButton, { passive: true });
+window.addEventListener("scroll", () => {
+  if (document.body.classList.contains("work-tab-list") || document.body.classList.contains("work-tab-sorting")) {
+    scheduleSaveUiState();
+  }
+}, { passive: true });
+window.addEventListener("resize", updateScrollTopButton);
+
+scrollTopButton?.addEventListener("click", () => {
+  scrollCurrentViewToTop("smooth");
+});
+
+document.addEventListener("click", (event) => {
+  const topButton = event.target.closest("[data-scroll-top-target]");
+
+  if (!topButton) {
+    return;
+  }
+
+  event.preventDefault();
+  scrollCurrentViewToTop("smooth");
+});
 
 openFullListButton.addEventListener("click", () => {
   setActiveNavigation("list");
@@ -15175,12 +15910,13 @@ imageInput.addEventListener("change", async () => {
   try {
     isImageProcessing = true;
     setSubmitDisabled(true);
-	    imagePreview.textContent = "画像を準備中...";
-	    currentImageData = await readImageFile(file);
-	    imageProviderInput.value = imageProviderInput.value || "local";
-	    localImageIdInput.value = localImageIdInput.value || `LOCAL-${ensurePendingFormItemCode()}-${Date.now()}`;
-	    updateImageReferenceMode();
-	    updateImagePreview(currentImageData);
+    imagePreview.classList.remove("hidden");
+    imagePreview.textContent = "画像を準備中...";
+    currentImageData = await readImageFile(file);
+    imageProviderInput.value = imageProviderInput.value || "local";
+    localImageIdInput.value = localImageIdInput.value || `LOCAL-${ensurePendingFormItemCode()}-${Date.now()}`;
+    updateImageReferenceMode();
+    updateImagePreview(currentImageData);
   } catch (error) {
     showErrorMessage(error.message);
     imageInput.value = "";
@@ -15308,6 +16044,38 @@ storageFilter?.addEventListener("change", () => {
   render();
   saveUiState();
 });
+inventoryStorageQuickFilter?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-storage-quick-scope='inventory']");
+  if (!button || !storageFilter) {
+    return;
+  }
+
+  const value = button.dataset.storageQuickValue || "";
+  refreshListStorageFilter();
+  if (value && ![...storageFilter.options].some((option) => option.value === value)) {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = value;
+    storageFilter.append(option);
+  }
+  storageFilter.value = value;
+  render();
+  saveUiState();
+});
+inventoryActiveFilterBar?.addEventListener("click", (event) => {
+  if (!event.target.closest("[data-action='clear-active-filter']")) {
+    return;
+  }
+
+  if (storageFilter) storageFilter.value = "";
+  if (statusFilter) statusFilter.value = "";
+  inventoryImageOnly = false;
+  inventoryStorageUnsetOnly = false;
+  if (inventoryImageOnlyFilter) inventoryImageOnlyFilter.checked = false;
+  if (inventoryStorageUnsetFilter) inventoryStorageUnsetFilter.checked = false;
+  render();
+  saveUiState();
+});
 sortOrderInput.addEventListener("change", () => {
   updateInventoryOptionSummary();
   render();
@@ -15338,6 +16106,55 @@ sortingGenreFilter.addEventListener("change", () => {
   saveUiState();
 });
 sortingBoxSearchInput.addEventListener("input", () => {
+  renderSorting();
+  renderBoxSearchList();
+  renderPackingList();
+  scheduleSaveUiState();
+});
+sortingStorageQuickFilter?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-storage-quick-scope='sorting']");
+  if (!button || !sortingBoxSearchInput) {
+    return;
+  }
+
+  sortingBoxSearchInput.value = button.dataset.storageQuickValue || "";
+  renderSorting();
+  renderBoxSearchList();
+  renderPackingList();
+  saveUiState();
+});
+sortingActiveFilterBar?.addEventListener("click", (event) => {
+  if (!event.target.closest("[data-action='clear-active-filter']")) {
+    return;
+  }
+
+  if (sortingBoxSearchInput) sortingBoxSearchInput.value = "";
+  if (sortingDestinationFilter) sortingDestinationFilter.value = "";
+  if (sortingStatusFilter) sortingStatusFilter.value = "";
+  if (sortingGenreFilter) sortingGenreFilter.value = "";
+  sortingImageOnly = false;
+  sortingStorageUnsetOnly = false;
+  if (sortingImageOnlyFilter) sortingImageOnlyFilter.checked = false;
+  if (sortingStorageUnsetFilter) sortingStorageUnsetFilter.checked = false;
+  renderSorting();
+  renderBoxSearchList();
+  renderPackingList();
+  saveUiState();
+});
+storageSearchLocationList?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-storage-search-value]");
+  if (!button) {
+    return;
+  }
+
+  const storageLocation = button.dataset.storageSearchValue || "";
+  sortingBoxSearchInput.value = storageLocation === "未設定" ? "未設定" : storageLocation;
+  if (storageFilter) {
+    refreshListStorageFilter();
+    storageFilter.value = [...storageFilter.options].some((option) => option.value === storageLocation)
+      ? storageLocation
+      : "";
+  }
   renderSorting();
   renderBoxSearchList();
   renderPackingList();
@@ -16213,6 +17030,29 @@ conditionInput.addEventListener("change", () => {
 statusInput.addEventListener("change", updateSoldFieldsVisibility);
 descriptionTemplateInput.addEventListener("change", applyDescriptionTemplate);
 parseImportButton?.addEventListener("click", parseImportInput);
+parseSurugayaEstimateButton?.addEventListener("click", parseSurugayaEstimateInput);
+saveSurugayaEstimateButton?.addEventListener("click", saveCurrentSurugayaEstimate);
+createSurugayaShippingListButton?.addEventListener("click", createSurugayaShippingList);
+surugayaEstimateList?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-estimate-decision]");
+  if (!button) {
+    return;
+  }
+  const card = button.closest("[data-estimate-id]");
+  if (!card) {
+    return;
+  }
+  updateSurugayaEstimateRow(card.dataset.estimateId, { decision: button.dataset.estimateDecision });
+});
+surugayaEstimateList?.addEventListener("input", (event) => {
+  const input = event.target.closest("[data-estimate-memo]");
+  if (!input) {
+    return;
+  }
+  const id = input.dataset.estimateMemo;
+  surugayaEstimateRows = surugayaEstimateRows.map((row) => row.id === id ? { ...row, memo: input.value } : row);
+  renderSurugayaEstimateStats();
+});
 importResultList?.addEventListener("change", (event) => {
   const select = event.target.closest("select[data-import-match-index]");
   if (select) {
@@ -16264,6 +17104,9 @@ refreshShippingMethodOptions();
 refreshTemplateOptions();
 restoreUiControlValues();
 listingDateInput.value = formatDateInputValue();
+if (surugayaEstimateDateInput && !surugayaEstimateDateInput.value) {
+  surugayaEstimateDateInput.value = formatDateInputValue();
+}
 saveSettings();
 saveTemplates();
 if (ensureItemCodes(items)) {
@@ -16271,6 +17114,7 @@ if (ensureItemCodes(items)) {
 }
 renderSettings();
 renderImportResults();
+renderSurugayaEstimateRows();
 updateProfitPreview();
 updateSoldFieldsVisibility();
 updateImageReferenceMode();
